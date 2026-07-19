@@ -19,12 +19,12 @@
    ============================================================ */
 
 const firebaseConfig = {
-  apiKey: "COLOQUE_AQUI_A_SUA_API_KEY",
-  authDomain: "SEU_PROJETO.firebaseapp.com",
-  projectId: "SEU_PROJETO",
-  storageBucket: "SEU_PROJETO.firebasestorage.app",
-  messagingSenderId: "000000000000",
-  appId: "1:000000000000:web:xxxxxxxxxxxxxxxxxx",
+  apiKey: "AIzaSyCjiRnA8FE-KV7oa68faYeCc8QpRYEQ2Io",
+  authDomain: "gors-5b8d2.firebaseapp.com",
+  projectId: "gors-5b8d2",
+  storageBucket: "gors-5b8d2.firebasestorage.app",
+  messagingSenderId: "765528378291",
+  appId: "1:765528378291:web:e26dffa4d6e640d0de59c6",
 };
 
 firebase.initializeApp(firebaseConfig);
