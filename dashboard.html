@@ -54,6 +54,7 @@
     </button>
     <nav class="main-nav">
       <a href="dashboard.html" class="is-active">Indicadores</a>
+      <a href="relatorios.html">Relatórios</a>
       <a href="approvals.html" id="approvals-link" style="display:none;">Aprovações</a>
       <a href="users.html" id="users-link" style="display:none;">Utilizadores</a>
       <span class="small-note" id="admin-name-label" style="margin-right:8px;"></span>
@@ -258,9 +259,9 @@ function renderDrawer(ind, values) {
     <div id="submit-alert"></div>
     <div class="form-card" style="padding:18px;">
       <div class="field">
-        <label for="val-period">Período</label>
+        <label for="val-period">Período <span class="small-note">(${escapeHtml(ind.frequency)})</span></label>
         <select id="val-period">
-          ${ind.targets.map(t => `<option value="${t.period}">${t.period}</option>`).join('')}
+          ${ME.getPeriodOptions(ind).map(p => `<option value="${p}">${p}</option>`).join('')}
         </select>
       </div>
       <div class="field">

@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Relatórios — M&amp;E MozCommunity</title>
+<link rel="icon" href="img/logo-adin.jpg" type="image/jpeg">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  .filters-card { background: var(--paper-raised); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; margin-bottom: 24px; }
+  .filters-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 14px; }
+  .filters-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  table.report-table { width: 100%; border-collapse: collapse; background: var(--paper-raised); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin-bottom: 24px; font-size: 0.85rem; }
+  table.report-table th { text-align: left; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-muted); padding: 10px 12px; border-bottom: 1px solid var(--line); font-family: var(--font-mono); font-weight: 500; }
+  table.report-table td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  table.report-table tr:last-child td { border-bottom: none; }
+  .progress-bar { width: 100%; height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: var(--teal); }
+  .level-tag { font-size: 0.72rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: var(--gold-tint); color: #8A5F13; white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="index.html" class="brand">
+      <span class="brand-mark"><img src="img/logo-adin.jpg" alt="Logótipo ADIN"></span>
+      <span class="brand-name">M&amp;E MozCommunity<small>Monitoria de Indicadores — ADIN</small></span>
+    </a>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Abrir menu" aria-expanded="false">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <nav class="main-nav">
+      <a href="dashboard.html">Indicadores</a>
+      <a href="relatorios.html" class="is-active">Relatórios</a>
+      <a href="approvals.html" id="approvals-link" style="display:none;">Aprovações</a>
+      <a href="users.html" id="users-link" style="display:none;">Utilizadores</a>
+      <span class="small-note" id="admin-name-label" style="margin-right:8px;"></span>
+      <a href="#" id="logout-link">Sair</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section style="padding-bottom:0;">
+    <div class="container">
+      <span class="eyebrow">Progresso do projecto</span>
+      <h1 style="font-size:clamp(1.8rem,3vw,2.4rem)">Relatórios</h1>
+      <p class="lead" style="max-width:60ch">Progresso dos indicadores face às metas do Quadro de Resultados, com base apenas em valores aprovados.</p>
+    </div>
+  </section>
+
+  <section style="padding-top:24px;">
+    <div class="container">
+
+      <div class="filters-card">
+        <h3 style="font-size:0.95rem; margin-bottom:14px;">Filtros do relatório</h3>
+        <div class="filters-grid">
+          <div class="field" style="margin:0;">
+            <label for="f-level">Nível</label>
+            <select id="f-level">
+              <option value="">Todos</option>
+              <option value="PrDO">PrDO (Programa)</option>
+              <option value="PDO">PDO (Projecto)</option>
+              <option value="Intermédio">Intermédio</option>
+            </select>
+          </div>
+          <div class="field" style="margin:0;">
+            <label for="f-component">Componente</label>
+            <select id="f-component"><option value="">Todas</option></select>
+          </div>
+        </div>
+        <div class="filters-actions">
+          <button type="button" class="btn btn-primary btn-sm" id="apply-filters-btn">Aplicar filtros</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="clear-filters-btn">Limpar filtros</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="download-pdf-btn" style="margin-left:auto; border-color:var(--teal); color:var(--teal-dark);">⬇ Descarregar relatório em PDF</button>
+        </div>
+      </div>
+
+      <div class="stat-grid" id="stat-tiles">
+        <div class="stat-tile"><div class="n skeleton" style="height:2.1rem;width:60px;"></div><div class="label">Indicadores</div></div>
+        <div class="stat-tile"><div class="n skeleton" style="height:2.1rem;width:60px;"></div><div class="label">Com valor aprovado</div></div>
+        <div class="stat-tile"><div class="n skeleton" style="height:2.1rem;width:60px;"></div><div class="label">Sem nenhum valor ainda</div></div>
+        <div class="stat-tile"><div class="n skeleton" style="height:2.1rem;width:60px;"></div><div class="label">Progresso médio</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding-top:0;">
+    <div class="container" style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+      <div class="chart-card">
+        <h3>Indicadores por nível</h3>
+        <div class="chart-sub">De acordo com os filtros seleccionados</div>
+        <canvas id="chart-level" height="200"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Progresso médio por componente</h3>
+        <div class="chart-sub">Indicadores numéricos apenas (%)</div>
+        <canvas id="chart-component" height="200"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <h3 style="margin-bottom:14px;">Detalhe por indicador</h3>
+      <table class="report-table" id="report-table">
+        <thead><tr><th>Nível</th><th>Indicador</th><th>Base</th><th>Último valor aprovado</th><th>Meta final</th><th>Progresso</th></tr></thead>
+        <tbody id="report-tbody">
+          <tr><td colspan="6" class="skeleton" style="height:40px;"></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <p>M&amp;E MozCommunity — Monitoria de Indicadores, ADIN.</p>
+  </div>
+</footer>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/store.js"></script>
+<script>
+let charts = {};
+let latestRows = [];
+let currentAdmin = null;
+
+ME.onAuthChange(admin => {
+  if (!admin) { window.location.href = 'index.html'; return; }
+  if (admin.noProfile) {
+    alert('A tua conta não tem permissões configuradas nesta plataforma.');
+    ME.adminLogout().then(() => window.location.href = 'index.html');
+    return;
+  }
+  currentAdmin = admin;
+  const roleLabels = { admin: 'Administrador geral', submitter: 'Equipa de reporte', readonly: 'Só leitura' };
+  document.getElementById('admin-name-label').textContent = `${admin.name} · ${roleLabels[admin.role] || admin.role}`;
+  document.getElementById('approvals-link').style.display = admin.role === 'admin' ? '' : 'none';
+  document.getElementById('users-link').style.display = admin.role === 'admin' ? '' : 'none';
+
+  ME.getComponents().forEach(c => document.getElementById('f-component').add(new Option(c, c)));
+  loadReport();
+});
+
+document.getElementById('logout-link').addEventListener('click', (e) => {
+  e.preventDefault();
+  ME.adminLogout().then(() => window.location.href = 'index.html');
+});
+
+function destroyCharts() {
+  Object.values(charts).forEach(c => c && c.destroy());
+  charts = {};
+}
+
+async function loadReport() {
+  const level = document.getElementById('f-level').value;
+  const component = document.getElementById('f-component').value;
+
+  document.getElementById('report-tbody').innerHTML = `<tr><td colspan="6" class="skeleton" style="height:40px;"></td></tr>`;
+
+  let indicators = ME.getIndicators();
+  if (level) indicators = indicators.filter(i => i.level === level);
+  if (component) indicators = indicators.filter(i => i.component === component);
+
+  try {
+    const rows = await Promise.all(indicators.map(async (ind) => {
+      const approved = await ME.listApprovedValues(ind.id);
+      approved.sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
+      const latest = approved[0] || null;
+      const finalTarget = ind.targets[ind.targets.length - 1];
+      const isNumeric = !ind.isTextIndicator && !ind.isYesNoIndicator;
+      let pct = null;
+      if (isNumeric && latest && typeof finalTarget.value === 'number' && finalTarget.value > 0) {
+        pct = Math.min(100, Math.round((Number(latest.value) / finalTarget.value) * 100));
+      }
+      return { ind, latest, finalTarget, isNumeric, pct };
+    }));
+    latestRows = rows;
+
+    // ---- Cartões-resumo ----
+    const total = rows.length;
+    const withValue = rows.filter(r => r.latest).length;
+    const withoutValue = total - withValue;
+    const pctValues = rows.filter(r => r.pct !== null).map(r => r.pct);
+    const avgPct = pctValues.length ? Math.round(pctValues.reduce((a, b) => a + b, 0) / pctValues.length) : null;
+
+    document.getElementById('stat-tiles').innerHTML = `
+      <div class="stat-tile"><div class="n">${total}</div><div class="label">Indicadores</div></div>
+      <div class="stat-tile"><div class="n">${withValue}</div><div class="label">Com valor aprovado</div></div>
+      <div class="stat-tile"><div class="n">${withoutValue}</div><div class="label">Sem nenhum valor ainda</div></div>
+      <div class="stat-tile"><div class="n">${avgPct ?? '—'}${avgPct !== null ? '%' : ''}</div><div class="label">Progresso médio</div></div>
+    `;
+
+    // ---- Tabela ----
+    document.getElementById('report-tbody').innerHTML = rows.map(r => `
+      <tr>
+        <td><span class="level-tag">${r.ind.level}</span></td>
+        <td>${escapeHtml(r.ind.name)}</td>
+        <td class="small-note">${escapeHtml(String(r.ind.baseline))}</td>
+        <td>${r.latest ? `${escapeHtml(String(r.latest.value))} <span class="small-note">(${escapeHtml(r.latest.period)})</span>` : '<span class="small-note">—</span>'}</td>
+        <td class="small-note">${escapeHtml(String(r.finalTarget.value))} (${r.finalTarget.period})</td>
+        <td>${r.pct !== null ? `<div class="progress-bar"><div class="progress-bar-fill" style="width:${r.pct}%;"></div></div><span class="small-note">${r.pct}%</span>` : '<span class="small-note">—</span>'}</td>
+      </tr>
+    `).join('') || `<tr><td colspan="6" class="small-note" style="padding:20px;">Nenhum indicador encontrado com estes filtros.</td></tr>`;
+
+    // ---- Gráficos ----
+    destroyCharts();
+    const PALETTE = ['#9D212B', '#FAA842', '#5A4344', '#D9773A', '#C8555F', '#7A1921', '#E8B98A', '#B08A80'];
+
+    const byLevel = {};
+    rows.forEach(r => { byLevel[r.ind.level] = (byLevel[r.ind.level] || 0) + 1; });
+    charts.level = new Chart(document.getElementById('chart-level'), {
+      type: 'doughnut',
+      data: { labels: Object.keys(byLevel), datasets: [{ data: Object.values(byLevel), backgroundColor: PALETTE, borderWidth: 0 }] },
+      options: { plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { family: 'Public Sans' } } } } }
+    });
+
+    const byComponent = {};
+    rows.filter(r => r.ind.component && r.pct !== null).forEach(r => {
+      const key = r.ind.component.replace('Componente ', 'C.');
+      if (!byComponent[key]) byComponent[key] = [];
+      byComponent[key].push(r.pct);
+    });
+    const compLabels = Object.keys(byComponent);
+    const compValues = compLabels.map(k => Math.round(byComponent[k].reduce((a, b) => a + b, 0) / byComponent[k].length));
+    charts.component = new Chart(document.getElementById('chart-component'), {
+      type: 'bar',
+      data: { labels: compLabels, datasets: [{ data: compValues, backgroundColor: '#9D212B', borderRadius: 4 }] },
+      options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { max: 100, ticks: { callback: v => v + '%' } } } }
+    });
+  } catch (err) {
+    console.error(err);
+    document.getElementById('report-tbody').innerHTML = `<tr><td colspan="6"><div class="alert alert-error">Não foi possível carregar o relatório.</div></td></tr>`;
+  }
+}
+
+document.getElementById('apply-filters-btn').addEventListener('click', loadReport);
+document.getElementById('clear-filters-btn').addEventListener('click', () => {
+  document.getElementById('f-level').value = '';
+  document.getElementById('f-component').value = '';
+  loadReport();
+});
+
+document.getElementById('download-pdf-btn').addEventListener('click', async () => {
+  if (!latestRows.length) { alert('Aguarda o relatório carregar antes de descarregar.'); return; }
+  const btn = document.getElementById('download-pdf-btn');
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'A preparar PDF...';
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 40;
+    let y = 50;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(18);
+    doc.text('Relatório de Indicadores — M&E MozCommunity', margin, y);
+    y += 20;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(90, 67, 68);
+    doc.text(`Gerado em ${new Date().toLocaleString('pt-MZ')}`, margin, y);
+    y += 22;
+
+    const level = document.getElementById('f-level').value;
+    const component = document.getElementById('f-component').value;
+    doc.setFontSize(10);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Nível: ${level || 'Todos'}`, margin, y); y += 14;
+    doc.text(`Componente: ${component || 'Todas'}`, margin, y); y += 14;
+    y += 10;
+
+    doc.setDrawColor(221, 214, 210);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 24;
+
+    // Gráficos
+    for (const [canvasId, label] of [['chart-level', 'Indicadores por nível'], ['chart-component', 'Progresso médio por componente']]) {
+      const canvas = document.getElementById(canvasId);
+      const imgData = canvas.toDataURL('image/png', 1.0);
+      const imgWidth = (pageWidth - margin * 2) / 2 - 10;
+      const imgHeight = (canvas.height / canvas.width) * imgWidth;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.text(label, margin, y);
+    }
+    // Coloca os dois gráficos lado a lado
+    {
+      const c1 = document.getElementById('chart-level');
+      const c2 = document.getElementById('chart-component');
+      const imgWidth = (pageWidth - margin * 2 - 20) / 2;
+      const h1 = (c1.height / c1.width) * imgWidth;
+      const h2 = (c2.height / c2.width) * imgWidth;
+      const rowHeight = Math.max(h1, h2);
+      doc.addImage(c1.toDataURL('image/png', 1.0), 'PNG', margin, y + 6, imgWidth, h1);
+      doc.addImage(c2.toDataURL('image/png', 1.0), 'PNG', margin + imgWidth + 20, y + 6, imgWidth, h2);
+      y += rowHeight + 36;
+    }
+
+    // Tabela de indicadores
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.text('Detalhe por indicador', margin, y);
+    y += 18;
+
+    doc.setFontSize(8.5);
+    const colX = [margin, margin + 40, margin + 260, margin + 330, margin + 420, margin + 480];
+    const headers = ['Nível', 'Indicador', 'Base', 'Último valor', 'Meta final', 'Progr.'];
+    doc.setFont('helvetica', 'bold');
+    headers.forEach((h, i) => doc.text(h, colX[i], y));
+    y += 6;
+    doc.setDrawColor(221, 214, 210);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 12;
+    doc.setFont('helvetica', 'normal');
+
+    latestRows.forEach(r => {
+      if (y > pageHeight - margin - 20) {
+        doc.addPage();
+        y = 50;
+      }
+      const nameLines = doc.splitTextToSize(r.ind.name, 210);
+      doc.text(r.ind.level, colX[0], y);
+      doc.text(nameLines, colX[1], y);
+      doc.text(String(r.ind.baseline), colX[2], y);
+      doc.text(r.latest ? `${r.latest.value} (${r.latest.period})` : '—', colX[3], y);
+      doc.text(`${r.finalTarget.value}`, colX[4], y);
+      doc.text(r.pct !== null ? `${r.pct}%` : '—', colX[5], y);
+      y += Math.max(14, nameLines.length * 10);
+    });
+
+    doc.save(`relatorio-indicadores-me-mozcommunity-${new Date().toISOString().slice(0, 10)}.pdf`);
+  } catch (err) {
+    console.error(err);
+    alert('Não foi possível gerar o PDF.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = original;
+  }
+});
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str == null ? '' : str;
+  return div.innerHTML;
+}
+
+document.getElementById('nav-toggle')?.addEventListener('click', () => {
+  const nav = document.querySelector('.main-nav');
+  const open = nav.classList.toggle('is-open');
+  document.getElementById('nav-toggle').setAttribute('aria-expanded', String(open));
+});
+</script>
+</body>
+</html>

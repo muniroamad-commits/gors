@@ -72,3 +72,28 @@ Firestore nem nas regras para isso.
   (200KB, 2 ficheiros por submissão).
 - Não há recuperação automática de UID por email — continua a ser preciso
   copiar o UID manualmente do Firebase Console.
+
+## Periodicidade correcta ao submeter valores
+
+Ao submeteres um valor, o menu de "Período" já não mostra só os pontos de
+meta — mostra a lista completa de períodos possíveis, de acordo com a
+periodicidade real de cada indicador:
+
+- **Trimestral** → T1, T2, T3, T4 de cada ano (2026–2034)
+- **Semestral** → 1º e 2º Semestre de cada ano
+- **Anual** → cada ano
+- **Bienal** → intervalos de dois anos
+
+Indicadores com periodicidade baseada em marcos (ex: "Ano 1 do projecto,
+meio-termo e encerramento") continuam a usar os períodos definidos nas
+próprias metas, porque não seguem uma cadência regular.
+
+## Página de Relatórios
+
+Nova página **"Relatórios"**, com:
+- Filtros por **Nível** (PrDO/PDO/Intermédio) e **Componente**
+- Cartões-resumo: total de indicadores, quantos já têm valor aprovado,
+  quantos ainda não têm nenhum, e o progresso médio
+- Gráficos: indicadores por nível, e progresso médio por componente
+- Botão **"Descarregar relatório em PDF"** — inclui os gráficos e uma
+  tabela detalhada por indicador, de acordo com os filtros aplicados

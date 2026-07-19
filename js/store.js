@@ -317,6 +317,54 @@ const ME = (() => {
     return ['PrDO', 'PDO', 'Intermédio'];
   }
 
+  // ---------- Períodos de reporte, de acordo com a periodicidade real ----------
+  // Cobre a duração do programa (2026-2034). Para indicadores com
+  // periodicidade regular (trimestral, semestral, anual, bienal), gera a
+  // lista completa de períodos possíveis — não só os pontos de meta.
+  // Para frequências baseadas em marcos (ex: "meio-termo e encerramento"),
+  // que não seguem uma cadência regular, usa os períodos definidos nas
+  // próprias metas.
+  const PROJECT_START_YEAR = 2026;
+  const PROJECT_END_YEAR = 2034;
+
+  function generateQuarters(startYear, endYear) {
+    const out = [];
+    for (let y = startYear; y <= endYear; y++) {
+      for (let q = 1; q <= 4; q++) out.push(`T${q} ${y}`);
+    }
+    return out;
+  }
+  function generateSemesters(startYear, endYear) {
+    const out = [];
+    for (let y = startYear; y <= endYear; y++) {
+      out.push(`1º Semestre ${y}`, `2º Semestre ${y}`);
+    }
+    return out;
+  }
+  function generateYears(startYear, endYear) {
+    const out = [];
+    for (let y = startYear; y <= endYear; y++) out.push(String(y));
+    return out;
+  }
+  function generateBiennial(startYear, endYear) {
+    const out = [];
+    for (let y = startYear; y <= endYear; y += 2) out.push(`${y}–${y + 1}`);
+    return out;
+  }
+
+  function getPeriodOptions(indicator) {
+    const freq = (indicator.frequency || '').trim();
+    if (freq === 'Trimestral') return generateQuarters(PROJECT_START_YEAR, PROJECT_END_YEAR);
+    if (freq === 'Semestral') return generateSemesters(PROJECT_START_YEAR, PROJECT_END_YEAR);
+    if (freq === 'Anual') return generateYears(PROJECT_START_YEAR, PROJECT_END_YEAR);
+    if (freq === 'Bienal') return generateBiennial(PROJECT_START_YEAR, PROJECT_END_YEAR);
+    // Frequências mistas ou por marcos (ex: "Trimestral (1ª metade) /
+    // Semestral (2ª metade)", "Ano 1 do projecto, meio-termo e
+    // encerramento", "Meio-termo e encerramento") não seguem uma cadência
+    // regular — usam-se os períodos definidos nas próprias metas.
+    return indicator.targets.map(t => t.period);
+  }
+
   // ---------- Utilitários ----------
   function nowIso() { return new Date().toISOString(); }
 
@@ -472,7 +520,7 @@ const ME = (() => {
   }
 
   return {
-    getIndicators, getIndicator, getComponents, getLevels,
+    getIndicators, getIndicator, getComponents, getLevels, getPeriodOptions,
     submitValue, listValues, listApprovedValues, reviewValue, deleteValue,
     adminLogin, adminLogout, onAuthChange, getCurrentAdminSync, changeAdminPassword,
     listAdminUsers, upsertAdminUser, removeAdminUser,
