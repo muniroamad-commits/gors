@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aprovações — GORS</title>
+<link rel="icon" href="img/adin-logo.png" type="image/png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="app-shell">
+  <aside class="app-sidebar" id="app-sidebar"></aside>
+  <div class="app-main">
+    <header class="app-topbar" id="app-topbar"></header>
+    <main class="app-content">
+      <div id="ap-loading" class="loading-block"><span class="spinner"></span> A carregar…</div>
+      <div id="ap-content" class="stack hidden">
+        <div class="flex gap-3" style="align-items:center;">
+          <div style="width:2.5rem;height:2.5rem;border-radius:999px;background:color-mix(in oklch, var(--primary) 12%, transparent);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:1.2rem;">🛡️</div>
+          <div>
+            <h1 class="text-xl">Aprovações pendentes</h1>
+            <p class="text-sm muted mt-1">Verifique, edite ou rejeite os valores submetidos pelos técnicos antes de os tornar públicos.</p>
+          </div>
+        </div>
+
+        <div id="ap-list" class="stack"></div>
+
+        <div class="card" style="border-color:color-mix(in oklch, var(--destructive) 40%, var(--border));">
+          <div class="card-header"><p class="card-title" style="color:var(--destructive);">Zona perigosa</p></div>
+          <div class="card-content flex-between">
+            <p class="text-sm muted">Reinicia todos os valores registados (pendentes, aprovados e rejeitados) para todos os indicadores. As metas e a estrutura dos indicadores mantêm-se.</p>
+            <button class="btn btn-destructive" id="reset-open-btn">↺ Resetar valores</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Edit pending value -->
+<div class="overlay hidden" id="dlg-edit-pending">
+  <div class="dialog">
+    <h3>Editar valor submetido</h3>
+    <p class="dialog-desc" id="ep-name"></p>
+    <div class="field" id="ep-text-field"><label>Valor (texto)</label><textarea class="input" id="ep-text" rows="3"></textarea></div>
+    <div class="field" id="ep-number-field"><label id="ep-number-label">Valor</label><input class="input" type="number" id="ep-number"></div>
+    <div class="field"><label>Observação</label><textarea class="input" id="ep-note" rows="2"></textarea></div>
+    <div class="dialog-footer">
+      <button class="btn btn-ghost" type="button" id="ep-cancel">Cancelar</button>
+      <button class="btn btn-primary" type="button" id="ep-save">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reject pending value -->
+<div class="overlay hidden" id="dlg-reject-pending">
+  <div class="dialog">
+    <h3>Rejeitar valor</h3>
+    <p class="dialog-desc" id="rp-name"></p>
+    <div class="field"><label>Motivo da rejeição</label><textarea class="input" id="rp-reason" rows="3" placeholder="Explique porque o valor não pode ser aprovado…"></textarea></div>
+    <div class="dialog-footer">
+      <button class="btn btn-ghost" type="button" id="rp-cancel">Cancelar</button>
+      <button class="btn btn-destructive" type="button" id="rp-confirm">Rejeitar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reset all -->
+<div class="overlay hidden" id="dlg-reset-all">
+  <div class="dialog">
+    <h3>Resetar todos os valores registados?</h3>
+    <p class="dialog-desc">Esta ação é irreversível e remove todos os valores submetidos pelos técnicos. Escreva <b>RESETAR</b> para confirmar.</p>
+    <div class="field"><input class="input" id="reset-confirm-input" placeholder="RESETAR"></div>
+    <div class="dialog-footer">
+      <button class="btn btn-outline" type="button" id="reset-cancel-btn">Cancelar</button>
+      <button class="btn btn-destructive" type="button" id="reset-confirm-btn" disabled>Confirmar reset</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-root"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/lib.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/data.js"></script>
+<script src="js/nav.js"></script>
+<script>
+(async function () {
+  const G = window.GORS;
+  const user = await G.requireAuth();
+  if (!user) return;
+
+  let fw;
+  try {
+    fw = await G.getFramework();
+  } catch (err) {
+    document.getElementById("ap-loading").innerHTML = `<p class="muted">${G.escapeHtml(err.message)}</p>`;
+    return;
+  }
+  if (!fw.isAdmin) {
+    window.location.href = "dashboard.html";
+    return;
+  }
+  G.renderShell(fw, "approvals");
+
+  let pending = [];
+  let currentRow = null;
+
+  function evidenceNote(row) {
+    const ind = fw.indicators.find((i) => i.id === row.indicator_id);
+    return ind && ind.evidence ? " · Evidência PDF disponível no indicador" : "";
+  }
+
+  function renderList() {
+    const listEl = document.getElementById("ap-list");
+    if (pending.length === 0) {
+      listEl.innerHTML = `<div class="card"><div class="card-content" style="padding:3rem 1rem;text-align:center;"><p class="muted">Nenhum valor pendente. Todos os dados foram revistos.</p></div></div>`;
+      return;
+    }
+    listEl.innerHTML = pending
+      .map((row) => {
+        const displayValue = row.indicator_value_type === "text" ? row.actual_text || "—" : G.formatValue(row.actual_value, row.indicator_value_type);
+        const submittedBy = row.recorded_by_name || row.recorded_by_email || "Utilizador desconhecido";
+        const meta = [
+          row.recorded_by_organization ? `· ${row.recorded_by_organization}` : "",
+          row.recorded_by_email && row.recorded_by_name ? `· ${row.recorded_by_email}` : "",
+          `· ${new Date(row.updated_at).toLocaleString("pt-PT")}`,
+          evidenceNote(row),
+        ].filter(Boolean).join(" ");
+        return `
+        <div class="card" data-row="${row.id}">
+          <div class="card-header">
+            <div class="flex-between" style="align-items:flex-start;">
+              <div>
+                <p class="card-title">${G.escapeHtml(row.indicator_name)}</p>
+                <p class="text-xs muted mt-1">${G.escapeHtml(row.period_label)} · ${G.escapeHtml(row.province)}${row.district !== "Todos" ? ` / ${G.escapeHtml(row.district)}` : ""} · ${G.escapeHtml(row.demographic)} · ${G.escapeHtml(row.beneficiary_status)}</p>
+              </div>
+              <span class="badge status-at_risk">Pendente</span>
+            </div>
+          </div>
+          <div class="card-content">
+            <div class="grid grid-2 text-sm">
+              <div><p class="text-xs muted">Valor submetido</p><p class="text-lg font-semibold">${G.escapeHtml(displayValue)}</p></div>
+              <div><p class="text-xs muted">Observação</p><p>${G.escapeHtml(row.note || "—")}</p></div>
+            </div>
+            <p class="text-xs muted mt-2">Submetido por <strong>${G.escapeHtml(submittedBy)}</strong> ${meta}</p>
+            <div class="flex gap-2 flex-wrap mt-3">
+              <button class="btn btn-primary btn-sm" data-action="approve" data-id="${row.id}">✓ Aprovar</button>
+              <button class="btn btn-outline btn-sm" data-action="edit" data-id="${row.id}">✎ Editar</button>
+              <button class="btn btn-outline btn-sm" data-action="reject" data-id="${row.id}" style="color:var(--destructive);">✕ Rejeitar</button>
+            </div>
+          </div>
+        </div>`;
+      })
+      .join("");
+
+    listEl.querySelectorAll("button[data-action]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const row = pending.find((r) => r.id === btn.dataset.id);
+        if (btn.dataset.action === "approve") doApprove(row, btn);
+        else if (btn.dataset.action === "edit") openEditDialog(row);
+        else if (btn.dataset.action === "reject") openRejectDialog(row);
+      });
+    });
+  }
+
+  async function loadPending() {
+    pending = await G.listPendingActuals();
+    renderList();
+  }
+
+  async function doApprove(row, btn) {
+    G.setBusy(btn, true, "…");
+    try {
+      await G.approveActual(row.id);
+      G.toast("Valor aprovado e publicado.", "success");
+      await loadPending();
+    } catch (err) {
+      G.toastError(err);
+      G.setBusy(btn, false);
+    }
+  }
+
+  function openEditDialog(row) {
+    currentRow = row;
+    const isText = row.indicator_value_type === "text";
+    document.getElementById("ep-name").textContent = row.indicator_name;
+    document.getElementById("ep-text-field").classList.toggle("hidden", !isText);
+    document.getElementById("ep-number-field").classList.toggle("hidden", isText);
+    document.getElementById("ep-number-label").textContent = `Valor ${row.indicator_value_type === "percentage" ? "(%)" : `(${row.indicator_unit})`}`;
+    document.getElementById("ep-text").value = row.actual_text || "";
+    document.getElementById("ep-number").value = row.actual_value !== null && row.actual_value !== undefined ? String(row.actual_value) : "";
+    document.getElementById("ep-note").value = row.note || "";
+    G.openDialog("dlg-edit-pending");
+  }
+  document.getElementById("ep-cancel").addEventListener("click", () => G.closeDialog("dlg-edit-pending"));
+  document.getElementById("ep-save").addEventListener("click", async () => {
+    if (!currentRow) return;
+    const isText = currentRow.indicator_value_type === "text";
+    const patch = { id: currentRow.id, note: document.getElementById("ep-note").value || null };
+    if (isText) patch.actual_text = document.getElementById("ep-text").value || null;
+    else {
+      const raw = document.getElementById("ep-number").value;
+      patch.actual_value = raw === "" ? null : Number(raw);
+    }
+    const btn = document.getElementById("ep-save");
+    G.setBusy(btn, true, "A guardar…");
+    try {
+      await G.updatePendingActual(patch);
+      G.toast("Valor actualizado.", "success");
+      G.closeDialog("dlg-edit-pending");
+      await loadPending();
+    } catch (err) {
+      G.toastError(err);
+    } finally {
+      G.setBusy(btn, false);
+    }
+  });
+
+  function openRejectDialog(row) {
+    currentRow = row;
+    document.getElementById("rp-name").textContent = row.indicator_name;
+    document.getElementById("rp-reason").value = "";
+    G.openDialog("dlg-reject-pending");
+  }
+  document.getElementById("rp-cancel").addEventListener("click", () => G.closeDialog("dlg-reject-pending"));
+  document.getElementById("rp-confirm").addEventListener("click", async () => {
+    if (!currentRow) return;
+    const reason = document.getElementById("rp-reason").value.trim();
+    if (!reason) { G.toast("Indique o motivo da rejeição.", "error"); return; }
+    const btn = document.getElementById("rp-confirm");
+    G.setBusy(btn, true, "A rejeitar…");
+    try {
+      await G.rejectActual(currentRow.id, reason);
+      G.toast("Valor rejeitado.", "success");
+      G.closeDialog("dlg-reject-pending");
+      await loadPending();
+    } catch (err) {
+      G.toastError(err);
+    } finally {
+      G.setBusy(btn, false);
+    }
+  });
+
+  // ---- Reset all ----
+  document.getElementById("reset-open-btn").addEventListener("click", () => {
+    document.getElementById("reset-confirm-input").value = "";
+    document.getElementById("reset-confirm-btn").disabled = true;
+    G.openDialog("dlg-reset-all");
+  });
+  document.getElementById("reset-cancel-btn").addEventListener("click", () => G.closeDialog("dlg-reset-all"));
+  document.getElementById("reset-confirm-input").addEventListener("input", (e) => {
+    document.getElementById("reset-confirm-btn").disabled = e.target.value !== "RESETAR";
+  });
+  document.getElementById("reset-confirm-btn").addEventListener("click", async () => {
+    const btn = document.getElementById("reset-confirm-btn");
+    G.setBusy(btn, true, "A resetar…");
+    try {
+      await G.resetAllActuals();
+      G.toast("Todos os valores registados foram eliminados.", "success");
+      G.closeDialog("dlg-reset-all");
+      await loadPending();
+    } catch (err) {
+      G.toastError(err);
+    } finally {
+      G.setBusy(btn, false);
+    }
+  });
+
+  await loadPending();
+  document.getElementById("ap-loading").classList.add("hidden");
+  document.getElementById("ap-content").classList.remove("hidden");
+})();
+</script>
+</body>
+</html>

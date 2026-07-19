@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Relatórios — GORS</title>
+<link rel="icon" href="img/adin-logo.png" type="image/png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="app-shell">
+  <aside class="app-sidebar no-print" id="app-sidebar"></aside>
+  <div class="app-main">
+    <header class="app-topbar no-print" id="app-topbar"></header>
+    <main class="app-content">
+      <div id="rep-loading" class="loading-block"><span class="spinner"></span> A carregar…</div>
+      <div id="rep-content" class="stack hidden">
+        <div class="flex-between no-print">
+          <div>
+            <h1 class="text-2xl">Relatórios</h1>
+            <p class="text-sm muted mt-1">Indicadores por período, província e distrito</p>
+          </div>
+          <div class="flex gap-2 flex-wrap">
+            <button class="btn btn-outline" id="rep-csv-btn">⬇ CSV</button>
+            <button class="btn btn-primary" id="rep-pdf-btn">📄 Baixar PDF</button>
+            <button class="btn btn-outline" id="rep-print-btn">🖨 Imprimir</button>
+          </div>
+        </div>
+
+        <div class="grid grid-3 no-print">
+          <div class="field" style="margin:0;"><label>Período</label><select class="input" id="rep-period"></select></div>
+          <div class="field" style="margin:0;"><label>Província</label><select class="input" id="rep-province"></select></div>
+          <div class="field" style="margin:0;"><label>Distrito</label><select class="input" id="rep-district"></select></div>
+        </div>
+
+        <div id="rep-report" class="stack" style="background:var(--background);padding:1rem;">
+          <div class="flex gap-3" style="align-items:center;border-bottom:1px solid var(--border);padding-bottom:1rem;">
+            <img src="img/adin-logo.png" alt="ADIN" style="height:4rem;width:4rem;object-fit:contain;flex-shrink:0;">
+            <div style="min-width:0;">
+              <p class="text-sm font-semibold" style="text-transform:uppercase;letter-spacing:0.03em;">Agência do Desenvolvimento Integrado do Norte</p>
+              <p class="text-xs muted">Projecto para Emprego, Coesão Social e Resiliência Comunitária no Norte de Moçambique – Fase I</p>
+              <p class="text-lg font-semibold mt-1" id="rep-title"></p>
+            </div>
+          </div>
+
+          <div class="card"><div class="card-content text-sm" id="rep-scope"></div></div>
+
+          <div class="grid grid-4" id="rep-status-cards"></div>
+
+          <div class="card"><div class="card-header"><p class="card-title">Estado dos indicadores</p></div>
+            <div class="card-content" id="rep-status-chart"></div>
+          </div>
+
+          <div class="card"><div class="card-header"><p class="card-title">Progresso por componente</p></div>
+            <div class="card-content" id="rep-comp-chart"></div>
+          </div>
+
+          <div class="card"><div class="card-header"><p class="card-title">Tabela de indicadores</p></div>
+            <div class="card-content-flush" style="overflow-x:auto;"><table class="data-table" id="rep-table">
+              <thead><tr><th>Indicador</th><th>Nível</th><th class="num">Meta</th><th class="num">Real</th><th class="num">Progresso</th><th>Estado</th></tr></thead>
+              <tbody id="rep-table-body"></tbody>
+            </table></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div id="toast-root"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas-pro@1/dist/html2canvas-pro.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2/dist/jspdf.umd.min.js"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/lib.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/data.js"></script>
+<script src="js/nav.js"></script>
+<script>
+(async function () {
+  const G = window.GORS;
+  const user = await G.requireAuth();
+  if (!user) return;
+
+  let fw;
+  try {
+    fw = await G.getFramework();
+  } catch (err) {
+    document.getElementById("rep-loading").innerHTML = `<p class="muted">${G.escapeHtml(err.message)}</p>`;
+    return;
+  }
+  G.renderShell(fw, "reports");
+
+  const { indicators, components } = fw;
+  const GERAL_PERIOD = "__geral__";
+
+  function periodYear(p) { return p.slice(0, 4); }
+
+  function targetFor(ind, period) {
+    if (period === GERAL_PERIOD) {
+      return { period_label: "Geral", period_order: 0, target_value: ind.final_target, target_text: ind.final_target_text };
+    }
+    const exact = ind.targets.find((t) => t.period_label === period);
+    if (exact) return exact;
+    if (!period) return undefined;
+    const y = periodYear(period);
+    const same = ind.targets.filter((t) => t.period_label.startsWith(y));
+    if (same.length === 0) return undefined;
+    const anyNumeric = same.some((t) => t.target_value !== null);
+    const sumVal = anyNumeric ? same.reduce((s, t) => s + (t.target_value ?? 0), 0) : null;
+    return { period_label: period, period_order: 0, target_value: sumVal, target_text: (same.find((t) => t.target_text) || {}).target_text || null };
+  }
+
+  function actualValueFor(ind, period, province, district) {
+    if (period === GERAL_PERIOD) {
+      const same = ind.actuals.filter((a) => a.province === province && a.district === district);
+      if (same.length === 0) return null;
+      const anyNumeric = same.some((a) => a.actual_value !== null);
+      if (!anyNumeric) return null;
+      return same.reduce((s, a) => s + (a.actual_value ?? 0), 0);
+    }
+    const exact = ind.actuals.find((a) => a.period_label === period && a.province === province && a.district === district);
+    if (exact) return exact.actual_value;
+    if (!period) return null;
+    const y = periodYear(period);
+    const same = ind.actuals.filter((a) => a.period_label.startsWith(y) && a.province === province && a.district === district);
+    if (same.length === 0) return null;
+    const anyNumeric = same.some((a) => a.actual_value !== null);
+    if (!anyNumeric) return null;
+    return same.reduce((s, a) => s + (a.actual_value ?? 0), 0);
+  }
+
+  function progressFor(ind, real) {
+    if (real === null) return null;
+    const t = ind.final_target;
+    if (t === null || t === 0) return real > 0 ? 100 : 0;
+    return Math.round(Math.max(0, Math.min(150, (real / t) * 100)));
+  }
+
+  function csvEscape(v) {
+    const s = v === null || v === undefined ? "" : String(v);
+    return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+
+  function buildCsv(period) {
+    const header = ["Indicador", "Nível", "Componente", "Unidade", "Período", "Província", "Distrito", "Meta", "Real", "Progresso (%)", "Estado"];
+    const compName = (id) => (components.find((c) => c.id === id) || {}).code || "";
+    const lines = [header.join(";")];
+    for (const ind of indicators) {
+      const recorded = period === GERAL_PERIOD ? ind.actuals : ind.actuals.filter((a) => a.period_label === period);
+      const t = targetFor(ind, period);
+      const meta = ind.value_type === "text" ? (t && t.target_text) || "" : (t && t.target_value) ?? "";
+      const periodDisplay = period === GERAL_PERIOD ? "Geral" : period;
+      if (recorded.length === 0) {
+        lines.push([csvEscape(ind.name), csvEscape(G.LEVEL_LABELS[ind.level]), csvEscape(compName(ind.component_id)), csvEscape(ind.unit), csvEscape(periodDisplay), "", "", csvEscape(meta), "", "", "Sem dados"].join(";"));
+        continue;
+      }
+      for (const a of recorded) {
+        const real = ind.value_type === "text" ? a.actual_text || "" : a.actual_value ?? "";
+        const prog = progressFor(ind, a.actual_value);
+        lines.push([csvEscape(ind.name), csvEscape(G.LEVEL_LABELS[ind.level]), csvEscape(compName(ind.component_id)), csvEscape(ind.unit), csvEscape(a.period_label), csvEscape(a.province), csvEscape(a.district), csvEscape(meta), csvEscape(real), csvEscape(prog), csvEscape(G.STATUS_META[G.indicatorStatus(ind)].label)].join(";"));
+      }
+    }
+    return lines.join("\n");
+  }
+
+  function fileBaseName(period, province, district) {
+    return `relatorio-${period}-${province}-${district}`.replace(/\s+/g, "_");
+  }
+
+  // ---- period / province / district selects ----
+  const periodMap = new Map();
+  for (const ind of indicators) for (const t of ind.targets) periodMap.set(t.period_label, t.period_order);
+  const periods = [...periodMap.entries()].sort((a, b) => a[1] - b[1]).map(([label]) => label);
+
+  const periodSel = document.getElementById("rep-period");
+  periodSel.innerHTML = `<option value="${GERAL_PERIOD}">Geral (todos os anos)</option>` + periods.map((p) => `<option value="${G.escapeHtml(p)}">${G.escapeHtml(p)}</option>`).join("");
+  periodSel.value = periods.length > 0 ? periods[periods.length - 1] : GERAL_PERIOD;
+
+  const provinceSel = document.getElementById("rep-province");
+  provinceSel.innerHTML = `<option value="${G.NATIONAL_PROVINCE}">${G.NATIONAL_PROVINCE}</option>` + G.PROVINCES.map((p) => `<option value="${G.escapeHtml(p)}">${G.escapeHtml(p)}</option>`).join("");
+  provinceSel.value = G.NATIONAL_PROVINCE;
+
+  const districtSel = document.getElementById("rep-district");
+  function refreshDistricts() {
+    const prov = provinceSel.value;
+    districtSel.innerHTML = G.districtsFor(prov).map((d) => `<option value="${G.escapeHtml(d)}">${G.escapeHtml(d)}</option>`).join("");
+    districtSel.disabled = prov === G.NATIONAL_PROVINCE;
+  }
+  refreshDistricts();
+
+  provinceSel.addEventListener("change", () => { refreshDistricts(); render(); });
+  districtSel.addEventListener("change", render);
+  periodSel.addEventListener("change", render);
+
+  function render() {
+    const period = periodSel.value;
+    const province = provinceSel.value;
+    const district = districtSel.value;
+
+    const rows = indicators.map((ind) => {
+      const t = targetFor(ind, period);
+      const real = actualValueFor(ind, period, province, district);
+      return { ind, meta: (t && t.target_value) ?? null, metaText: (t && t.target_text) ?? null, real, progress: progressFor(ind, real) };
+    });
+    const withData = rows.filter((r) => r.real !== null);
+    const onTrack = withData.filter((r) => (r.progress || 0) >= 100).length;
+
+    document.getElementById("rep-title").textContent =
+      period === GERAL_PERIOD ? "Relatório Geral · Todos os anos" : `Relatório ${G.PERIOD_KIND_LABELS[G.inferKindFromLabel(period || "")]} · ${period || "—"}`;
+    document.getElementById("rep-scope").innerHTML =
+      `<span class="font-medium">Âmbito:</span> ${G.escapeHtml(province)}${province !== G.NATIONAL_PROVINCE ? ` · ${G.escapeHtml(district)}` : ""} — ${withData.length} de ${indicators.length} indicadores com dados · ${onTrack} no alvo`;
+
+    const statusCounts = { on_track: 0, at_risk: 0, off_track: 0, no_data: 0 };
+    for (const ind of indicators) statusCounts[G.indicatorStatus(ind)]++;
+
+    document.getElementById("rep-status-cards").innerHTML = Object.keys(G.STATUS_META)
+      .map((k) => `<div class="card"><div class="card-content"><p class="text-xs muted">${G.STATUS_META[k].label}</p><p class="text-2xl font-semibold mt-1">${statusCounts[k]}</p></div></div>`)
+      .join("");
+
+    const maxCount = Math.max(1, ...Object.values(statusCounts));
+    const statusColor = { on_track: "var(--success)", at_risk: "var(--warning)", off_track: "var(--destructive)", no_data: "var(--muted-foreground)" };
+    document.getElementById("rep-status-chart").innerHTML = Object.keys(G.STATUS_META)
+      .map((k) => `
+        <div class="mt-2" style="margin-bottom:0.75rem;">
+          <div class="flex-between text-sm"><span>${G.STATUS_META[k].label}</span><span class="muted">${statusCounts[k]}</span></div>
+          <div class="progress mt-1"><span style="width:${(statusCounts[k] / maxCount) * 100}%;background:${statusColor[k]};"></span></div>
+        </div>`)
+      .join("");
+
+    const componentProgress = components.map((c) => {
+      const rs = rows.filter((r) => r.ind.component_id === c.id && r.progress !== null);
+      const avg = rs.length > 0 ? Math.round(rs.reduce((s, r) => s + (r.progress || 0), 0) / rs.length) : 0;
+      return { code: c.code, title: c.title, progress: avg, count: rs.length };
+    });
+    document.getElementById("rep-comp-chart").innerHTML = componentProgress
+      .map((c) => `
+        <div class="mt-2" style="margin-bottom:0.9rem;">
+          <div class="flex-between text-sm"><span class="font-medium">${G.escapeHtml(c.code)} · ${G.escapeHtml(c.title)}</span><span class="muted">${c.progress}% · ${c.count} indicadores</span></div>
+          <div class="progress mt-1"><span style="width:${Math.min(100, c.progress)}%;background:${c.progress >= 70 ? "var(--success)" : c.progress >= 40 ? "var(--warning)" : "var(--chart-1)"};"></span></div>
+        </div>`)
+      .join("");
+
+    document.getElementById("rep-table-body").innerHTML = rows
+      .map(({ ind, meta, metaText, real, progress }) => {
+        const isTxt = ind.value_type === "text";
+        const status = G.indicatorStatus(ind);
+        return `<tr>
+          <td class="font-medium" style="max-width:280px;">${G.escapeHtml(ind.name)}</td>
+          <td class="text-xs muted">${G.LEVEL_LABELS[ind.level]}</td>
+          <td class="num">${G.escapeHtml(isTxt ? metaText ?? "—" : G.formatValue(meta, ind.value_type))}</td>
+          <td class="num">${G.escapeHtml(isTxt ? "—" : G.formatValue(real, ind.value_type))}</td>
+          <td class="num">${progress !== null ? progress + "%" : "—"}</td>
+          <td><span class="badge ${G.STATUS_META[status].cls}">${G.STATUS_META[status].label}</span></td>
+        </tr>`;
+      })
+      .join("");
+  }
+
+  document.getElementById("rep-csv-btn").addEventListener("click", () => {
+    const csv = buildCsv(periodSel.value);
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${fileBaseName(periodSel.value, provinceSel.value, districtSel.value)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById("rep-print-btn").addEventListener("click", () => window.print());
+
+  document.getElementById("rep-pdf-btn").addEventListener("click", async () => {
+    const btn = document.getElementById("rep-pdf-btn");
+    const html2canvasFn = window.html2canvas;
+    const jsPDFCtor = window.jspdf && window.jspdf.jsPDF;
+    if (!html2canvasFn || !jsPDFCtor) {
+      G.toast("Não foi possível carregar as bibliotecas de exportação PDF.", "error");
+      return;
+    }
+    G.setBusy(btn, true, "A gerar PDF…");
+    try {
+      const el = document.getElementById("rep-report");
+      const canvas = await html2canvasFn(el, { backgroundColor: "#ffffff", scale: 2, useCORS: true });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDFCtor({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 8;
+      const contentWidth = pageWidth - margin * 2;
+      const imgHeight = (canvas.height * contentWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = margin;
+      pdf.addImage(imgData, "PNG", margin, position, contentWidth, imgHeight);
+      heightLeft -= pageHeight - margin * 2;
+      while (heightLeft > 0) {
+        pdf.addPage();
+        position = margin - (imgHeight - heightLeft);
+        pdf.addImage(imgData, "PNG", margin, position, contentWidth, imgHeight);
+        heightLeft -= pageHeight - margin * 2;
+      }
+      pdf.save(`${fileBaseName(periodSel.value, provinceSel.value, districtSel.value)}.pdf`);
+    } catch (err) {
+      G.toast(`Falha ao gerar PDF: ${err.message}`, "error");
+    } finally {
+      G.setBusy(btn, false);
+    }
+  });
+
+  render();
+  document.getElementById("rep-loading").classList.add("hidden");
+  document.getElementById("rep-content").classList.remove("hidden");
+})();
+</script>
+</body>
+</html>

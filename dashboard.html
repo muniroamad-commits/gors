@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel de Monitoria — GORS</title>
+<link rel="icon" href="img/adin-logo.png" type="image/png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="app-shell">
+  <aside class="app-sidebar" id="app-sidebar"></aside>
+  <div class="app-main">
+    <header class="app-topbar" id="app-topbar"></header>
+    <main class="app-content">
+      <div id="dash-loading" class="loading-block"><span class="spinner"></span> A carregar…</div>
+      <div id="dash-content" class="stack hidden">
+        <div>
+          <h1 class="text-2xl">Painel de Monitoria</h1>
+          <p class="text-sm muted mt-1">Empregos, Coesão Social e Resiliência Comunitária no Norte de Moçambique — Fase I</p>
+        </div>
+
+        <div class="card">
+          <div class="card-content">
+            <div class="flex-between mb-2">
+              <span class="text-sm font-medium muted">Filtros</span>
+              <button class="btn btn-ghost btn-sm hidden" id="dash-reset">Limpar</button>
+            </div>
+            <div class="grid grid-4" id="dash-filters"></div>
+          </div>
+        </div>
+
+        <div class="grid grid-4" id="dash-kpis"></div>
+
+        <div class="card">
+          <div class="card-header"><p class="card-title">Por componente</p></div>
+          <div class="card-content"><div class="grid grid-4" id="dash-comp-cards"></div></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><p class="card-title">Estado dos indicadores</p></div>
+          <div class="card-content"><div class="grid grid-4" id="dash-status-counts"></div></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><p class="card-title">Indicadores por componentes</p></div>
+          <div class="card-content">
+            <div class="flex gap-2 flex-wrap mb-4" id="dash-tabs"></div>
+            <div id="dash-tab-content"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div id="toast-root"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/lib.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/data.js"></script>
+<script src="js/nav.js"></script>
+<script>
+(async function () {
+  const G = window.GORS;
+  const user = await G.requireAuth();
+  if (!user) return;
+
+  let fw;
+  try {
+    fw = await G.getFramework();
+  } catch (err) {
+    document.getElementById("dash-loading").innerHTML = `<p class="muted">${G.escapeHtml(err.message)}</p>`;
+    return;
+  }
+  G.renderShell(fw, "dashboard");
+
+  const state = { componentId: "all", indicatorId: "all", province: "all", district: "all", period: "all", demographic: "all", status: "all", tab: "pdo" };
+  const PERIOD_FILTER_OPTIONS = [
+    { value: "all", label: "Todos" }, { value: "monthly", label: "Mensal" },
+    { value: "quarterly", label: "Trimestral" }, { value: "semestral", label: "Semestral" },
+    { value: "annual", label: "Anual" }, { value: "biennial", label: "Bienal" },
+  ];
+  const COMPONENT_PALETTE = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
+
+  // ---- filter/aggregation helpers (ported 1:1 from the React dashboard) ----
+  function matchesDims(a, dem, st, prov, dist) {
+    if (dem !== "all" && a.demographic !== dem) return false;
+    if (st !== "all" && a.beneficiary_status !== st) return false;
+    if (prov !== "all" && a.province !== prov) return false;
+    if (dist !== "all" && a.district !== dist) return false;
+    return true;
+  }
+  function indicatorMatches(ind) {
+    const { componentId, indicatorId, period, demographic, status, province, district } = state;
+    if (componentId !== "all" && ind.component_id !== componentId) return false;
+    if (indicatorId !== "all" && ind.id !== indicatorId) return false;
+    if (period !== "all" && G.periodKindFromFrequency(ind.frequency) !== period) return false;
+    if (demographic === "all" && status === "all" && province === "all" && district === "all") return true;
+    if (ind.actuals.length === 0) return true;
+    return ind.actuals.some((a) => matchesDims(a, demographic, status, province, district));
+  }
+  function filteredLatest(ind, dem, st, prov, dist) {
+    const rows = ind.actuals
+      .filter((a) => matchesDims(a, dem, st, prov, dist))
+      .filter((a) => a.actual_value !== null || a.actual_text !== null)
+      .sort((a, b) => b.period_order - a.period_order);
+    if (rows.length > 0) return rows[0];
+    if (prov === "all" && dist === "all") {
+      const nat = ind.actuals
+        .filter((a) => a.province === "Nacional" && matchesDims(a, dem, st, "all", "all"))
+        .filter((a) => a.actual_value !== null || a.actual_text !== null)
+        .sort((a, b) => b.period_order - a.period_order);
+      return nat[0] || null;
+    }
+    return null;
+  }
+  function filteredCumulative(ind, dem, st, prov, dist) {
+    if (ind.value_type !== "number") {
+      const l = filteredLatest(ind, dem, st, prov, dist);
+      return l ? l.actual_value : null;
+    }
+    const useNational = prov === "all" && dist === "all";
+    const rows = ind.actuals
+      .filter((a) => (useNational ? a.province === "Nacional" : true))
+      .filter((a) => matchesDims(a, dem, st, prov, dist))
+      .filter((a) => a.actual_value !== null);
+    if (rows.length === 0) {
+      if (useNational) {
+        const all = ind.actuals.filter((a) => matchesDims(a, dem, st, prov, dist)).filter((a) => a.actual_value !== null);
+        if (all.length === 0) return null;
+        return all.reduce((s, a) => s + (a.actual_value || 0), 0);
+      }
+      return null;
+    }
+    return rows.reduce((s, a) => s + (a.actual_value || 0), 0);
+  }
+  function filteredProgress(ind, dem, st, prov, dist) {
+    if (ind.value_type === "yes_no") {
+      const last = filteredLatest(ind, dem, st, prov, dist);
+      if (!last || last.actual_value === null) return null;
+      return last.actual_value >= 1 ? 1 : 0;
+    }
+    const v = filteredCumulative(ind, dem, st, prov, dist);
+    if (v === null) return null;
+    const t = ind.final_target;
+    if (t === null || t === 0) return v > 0 ? 1 : 0;
+    return Math.max(0, Math.min(1.5, v / t));
+  }
+  function ratioStatus(r) { return r >= 1 ? "on_track" : r >= 0.8 ? "at_risk" : "off_track"; }
+  function filteredStatus(ind, dem, st, prov, dist) {
+    const last = filteredLatest(ind, dem, st, prov, dist);
+    if (!last) return "no_data";
+    if (ind.value_type === "yes_no" || ind.value_type === "text") {
+      return last.actual_value !== null || last.actual_text ? "on_track" : "no_data";
+    }
+    if (ind.value_type === "number") {
+      const v = filteredCumulative(ind, dem, st, prov, dist);
+      if (v === null) return "no_data";
+      const tv = ind.final_target;
+      if (tv === null || tv === 0) return v > 0 ? "on_track" : "at_risk";
+      return ratioStatus(v / tv);
+    }
+    const target = ind.targets.find((t) => t.period_label === last.period_label);
+    if (last.actual_value === null) return "no_data";
+    const tv = target ? target.target_value : null;
+    if (tv === null || tv === 0) return last.actual_value > 0 ? "on_track" : "at_risk";
+    return ratioStatus(last.actual_value / tv);
+  }
+
+  function provincesAll() {
+    const s = new Set();
+    for (const ind of fw.indicators) for (const a of ind.actuals) if (a.province) s.add(a.province);
+    return [...s].sort();
+  }
+  function districtsAll() {
+    const s = new Set();
+    for (const ind of fw.indicators)
+      for (const a of ind.actuals)
+        if (a.district && (state.province === "all" || a.province === state.province)) s.add(a.district);
+    return [...s].sort();
+  }
+  function availablePeriods() {
+    const kinds = new Set();
+    for (const ind of fw.indicators) {
+      kinds.add(G.periodKindFromFrequency(ind.frequency));
+      for (const a of ind.actuals) kinds.add(G.inferKindFromLabel(a.period_label));
+    }
+    return kinds;
+  }
+
+  function select(id, label, options, value, onChange) {
+    return `<div class="field" style="margin-bottom:0;">
+      <label>${label}</label>
+      <select class="input" id="${id}">
+        ${options.map((o) => `<option value="${o.value}" ${o.value === value ? "selected" : ""} ${o.disabled ? "disabled" : ""}>${G.escapeHtml(o.label)}</option>`).join("")}
+      </select>
+    </div>`;
+  }
+
+  function renderFilters() {
+    const provinces = provincesAll();
+    const districts = districtsAll();
+    const periods = availablePeriods();
+    const indicatorsForComponent =
+      state.componentId === "all"
+        ? fw.indicators
+        : fw.indicators.filter((i) => i.component_id === state.componentId || i.component_id === null);
+
+    document.getElementById("dash-filters").innerHTML =
+      select("f-component", "Componente", [{ value: "all", label: "Todas" }, ...fw.components.map((c) => ({ value: c.id, label: `${c.code} · ${c.title}` }))], state.componentId) +
+      select("f-indicator", "Indicador", [{ value: "all", label: "Todos" }, ...indicatorsForComponent.map((i) => ({ value: i.id, label: i.name }))], state.indicatorId) +
+      select("f-province", "Província", [{ value: "all", label: "Todas" }, ...provinces.map((p) => ({ value: p, label: p }))], state.province) +
+      select("f-district", "Distrito", [{ value: "all", label: "Todos" }, ...districts.map((d) => ({ value: d, label: d }))], state.district) +
+      select("f-demographic", "Género / faixa etária", [{ value: "all", label: "Todos" }, ...G.DEMOGRAPHICS], state.demographic) +
+      select("f-status", "Estatuto", [{ value: "all", label: "Todos" }, ...G.BENEFICIARY_STATUS], state.status) +
+      select(
+        "f-period",
+        "Período",
+        PERIOD_FILTER_OPTIONS.map((o) => ({ ...o, disabled: o.value !== "all" && !periods.has(o.value) })),
+        state.period,
+      ) +
+      `<div class="flex" style="align-items:flex-end;"><span class="badge badge-outline" style="height:2.2rem;padding:0 0.75rem;" id="dash-filtered-count"></span></div>`;
+
+    ["component", "indicator", "province", "district", "demographic", "status", "period"].forEach((key) => {
+      document.getElementById(`f-${key}`).addEventListener("change", (e) => {
+        state[key === "component" ? "componentId" : key === "indicator" ? "indicatorId" : key] = e.target.value;
+        if (key === "component") state.indicatorId = "all";
+        if (key === "province") state.district = "all";
+        renderAll();
+      });
+    });
+
+    const anyFilter = Object.entries(state).some(([k, v]) => k !== "tab" && v !== "all");
+    document.getElementById("dash-reset").classList.toggle("hidden", !anyFilter);
+  }
+
+  document.getElementById("dash-reset").addEventListener("click", () => {
+    Object.assign(state, { componentId: "all", indicatorId: "all", province: "all", district: "all", period: "all", demographic: "all", status: "all" });
+    renderAll();
+  });
+
+  function kpiCard(label, value, hint) {
+    return `<div class="card"><div class="card-content">
+      <p class="text-sm muted">${label}</p>
+      <p class="text-2xl font-semibold mt-1">${value}</p>
+      ${hint ? `<p class="text-xs muted mt-1">${hint}</p>` : ""}
+    </div></div>`;
+  }
+
+  function indicatorCard(ind) {
+    const p = filteredProgress(ind, state.demographic, state.status, state.province, state.district);
+    const latest = filteredLatest(ind, state.demographic, state.status, state.province, state.district);
+    const cum = filteredCumulative(ind, state.demographic, state.status, state.province, state.district);
+    const real =
+      ind.value_type === "text"
+        ? (latest && latest.actual_text) || "—"
+        : ind.value_type === "yes_no"
+          ? (latest && latest.actual_text) || G.formatValue(latest ? latest.actual_value : null, ind.value_type)
+          : G.formatValue(cum, ind.value_type);
+    return `
+      <a href="indicator.html?id=${ind.id}" class="card" style="display:block;padding:0.9rem;text-decoration:none;">
+        <div class="flex-between" style="align-items:flex-start;">
+          <p class="text-sm font-medium">${G.escapeHtml(ind.name)}</p>
+          <span class="badge" style="background:color-mix(in oklch, var(--primary) 12%, transparent);color:var(--primary);flex-shrink:0;">Real: ${G.escapeHtml(real)}</span>
+        </div>
+        <div class="progress mt-2"><span style="width:${p !== null ? Math.min(100, p * 100) : 0}%"></span></div>
+        <p class="text-xs muted mt-2">${G.LEVEL_LABELS[ind.level]} · ${G.PERIOD_KIND_LABELS[G.periodKindFromFrequency(ind.frequency)]} · Meta ${G.escapeHtml(G.formatValue(ind.final_target, ind.value_type))}</p>
+      </a>`;
+  }
+
+  function renderTabs(filtered) {
+    const tabs = [{ key: "pdo", label: "PDO" }, ...fw.components.map((c) => ({ key: c.id, label: c.code }))];
+    document.getElementById("dash-tabs").innerHTML = tabs
+      .map((t) => `<button class="btn ${state.tab === t.key ? "btn-primary" : "btn-outline"} btn-sm" data-tab="${t.key}">${G.escapeHtml(t.label)}</button>`)
+      .join("");
+    document.querySelectorAll("#dash-tabs button").forEach((b) =>
+      b.addEventListener("click", () => {
+        state.tab = b.dataset.tab;
+        renderAll();
+      }),
+    );
+
+    let items, emptyLabel, header = "";
+    if (state.tab === "pdo") {
+      items = filtered.filter((i) => i.level !== "intermediate" && i.parent_id === null);
+      emptyLabel = "Nenhum indicador PDO corresponde aos filtros.";
+    } else {
+      const c = fw.components.find((c) => c.id === state.tab);
+      items = filtered.filter((i) => i.level === "intermediate" && i.component_id === state.tab);
+      emptyLabel = "Nenhum indicador desta componente corresponde aos filtros.";
+      if (c) header = `<p class="text-sm font-medium">${G.escapeHtml(c.code)} · ${G.escapeHtml(c.title)}</p>${c.description ? `<p class="text-xs muted">${G.escapeHtml(c.description)}</p>` : ""}`;
+    }
+    document.getElementById("dash-tab-content").innerHTML =
+      header +
+      (items.length === 0
+        ? `<p class="text-sm muted mt-2">${emptyLabel}</p>`
+        : `<div class="grid grid-2 mt-2">${items.map(indicatorCard).join("")}</div>`);
+  }
+
+  function renderAll() {
+    renderFilters();
+    const filtered = fw.indicators.filter(indicatorMatches);
+    document.getElementById("dash-filtered-count").textContent = `${filtered.length} indicadores`;
+
+    const statusCounts = { on_track: 0, at_risk: 0, off_track: 0, no_data: 0 };
+    for (const ind of filtered) statusCounts[filteredStatus(ind, state.demographic, state.status, state.province, state.district)]++;
+
+    const tracked = filtered.map((i) => filteredProgress(i, state.demographic, state.status, state.province, state.district)).filter((p) => p !== null);
+    const avgProgress = tracked.length > 0 ? Math.round((tracked.reduce((s, v) => s + v, 0) / tracked.length) * 100) : 0;
+
+    const jobs = filtered.find((i) => i.name.includes("Empregos") && i.level === "pdo_phase1");
+    const people = filtered.find((i) => i.name.startsWith("Pessoas beneficiadas") && i.parent_id === null);
+    const jobsActual = jobs ? (filteredCumulative(jobs, state.demographic, state.status, state.province, state.district) || 0) : 0;
+    const peopleActual = people ? (filteredCumulative(people, state.demographic, state.status, state.province, state.district) || 0) : 0;
+
+    document.getElementById("dash-kpis").innerHTML =
+      kpiCard("Progresso médio", `${avgProgress}%`, `${tracked.length} indicadores com dados`) +
+      kpiCard("Empregos criados (Fase I)", jobsActual.toLocaleString("pt-PT"), jobs ? `Meta: ${(jobs.final_target || 0).toLocaleString("pt-PT")}` : "") +
+      kpiCard("Pessoas beneficiadas", peopleActual.toLocaleString("pt-PT"), people ? `Meta: ${(people.final_target || 0).toLocaleString("pt-PT")}` : "") +
+      kpiCard("Indicadores no alvo", `${statusCounts.on_track}/${filtered.length}`, `${statusCounts.off_track} atrasados · ${statusCounts.no_data} sem dados`);
+
+    const compProgress = fw.components.map((c, idx) => {
+      const inds = filtered.filter((i) => i.component_id === c.id);
+      const t = inds.map((i) => filteredProgress(i, state.demographic, state.status, state.province, state.district)).filter((p) => p !== null);
+      const p = t.length > 0 ? Math.round((t.reduce((s, v) => s + v, 0) / t.length) * 100) : 0;
+      return { id: c.id, code: c.code, title: c.title, progress: p, count: inds.length, color: COMPONENT_PALETTE[idx % COMPONENT_PALETTE.length] };
+    });
+    document.getElementById("dash-comp-cards").innerHTML = compProgress
+      .map(
+        (c) => `
+      <button class="card dash-comp-btn" data-id="${c.id}" style="text-align:left;cursor:pointer;padding:1rem;${state.componentId === c.id ? "border-color:var(--primary);" : ""}">
+        <div class="flex gap-2" style="align-items:center;"><span style="width:0.6rem;height:0.6rem;border-radius:999px;background:${c.color};"></span><p class="text-sm font-medium">${G.escapeHtml(c.code)}</p></div>
+        <p class="text-xs muted mt-1">${G.escapeHtml(c.title)}</p>
+        <div class="flex-between mt-2"><p class="text-2xl font-semibold">${c.count}</p><p class="text-xs muted">${c.progress}%</p></div>
+        <div class="progress mt-2"><span style="width:${Math.min(100, c.progress)}%;background:${c.color};"></span></div>
+      </button>`,
+      )
+      .join("");
+    document.querySelectorAll(".dash-comp-btn").forEach((b) =>
+      b.addEventListener("click", () => {
+        state.componentId = state.componentId === b.dataset.id ? "all" : b.dataset.id;
+        state.indicatorId = "all";
+        renderAll();
+      }),
+    );
+
+    document.getElementById("dash-status-counts").innerHTML = Object.keys(G.STATUS_META)
+      .map((k) => `<div class="card"><div class="card-content"><p class="text-xs muted">${G.STATUS_META[k].label}</p><p class="text-xl font-semibold mt-1">${statusCounts[k]}</p></div></div>`)
+      .join("");
+
+    renderTabs(filtered);
+  }
+
+  document.getElementById("dash-loading").classList.add("hidden");
+  document.getElementById("dash-content").classList.remove("hidden");
+  renderAll();
+})();
+</script>
+</body>
+</html>

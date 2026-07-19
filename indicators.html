@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Indicadores — GORS</title>
+<link rel="icon" href="img/adin-logo.png" type="image/png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="app-shell">
+  <aside class="app-sidebar" id="app-sidebar"></aside>
+  <div class="app-main">
+    <header class="app-topbar" id="app-topbar"></header>
+    <main class="app-content">
+      <div id="ind-loading" class="loading-block"><span class="spinner"></span> A carregar…</div>
+      <div id="ind-content" class="stack hidden">
+        <div class="flex-between">
+          <div>
+            <h1 class="text-2xl">Indicadores</h1>
+            <p class="text-sm muted mt-1" id="ind-subtitle"></p>
+          </div>
+          <button class="btn btn-primary hidden" id="ind-new-btn">+ Novo indicador</button>
+        </div>
+
+        <div class="flex gap-3 flex-wrap">
+          <input class="input" id="ind-search" placeholder="Pesquisar indicador…" style="flex:1;min-width:200px;">
+          <select class="input" id="ind-filter" style="max-width:16rem;">
+            <option value="all">Todos os níveis</option>
+            <option value="pdo">Apenas PDO</option>
+            <option value="intermediate">Apenas intermediários</option>
+          </select>
+        </div>
+
+        <div class="stack" id="ind-groups"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="overlay hidden" id="dlg-indicator-form">
+  <div class="dialog">
+    <h3 id="ifd-title">Novo indicador</h3>
+    <p class="dialog-desc">Preencha os dados do indicador do quadro de resultados.</p>
+    <div class="field"><label>Nome</label><textarea class="input" id="ifd-name" rows="2"></textarea></div>
+    <div class="grid grid-2">
+      <div class="field"><label>Nível</label>
+        <select class="input" id="ifd-level">
+          <option value="pdo_program">PDO — Programa</option>
+          <option value="pdo_phase1">PDO — Fase I</option>
+          <option value="intermediate">Intermediário</option>
+        </select>
+      </div>
+      <div class="field"><label>Tipo de valor</label>
+        <select class="input" id="ifd-value-type">
+          <option value="number">Número</option>
+          <option value="percentage">Percentagem</option>
+          <option value="yes_no">Sim / Não</option>
+          <option value="text">Texto</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid grid-2">
+      <div class="field"><label>Componente</label><select class="input" id="ifd-component"><option value="">Sem componente</option></select></div>
+      <div class="field"><label>Unidade</label><input class="input" id="ifd-unit" value="Número"></div>
+    </div>
+    <div class="grid grid-2" id="ifd-numeric-row">
+      <div class="field"><label>Baseline</label><input class="input" type="number" id="ifd-baseline"></div>
+      <div class="field"><label>Meta final</label><input class="input" type="number" id="ifd-target"></div>
+    </div>
+    <div class="grid grid-2">
+      <div class="field"><label>Frequência</label><input class="input" id="ifd-frequency" placeholder="Anual, Trimestral…"></div>
+      <div class="field"><label>Responsável</label><input class="input" id="ifd-responsibility"></div>
+    </div>
+    <div class="field"><label>Fonte de dados</label><input class="input" id="ifd-data-source"></div>
+    <div class="field"><label>Metodologia</label><textarea class="input" id="ifd-methodology" rows="2"></textarea></div>
+    <div class="field"><label>Descrição</label><textarea class="input" id="ifd-description" rows="2"></textarea></div>
+    <div class="dialog-footer">
+      <button class="btn btn-outline" id="ifd-cancel" type="button">Cancelar</button>
+      <button class="btn btn-primary" id="ifd-save" type="button">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-root"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/lib.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/data.js"></script>
+<script src="js/nav.js"></script>
+<script>
+(async function () {
+  const G = window.GORS;
+  const user = await G.requireAuth();
+  if (!user) return;
+
+  let fw;
+  try {
+    fw = await G.getFramework();
+  } catch (err) {
+    document.getElementById("ind-loading").innerHTML = `<p class="muted">${G.escapeHtml(err.message)}</p>`;
+    return;
+  }
+  G.renderShell(fw, "indicators");
+
+  const DEFAULT_UNIT = "Número";
+  const componentName = (id) => (fw.components.find((c) => c.id === id) || {}).code || "—";
+
+  function groupIndicators(filtered) {
+    return [
+      { key: "pdo_program", label: "PDO — Nível Programa", items: filtered.filter((i) => i.level === "pdo_program") },
+      { key: "pdo_phase1", label: "PDO — Fase I", items: filtered.filter((i) => i.level === "pdo_phase1") },
+      ...fw.components.map((c) => ({
+        key: c.id,
+        label: `${c.code} · ${c.title}`,
+        items: filtered.filter((i) => i.level === "intermediate" && i.component_id === c.id),
+      })),
+    ];
+  }
+
+  function render() {
+    const q = document.getElementById("ind-search").value.toLowerCase();
+    const filter = document.getElementById("ind-filter").value;
+    document.getElementById("ind-subtitle").textContent = `${fw.indicators.length} indicadores do quadro de resultados`;
+
+    const filtered = fw.indicators.filter((ind) => {
+      if (q && !ind.name.toLowerCase().includes(q)) return false;
+      if (filter === "pdo") return ind.level !== "intermediate";
+      if (filter === "intermediate") return ind.level === "intermediate";
+      if (filter.startsWith("comp:")) return ind.component_id === filter.slice(5);
+      return true;
+    });
+
+    const groups = groupIndicators(filtered).filter((g) => g.items.length > 0);
+    document.getElementById("ind-groups").innerHTML = groups
+      .map(
+        (group) => `
+      <div>
+        <h2 class="text-sm font-semibold muted mb-2">${G.escapeHtml(group.label)}</h2>
+        <div class="card"><div class="card-content-flush divide">
+          ${group.items
+            .map((ind) => {
+              const last = G.latestActual(ind);
+              const real = last
+                ? ind.value_type === "text"
+                  ? "Registado"
+                  : G.formatValue(G.cumulativeValue(ind), ind.value_type)
+                : "—";
+              const meta = ind.value_type === "text" ? "—" : G.formatValue(ind.final_target, ind.value_type);
+              const status = G.indicatorStatus(ind);
+              return `
+              <a href="indicator.html?id=${ind.id}" class="row-link" style="flex-wrap:wrap;">
+                <div style="min-width:0;flex:1;">
+                  <p class="text-sm font-medium">${ind.parent_id ? "↳ " : ""}${G.escapeHtml(ind.name)}</p>
+                  <p class="text-xs muted mt-1">${G.LEVEL_LABELS[ind.level]}${ind.level === "intermediate" ? ` · ${G.escapeHtml(componentName(ind.component_id))}` : ""} · ${G.escapeHtml(ind.unit)}</p>
+                </div>
+                <div class="flex gap-3" style="align-items:center;">
+                  <div style="text-align:right;"><p class="text-xs muted">Real acumulado</p><p class="text-sm font-medium">${G.escapeHtml(real)}</p></div>
+                  <div style="text-align:right;"><p class="text-xs muted">Meta</p><p class="text-sm font-medium">${G.escapeHtml(meta)}</p></div>
+                  <span class="badge ${G.STATUS_META[status].cls}">${G.STATUS_META[status].label}</span>
+                </div>
+              </a>`;
+            })
+            .join("")}
+        </div></div>
+      </div>`,
+      )
+      .join("");
+  }
+
+  document.getElementById("ind-search").addEventListener("input", render);
+  document.getElementById("ind-filter").addEventListener("change", render);
+
+  // ---- create-indicator dialog (admin only) ----
+  if (fw.isAdmin) {
+    document.getElementById("ind-new-btn").classList.remove("hidden");
+    const compSel = document.getElementById("ifd-component");
+    for (const c of fw.components) {
+      const opt = document.createElement("option");
+      opt.value = c.id;
+      opt.textContent = `${c.code} · ${c.title}`;
+      compSel.appendChild(opt);
+    }
+
+    function toggleNumericRow() {
+      const isNumeric = document.getElementById("ifd-value-type").value !== "text" && document.getElementById("ifd-value-type").value !== "yes_no";
+      document.getElementById("ifd-numeric-row").classList.toggle("hidden", !isNumeric);
+    }
+    document.getElementById("ifd-value-type").addEventListener("change", toggleNumericRow);
+
+    function resetForm() {
+      document.getElementById("ifd-title").textContent = "Novo indicador";
+      document.getElementById("ifd-name").value = "";
+      document.getElementById("ifd-level").value = "intermediate";
+      document.getElementById("ifd-value-type").value = "number";
+      document.getElementById("ifd-component").value = "";
+      document.getElementById("ifd-unit").value = DEFAULT_UNIT;
+      document.getElementById("ifd-baseline").value = "";
+      document.getElementById("ifd-target").value = "";
+      document.getElementById("ifd-frequency").value = "";
+      document.getElementById("ifd-responsibility").value = "";
+      document.getElementById("ifd-data-source").value = "";
+      document.getElementById("ifd-methodology").value = "";
+      document.getElementById("ifd-description").value = "";
+      toggleNumericRow();
+    }
+
+    document.getElementById("ind-new-btn").addEventListener("click", () => {
+      resetForm();
+      G.openDialog("dlg-indicator-form");
+    });
+    document.getElementById("ifd-cancel").addEventListener("click", () => G.closeDialog("dlg-indicator-form"));
+
+    document.getElementById("ifd-save").addEventListener("click", async () => {
+      const name = document.getElementById("ifd-name").value.trim();
+      if (name.length < 2) {
+        G.toast("Indique o nome do indicador.", "error");
+        return;
+      }
+      const valueType = document.getElementById("ifd-value-type").value;
+      const isNumeric = valueType !== "text" && valueType !== "yes_no";
+      const toNum = (s) => (s.trim() === "" ? null : Number(s));
+      const btn = document.getElementById("ifd-save");
+      G.setBusy(btn, true, "A guardar…");
+      try {
+        const res = await G.saveIndicator({
+          name,
+          unit: document.getElementById("ifd-unit").value.trim() || DEFAULT_UNIT,
+          level: document.getElementById("ifd-level").value,
+          value_type: valueType,
+          component_id: document.getElementById("ifd-component").value || null,
+          baseline_value: isNumeric ? toNum(document.getElementById("ifd-baseline").value) : null,
+          final_target: isNumeric ? toNum(document.getElementById("ifd-target").value) : null,
+          frequency: document.getElementById("ifd-frequency").value.trim() || null,
+          data_source: document.getElementById("ifd-data-source").value.trim() || null,
+          methodology: document.getElementById("ifd-methodology").value.trim() || null,
+          responsibility: document.getElementById("ifd-responsibility").value.trim() || null,
+          description: document.getElementById("ifd-description").value.trim() || null,
+        });
+        G.toast("Indicador criado.", "success");
+        window.location.href = `indicator.html?id=${res.id}`;
+      } catch (err) {
+        G.toastError(err);
+      } finally {
+        G.setBusy(btn, false);
+      }
+    });
+  }
+
+  document.getElementById("ind-loading").classList.add("hidden");
+  document.getElementById("ind-content").classList.remove("hidden");
+  render();
+})();
+</script>
+</body>
+</html>

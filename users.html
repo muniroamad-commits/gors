@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Utilizadores — GORS</title>
+<link rel="icon" href="img/adin-logo.png" type="image/png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="app-shell">
+  <aside class="app-sidebar" id="app-sidebar"></aside>
+  <div class="app-main">
+    <header class="app-topbar" id="app-topbar"></header>
+    <main class="app-content">
+      <div id="us-loading" class="loading-block"><span class="spinner"></span> A carregar…</div>
+      <div id="us-content" class="stack hidden">
+        <div class="flex gap-2" style="align-items:center;">
+          <span style="font-size:1.3rem;">👥</span>
+          <h1 class="text-2xl">Gestão de utilizadores</h1>
+        </div>
+        <p class="text-sm muted">Atribua papéis para controlar o acesso à plataforma. <strong>Distrital</strong> apenas visualiza. <strong>Provincial</strong> pode submeter valores mas não editar; recebe notificações quando os valores são aprovados ou rejeitados. <strong>Administrador</strong> pode gerir tudo.</p>
+
+        <div class="card">
+          <div class="card-header"><p class="card-title">Utilizadores</p></div>
+          <div class="card-content-flush" style="overflow-x:auto;">
+            <table class="data-table">
+              <thead><tr><th>Utilizador</th><th>Organização</th><th>Papel actual</th><th style="min-width:14rem;">Definir papel</th></tr></thead>
+              <tbody id="us-rows"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div id="toast-root"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/lib.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/data.js"></script>
+<script src="js/nav.js"></script>
+<script>
+(async function () {
+  const G = window.GORS;
+  const user = await G.requireAuth();
+  if (!user) return;
+
+  let fw;
+  try {
+    fw = await G.getFramework();
+  } catch (err) {
+    document.getElementById("us-loading").innerHTML = `<p class="muted">${G.escapeHtml(err.message)}</p>`;
+    return;
+  }
+  if (!fw.isAdmin) {
+    window.location.href = "dashboard.html";
+    return;
+  }
+  G.renderShell(fw, "users");
+
+  const ROLE_LABELS = { admin: "Administrador", provincial: "Provincial", district: "Distrital", user: "Sem papel definido", moderator: "Moderador" };
+
+  function renderRows(users) {
+    const tbody = document.getElementById("us-rows");
+    if (users.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4" class="muted" style="text-align:center;padding:2rem 0;">Nenhum utilizador registado.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = users
+      .map((u) => {
+        const isSelf = u.id === fw.userId;
+        return `
+        <tr data-id="${u.id}">
+          <td><div class="font-medium">${G.escapeHtml(u.full_name || "—")}</div><div class="text-xs muted">${G.escapeHtml(u.email || "—")}</div></td>
+          <td class="text-sm">${G.escapeHtml(u.organization || "—")}</td>
+          <td><span class="badge ${u.role === "admin" ? "" : "badge-outline"}">${G.escapeHtml(u.role ? (ROLE_LABELS[u.role] || u.role) : "Sem papel")}</span></td>
+          <td>
+            <select class="input us-role-select" data-id="${u.id}" ${isSelf ? "disabled" : ""}>
+              <option value="" ${!u.role ? "selected" : ""} disabled>Escolher papel</option>
+              <option value="district" ${u.role === "district" ? "selected" : ""}>Distrital (visualizar)</option>
+              <option value="provincial" ${u.role === "provincial" ? "selected" : ""}>Provincial (submeter)</option>
+              <option value="admin" ${u.role === "admin" ? "selected" : ""}>Administrador</option>
+            </select>
+          </td>
+        </tr>`;
+      })
+      .join("");
+
+    tbody.querySelectorAll(".us-role-select").forEach((sel) => {
+      sel.addEventListener("change", async (e) => {
+        const uid = sel.dataset.id;
+        const role = e.target.value;
+        sel.disabled = true;
+        try {
+          await G.setUserRole(uid, role);
+          G.toast("Papel actualizado.", "success");
+          await load();
+        } catch (err) {
+          G.toastError(err);
+          sel.disabled = false;
+        }
+      });
+    });
+  }
+
+  async function load() {
+    try {
+      const users = await G.listUsers();
+      renderRows(users);
+    } catch (err) {
+      G.toastError(err);
+    }
+  }
+
+  await load();
+  document.getElementById("us-loading").classList.add("hidden");
+  document.getElementById("us-content").classList.remove("hidden");
+})();
+</script>
+</body>
+</html>
