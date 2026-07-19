@@ -97,3 +97,28 @@ Nova página **"Relatórios"**, com:
 - Gráficos: indicadores por nível, e progresso médio por componente
 - Botão **"Descarregar relatório em PDF"** — inclui os gráficos e uma
   tabela detalhada por indicador, de acordo com os filtros aplicados
+
+## Ano e Período como campos separados
+
+Ao submeteres um valor, para indicadores com periodicidade regular
+(Trimestral, Semestral, Anual, Bienal), o formulário agora tem **dois
+campos separados**: primeiro escolhes o **Ano**, depois o **Período**
+dentro desse ano (ex: Trimestre ou Semestre). Os dois juntam-se
+automaticamente no período final gravado (ex: "T1 2026"). Indicadores com
+periodicidade por marcos (ex: "meio-termo e encerramento") continuam a
+usar um único campo, com as opções definidas nas próprias metas.
+
+## Relatório Público (sem login)
+
+Nova página **`relatorio-publico.html`**, com acesso livre — não pede
+nenhuma conta nem password. Mostra os mesmos filtros, gráficos, tabela e
+exportação em PDF da página "Relatórios" interna, mas alimentada só por
+uma colecção espelho (`indicator_values_public`) que:
+
+- Só recebe dados quando um valor é **aprovado** pelo Administrador geral
+  (nunca mostra submissões pendentes ou rejeitadas).
+- Não inclui nomes de quem submeteu, notas internas, nem evidências.
+
+Há um link para este relatório na própria página de login (`index.html`),
+para ser fácil de partilhar com qualquer pessoa — parceiros, o Banco
+Mundial, ou o público em geral — sem lhes teres de criar conta nenhuma.

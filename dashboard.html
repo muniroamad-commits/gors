@@ -254,16 +254,43 @@ function renderDrawer(ind, values) {
     </div>
   `).join('');
 
+  const periodFields = ME.getSubmissionPeriodFields(ind);
+  let periodFieldsHtml = '';
+  if (periodFields.mode === 'year+sub') {
+    periodFieldsHtml = `
+      <div class="form-row">
+        <div class="field">
+          <label for="val-year">Ano</label>
+          <select id="val-year">${periodFields.years.map(y => `<option value="${y}">${y}</option>`).join('')}</select>
+        </div>
+        <div class="field">
+          <label for="val-sub">${escapeHtml(periodFields.subLabel)}</label>
+          <select id="val-sub">${periodFields.subOptions.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('')}</select>
+        </div>
+      </div>
+    `;
+  } else if (periodFields.mode === 'year-only') {
+    periodFieldsHtml = `
+      <div class="field">
+        <label for="val-year">${periodFields.biennial ? 'Ano de início do biénio' : 'Ano'}</label>
+        <select id="val-year">${periodFields.years.map(y => `<option value="${y}">${y}${periodFields.biennial ? '–' + (y + 1) : ''}</option>`).join('')}</select>
+      </div>
+    `;
+  } else {
+    periodFieldsHtml = `
+      <div class="field">
+        <label for="val-sub">Período</label>
+        <select id="val-sub">${periodFields.options.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('')}</select>
+      </div>
+    `;
+  }
+
   const submitFormHtml = canSubmit ? `
     <h4 style="font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-muted); margin:24px 0 8px;">Submeter novo valor</h4>
     <div id="submit-alert"></div>
     <div class="form-card" style="padding:18px;">
-      <div class="field">
-        <label for="val-period">Período <span class="small-note">(${escapeHtml(ind.frequency)})</span></label>
-        <select id="val-period">
-          ${ME.getPeriodOptions(ind).map(p => `<option value="${p}">${p}</option>`).join('')}
-        </select>
-      </div>
+      <p class="small-note" style="margin:0 0 12px;">Periodicidade deste indicador: <strong>${escapeHtml(ind.frequency)}</strong></p>
+      ${periodFieldsHtml}
       <div class="field">
         <label for="val-value">Valor ${ind.isYesNoIndicator ? '(Sim/Não)' : ind.isTextIndicator ? '(descrição)' : `(${ind.unit})`}</label>
         ${ind.isYesNoIndicator
@@ -331,9 +358,12 @@ function renderDrawer(ind, values) {
       submitBtn.innerHTML = '<span class="spinner"></span>';
       try {
         const fileList = document.getElementById('val-evidence').files;
+        const yearEl = document.getElementById('val-year');
+        const subEl = document.getElementById('val-sub');
+        const period = ME.combinePeriod(periodFields, yearEl ? Number(yearEl.value) : null, subEl ? subEl.value : null);
         const result = await ME.submitValue({
           indicator_id: ind.id,
-          period: document.getElementById('val-period').value,
+          period,
           value: document.getElementById('val-value').value,
           disagg: Object.keys(disagg).length ? disagg : null,
           note: document.getElementById('val-note').value,

@@ -7,6 +7,10 @@
 
 const ME = (() => {
   const VALUES = 'indicator_values';
+  // Espelho público, sem notas nem quem submeteu — alimenta o relatório
+  // público (acessível sem login). Só recebe dados quando um valor é
+  // aprovado; nunca contém submissões pendentes ou rejeitadas.
+  const VALUES_PUBLIC = 'indicator_values_public';
   const ADMINS = 'admins';
 
   // ---------- Catálogo de indicadores (Quadro de Resultados) ----------
@@ -327,42 +331,38 @@ const ME = (() => {
   const PROJECT_START_YEAR = 2026;
   const PROJECT_END_YEAR = 2034;
 
-  function generateQuarters(startYear, endYear) {
+  function yearsRange(step = 1) {
     const out = [];
-    for (let y = startYear; y <= endYear; y++) {
-      for (let q = 1; q <= 4; q++) out.push(`T${q} ${y}`);
-    }
-    return out;
-  }
-  function generateSemesters(startYear, endYear) {
-    const out = [];
-    for (let y = startYear; y <= endYear; y++) {
-      out.push(`1º Semestre ${y}`, `2º Semestre ${y}`);
-    }
-    return out;
-  }
-  function generateYears(startYear, endYear) {
-    const out = [];
-    for (let y = startYear; y <= endYear; y++) out.push(String(y));
-    return out;
-  }
-  function generateBiennial(startYear, endYear) {
-    const out = [];
-    for (let y = startYear; y <= endYear; y += 2) out.push(`${y}–${y + 1}`);
+    for (let y = PROJECT_START_YEAR; y <= PROJECT_END_YEAR; y += step) out.push(y);
     return out;
   }
 
-  function getPeriodOptions(indicator) {
+  // Devolve como o formulário de submissão deve pedir o período, separado
+  // em "Ano" + "Período dentro do ano" sempre que a periodicidade for
+  // regular. Para frequências por marcos (que não seguem uma cadência
+  // regular, ex: "meio-termo e encerramento"), devolve um único campo com
+  // os períodos definidos nas próprias metas.
+  function getSubmissionPeriodFields(indicator) {
     const freq = (indicator.frequency || '').trim();
-    if (freq === 'Trimestral') return generateQuarters(PROJECT_START_YEAR, PROJECT_END_YEAR);
-    if (freq === 'Semestral') return generateSemesters(PROJECT_START_YEAR, PROJECT_END_YEAR);
-    if (freq === 'Anual') return generateYears(PROJECT_START_YEAR, PROJECT_END_YEAR);
-    if (freq === 'Bienal') return generateBiennial(PROJECT_START_YEAR, PROJECT_END_YEAR);
-    // Frequências mistas ou por marcos (ex: "Trimestral (1ª metade) /
-    // Semestral (2ª metade)", "Ano 1 do projecto, meio-termo e
-    // encerramento", "Meio-termo e encerramento") não seguem uma cadência
-    // regular — usam-se os períodos definidos nas próprias metas.
-    return indicator.targets.map(t => t.period);
+    if (freq === 'Trimestral') {
+      return { mode: 'year+sub', years: yearsRange(), subLabel: 'Trimestre', subOptions: ['T1', 'T2', 'T3', 'T4'] };
+    }
+    if (freq === 'Semestral') {
+      return { mode: 'year+sub', years: yearsRange(), subLabel: 'Semestre', subOptions: ['1º Semestre', '2º Semestre'] };
+    }
+    if (freq === 'Anual') {
+      return { mode: 'year-only', years: yearsRange() };
+    }
+    if (freq === 'Bienal') {
+      return { mode: 'year-only', years: yearsRange(2), biennial: true };
+    }
+    return { mode: 'fixed', options: indicator.targets.map(t => t.period) };
+  }
+
+  function combinePeriod(fields, year, sub) {
+    if (fields.mode === 'year+sub') return `${sub} ${year}`;
+    if (fields.mode === 'year-only') return fields.biennial ? `${year}–${year + 1}` : String(year);
+    return sub; // 'fixed' mode: o próprio valor já é o período completo
   }
 
   // ---------- Utilitários ----------
@@ -447,12 +447,42 @@ const ME = (() => {
     if (!admin || admin.noProfile) throw new Error('A tua conta não tem permissões configuradas.');
     if (admin.role !== 'admin') throw new Error('Só o Administrador geral pode aprovar ou rejeitar valores.');
 
-    await db.collection(VALUES).doc(valueId).update({
+    const ref = db.collection(VALUES).doc(valueId);
+    const snap = await ref.get();
+    if (!snap.exists) throw new Error('Registo não encontrado.');
+    const record = snap.data();
+    const timestamp = nowIso();
+
+    await ref.update({
       status: approve ? 'aprovado' : 'rejeitado',
       reviewed_by: admin.name,
-      reviewed_at: nowIso(),
+      reviewed_at: timestamp,
       review_note: review_note || null,
     });
+
+    if (approve) {
+      // Espelho público: uma entrada por indicador+período (a mais
+      // recente aprovação substitui a anterior, se voltar a ser revista).
+      const publicId = `${record.indicator_id}__${record.period}`.replace(/[\/\s]+/g, '_');
+      await db.collection(VALUES_PUBLIC).doc(publicId).set({
+        indicator_id: record.indicator_id,
+        indicator_name: record.indicator_name,
+        component: record.component,
+        period: record.period,
+        value: record.value,
+        disagg: record.disagg || null,
+        updated_at: timestamp,
+      });
+    }
+  }
+
+  // Progresso público (sem login) — só valores já aprovados, sem nomes,
+  // notas ou evidências.
+  async function listPublicValues(indicatorId) {
+    let query = db.collection(VALUES_PUBLIC);
+    if (indicatorId) query = query.where('indicator_id', '==', indicatorId);
+    const snap = await query.get();
+    return snap.docs.map(d => d.data());
   }
 
   async function deleteValue(valueId) {
@@ -520,8 +550,8 @@ const ME = (() => {
   }
 
   return {
-    getIndicators, getIndicator, getComponents, getLevels, getPeriodOptions,
-    submitValue, listValues, listApprovedValues, reviewValue, deleteValue,
+    getIndicators, getIndicator, getComponents, getLevels, getSubmissionPeriodFields, combinePeriod,
+    submitValue, listValues, listApprovedValues, reviewValue, deleteValue, listPublicValues,
     adminLogin, adminLogout, onAuthChange, getCurrentAdminSync, changeAdminPassword,
     listAdminUsers, upsertAdminUser, removeAdminUser,
   };

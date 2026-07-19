@@ -56,6 +56,14 @@ service cloud.firestore {
       allow delete: if isAdminGeral();
     }
 
+    // Espelho público — sem nomes, notas ou evidências — para o relatório
+    // acessível sem login. Só é escrito quando um valor é aprovado.
+    match /indicator_values_public/{docId} {
+      allow get, list: if true;
+      allow create, update: if isAdminGeral();
+      allow delete: if false;
+    }
+
     match /admins/{adminId} {
       allow get: if isSignedIn() && request.auth.uid == adminId;
       allow list: if isAdminGeral();
