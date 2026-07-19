@@ -1,0 +1,65 @@
+rules_version = '2';
+
+// Regras de segurança do Firestore para a plataforma M&E MozCommunity.
+//
+// Como aplicar:
+// Firebase Console → Firestore Database → Regras → cole este conteúdo → Publicar
+//
+// Lógica:
+// - O catálogo de indicadores NÃO está na base de dados — vive no código
+//   (js/store.js), porque é fixo (vem do Quadro de Resultados do projecto).
+// - "indicator_values" guarda cada valor SUBMETIDO para um indicador/período.
+//   Só conta como oficial depois de aprovado por um Administrador geral.
+// - Qualquer pessoa autenticada (admin, submitter, readonly) pode LER os
+//   valores, para todos verem o progresso.
+// - Só "admin" e "submitter" podem CRIAR novas submissões.
+// - Só "admin" pode APROVAR/REJEITAR (mudar o estado) ou APAGAR.
+//
+// IMPORTANTE — arranque inicial (bootstrap):
+// Tal como na plataforma MDR, o PRIMEIRO utilizador "admin" tem de ser
+// criado manualmente no Firestore Console (colecção "admins", documento
+// com ID = o teu User UID, campo role="admin"). Depois disso, geres todos
+// os outros a partir do próprio painel, em "Utilizadores".
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function adminDoc() {
+      return get(/databases/$(database)/documents/admins/$(request.auth.uid)).data;
+    }
+    function hasProfile() {
+      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    function isAdminGeral() {
+      return hasProfile() && adminDoc().role == 'admin';
+    }
+    function canSubmit() {
+      return hasProfile() && (adminDoc().role == 'admin' || adminDoc().role == 'submitter');
+    }
+
+    match /indicator_values/{valueId} {
+      // Ler valores: qualquer pessoa autenticada com perfil configurado.
+      allow get, list: if hasProfile();
+
+      // Criar uma nova submissão: admin ou submitter, sempre com estado
+      // inicial "submetido" (não pode nascer já aprovado).
+      allow create: if canSubmit() &&
+        request.resource.data.status == 'submetido';
+
+      // Aprovar/rejeitar ou editar: só Administrador geral.
+      allow update: if isAdminGeral();
+
+      // Apagar: só Administrador geral.
+      allow delete: if isAdminGeral();
+    }
+
+    match /admins/{adminId} {
+      allow get: if isSignedIn() && request.auth.uid == adminId;
+      allow list: if isAdminGeral();
+      allow create, update, delete: if isAdminGeral();
+    }
+  }
+}

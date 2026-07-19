@@ -1,126 +1,211 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="pt-MZ">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Utilizadores — GORS</title>
-<link rel="icon" href="img/adin-logo.png" type="image/png">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Utilizadores — M&amp;E MozCommunity</title>
+<link rel="icon" href="img/logo-adin.jpg" type="image/jpeg">
 <link rel="stylesheet" href="css/style.css">
+<style>
+  .role-tag { font-size: 0.78rem; font-weight: 700; padding: 4px 10px; border-radius: 999px; }
+  .role-admin { background: var(--teal-tint); color: var(--teal-dark); }
+  .role-submitter { background: var(--gold-tint); color: #8A5F13; }
+  .role-readonly { background: #ECECEC; color: #55606A; }
+  table.users { width: 100%; border-collapse: collapse; background: var(--paper-raised); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin-bottom: 24px; }
+  table.users th { text-align: left; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-muted); padding: 12px 14px; border-bottom: 1px solid var(--line); font-family: var(--font-mono); font-weight: 500; }
+  table.users td { padding: 12px 14px; border-bottom: 1px solid var(--line); font-size: 0.88rem; vertical-align: middle; }
+  table.users tr:last-child td { border-bottom: none; }
+  .denied { max-width: 520px; margin: 60px auto; text-align: center; }
+</style>
 </head>
 <body>
 
-<div class="app-shell">
-  <aside class="app-sidebar" id="app-sidebar"></aside>
-  <div class="app-main">
-    <header class="app-topbar" id="app-topbar"></header>
-    <main class="app-content">
-      <div id="us-loading" class="loading-block"><span class="spinner"></span> A carregar…</div>
-      <div id="us-content" class="stack hidden">
-        <div class="flex gap-2" style="align-items:center;">
-          <span style="font-size:1.3rem;">👥</span>
-          <h1 class="text-2xl">Gestão de utilizadores</h1>
-        </div>
-        <p class="text-sm muted">Atribua papéis para controlar o acesso à plataforma. <strong>Distrital</strong> apenas visualiza. <strong>Provincial</strong> pode submeter valores mas não editar; recebe notificações quando os valores são aprovados ou rejeitados. <strong>Administrador</strong> pode gerir tudo.</p>
+<header class="site-header">
+  <div class="container">
+    <a href="index.html" class="brand">
+      <span class="brand-mark"><img src="img/logo-adin.jpg" alt="Logótipo ADIN"></span>
+      <span class="brand-name">M&amp;E MozCommunity<small>Monitoria de Indicadores — ADIN</small></span>
+    </a>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Abrir menu" aria-expanded="false">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <nav class="main-nav">
+      <a href="dashboard.html">Indicadores</a>
+      <a href="approvals.html">Aprovações</a>
+      <a href="users.html" class="is-active">Utilizadores</a>
+      <span class="small-note" id="admin-name-label" style="margin-right:8px;"></span>
+      <a href="#" id="logout-link">Sair</a>
+    </nav>
+  </div>
+</header>
 
-        <div class="card">
-          <div class="card-header"><p class="card-title">Utilizadores</p></div>
-          <div class="card-content-flush" style="overflow-x:auto;">
-            <table class="data-table">
-              <thead><tr><th>Utilizador</th><th>Organização</th><th>Papel actual</th><th style="min-width:14rem;">Definir papel</th></tr></thead>
-              <tbody id="us-rows"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </main>
+<div id="denied-area" class="container" style="display:none;">
+  <div class="denied">
+    <h2>Acesso restrito</h2>
+    <p>Só o Administrador geral pode gerir utilizadores.</p>
+    <a href="dashboard.html" class="btn btn-secondary">Voltar aos indicadores</a>
   </div>
 </div>
 
-<div id="toast-root"></div>
+<main id="main-area" style="display:none;">
+  <section>
+    <div class="container" style="max-width:920px;">
+      <span class="eyebrow">Área reservada — só Administrador geral</span>
+      <h1 style="font-size:clamp(1.6rem,3vw,2.1rem)">Gestão de Utilizadores</h1>
+      <p class="lead" style="max-width:70ch">
+        Cria primeiro a conta de login em <strong>Firebase Console → Authentication → Users → Add user</strong>,
+        copia o <strong>User UID</strong> gerado, e cola-o aqui para atribuir o nível de acesso.
+      </p>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="js/supabase-config.js"></script>
-<script src="js/lib.js"></script>
-<script src="js/ui.js"></script>
-<script src="js/data.js"></script>
-<script src="js/nav.js"></script>
+      <div id="alert-box"></div>
+
+      <table class="users">
+        <thead><tr><th>Nome</th><th>Email</th><th>Nível de acesso</th><th></th></tr></thead>
+        <tbody id="users-tbody">
+          <tr><td colspan="4" class="skeleton" style="height:40px;"></td></tr>
+        </tbody>
+      </table>
+
+      <div class="form-card">
+        <h3 style="margin-bottom:14px;">Adicionar / editar utilizador</h3>
+        <div class="field">
+          <label for="uid">User UID <span class="required">*</span></label>
+          <input type="text" id="uid" placeholder="Copiado de Firebase Console → Authentication → Users" style="font-family:var(--font-mono);">
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label for="name">Nome</label>
+            <input type="text" id="name" placeholder="Nome da pessoa">
+          </div>
+          <div class="field">
+            <label for="email">Email (só para referência)</label>
+            <input type="email" id="email" placeholder="email@adin.gov.mz">
+          </div>
+        </div>
+        <div class="field">
+          <label for="role">Nível de acesso <span class="required">*</span></label>
+          <select id="role">
+            <option value="admin">Administrador geral — aprova/rejeita e gere tudo</option>
+            <option value="submitter">Equipa de reporte — submete valores para aprovação</option>
+            <option value="readonly">Só leitura — só vê o progresso</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary" id="save-btn">Guardar utilizador</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/store.js"></script>
 <script>
-(async function () {
-  const G = window.GORS;
-  const user = await G.requireAuth();
-  if (!user) return;
+ME.onAuthChange(admin => {
+  if (!admin) { window.location.href = 'index.html'; return; }
+  if (admin.noProfile) {
+    alert('A tua conta não tem permissões configuradas nesta plataforma.');
+    ME.adminLogout().then(() => window.location.href = 'index.html');
+    return;
+  }
+  if (admin.role !== 'admin') {
+    document.getElementById('denied-area').style.display = 'block';
+    document.getElementById('admin-name-label').textContent = admin.name;
+    return;
+  }
+  document.getElementById('main-area').style.display = 'block';
+  document.getElementById('admin-name-label').textContent = admin.name;
+  loadUsers();
+});
 
-  let fw;
+document.getElementById('logout-link').addEventListener('click', (e) => {
+  e.preventDefault();
+  ME.adminLogout().then(() => window.location.href = 'index.html');
+});
+
+const roleLabels = { admin: 'Administrador geral', submitter: 'Equipa de reporte', readonly: 'Só leitura' };
+const alertBox = document.getElementById('alert-box');
+
+async function loadUsers() {
+  const tbody = document.getElementById('users-tbody');
   try {
-    fw = await G.getFramework();
-  } catch (err) {
-    document.getElementById("us-loading").innerHTML = `<p class="muted">${G.escapeHtml(err.message)}</p>`;
-    return;
-  }
-  if (!fw.isAdmin) {
-    window.location.href = "dashboard.html";
-    return;
-  }
-  G.renderShell(fw, "users");
-
-  const ROLE_LABELS = { admin: "Administrador", provincial: "Provincial", district: "Distrital", user: "Sem papel definido", moderator: "Moderador" };
-
-  function renderRows(users) {
-    const tbody = document.getElementById("us-rows");
-    if (users.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="4" class="muted" style="text-align:center;padding:2rem 0;">Nenhum utilizador registado.</td></tr>`;
+    const users = await ME.listAdminUsers();
+    if (!users.length) {
+      tbody.innerHTML = `<tr><td colspan="4" class="small-note" style="padding:20px;">Ainda não há utilizadores configurados.</td></tr>`;
       return;
     }
-    tbody.innerHTML = users
-      .map((u) => {
-        const isSelf = u.id === fw.userId;
-        return `
-        <tr data-id="${u.id}">
-          <td><div class="font-medium">${G.escapeHtml(u.full_name || "—")}</div><div class="text-xs muted">${G.escapeHtml(u.email || "—")}</div></td>
-          <td class="text-sm">${G.escapeHtml(u.organization || "—")}</td>
-          <td><span class="badge ${u.role === "admin" ? "" : "badge-outline"}">${G.escapeHtml(u.role ? (ROLE_LABELS[u.role] || u.role) : "Sem papel")}</span></td>
-          <td>
-            <select class="input us-role-select" data-id="${u.id}" ${isSelf ? "disabled" : ""}>
-              <option value="" ${!u.role ? "selected" : ""} disabled>Escolher papel</option>
-              <option value="district" ${u.role === "district" ? "selected" : ""}>Distrital (visualizar)</option>
-              <option value="provincial" ${u.role === "provincial" ? "selected" : ""}>Provincial (submeter)</option>
-              <option value="admin" ${u.role === "admin" ? "selected" : ""}>Administrador</option>
-            </select>
-          </td>
-        </tr>`;
-      })
-      .join("");
-
-    tbody.querySelectorAll(".us-role-select").forEach((sel) => {
-      sel.addEventListener("change", async (e) => {
-        const uid = sel.dataset.id;
-        const role = e.target.value;
-        sel.disabled = true;
-        try {
-          await G.setUserRole(uid, role);
-          G.toast("Papel actualizado.", "success");
-          await load();
-        } catch (err) {
-          G.toastError(err);
-          sel.disabled = false;
-        }
-      });
-    });
+    tbody.innerHTML = users.map(u => `
+      <tr>
+        <td>${escapeHtml(u.name || '—')}</td>
+        <td class="small-note">${escapeHtml(u.email || '—')}</td>
+        <td><span class="role-tag role-${u.role}">${roleLabels[u.role] || u.role}</span></td>
+        <td style="text-align:right;">
+          <button class="btn btn-secondary btn-sm" onclick="editUser('${u.uid}')">Editar</button>
+          <button class="btn btn-secondary btn-sm" onclick="removeUser('${u.uid}')">Remover acesso</button>
+        </td>
+      </tr>
+    `).join('');
+    window._usersCache = users;
+  } catch (err) {
+    console.error(err);
+    tbody.innerHTML = `<tr><td colspan="4"><div class="alert alert-error">Não foi possível carregar os utilizadores.</div></td></tr>`;
   }
+}
 
-  async function load() {
-    try {
-      const users = await G.listUsers();
-      renderRows(users);
-    } catch (err) {
-      G.toastError(err);
-    }
+function editUser(uid) {
+  const u = (window._usersCache || []).find(x => x.uid === uid);
+  if (!u) return;
+  document.getElementById('uid').value = u.uid;
+  document.getElementById('name').value = u.name || '';
+  document.getElementById('email').value = u.email || '';
+  document.getElementById('role').value = u.role;
+  window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+}
+
+async function removeUser(uid) {
+  if (!confirm('Remover o acesso desta pessoa à plataforma? A conta de login no Firebase não é apagada, só o nível de acesso.')) return;
+  try {
+    await ME.removeAdminUser(uid);
+    loadUsers();
+  } catch (err) {
+    console.error(err);
+    alertBox.innerHTML = `<div class="alert alert-error">Não foi possível remover o acesso.</div>`;
   }
+}
 
-  await load();
-  document.getElementById("us-loading").classList.add("hidden");
-  document.getElementById("us-content").classList.remove("hidden");
-})();
+document.getElementById('save-btn').addEventListener('click', async () => {
+  alertBox.innerHTML = '';
+  const uid = document.getElementById('uid').value.trim();
+  const name = document.getElementById('name').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const role = document.getElementById('role').value;
+
+  try {
+    await ME.upsertAdminUser(uid, { name, email, role });
+    document.getElementById('uid').value = '';
+    document.getElementById('name').value = '';
+    document.getElementById('email').value = '';
+    document.getElementById('role').value = 'admin';
+    loadUsers();
+    alertBox.innerHTML = `<div class="alert alert-success">Utilizador guardado.</div>`;
+  } catch (err) {
+    console.error(err);
+    alertBox.innerHTML = `<div class="alert alert-error">${err.message || 'Não foi possível guardar.'}</div>`;
+  }
+});
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str == null ? '' : str;
+  return div.innerHTML;
+}
+
+document.getElementById('nav-toggle')?.addEventListener('click', () => {
+  const nav = document.querySelector('.main-nav');
+  const open = nav.classList.toggle('is-open');
+  document.getElementById('nav-toggle').setAttribute('aria-expanded', String(open));
+});
 </script>
 </body>
 </html>
