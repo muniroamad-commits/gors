@@ -422,3 +422,21 @@ Se ainda vires a versão antiga (com "Último valor aprovado" e "Meta no
 período"), é sinal de que o teu site publicado ainda não tem os ficheiros
 mais recentes — basta repetir o Passo 2 (enviar para o GitHub) com este
 pacote.
+
+## PDF mais legível e mais estético
+
+Corrigi três coisas nos dois relatórios em PDF (interno e público):
+
+1. **Gráfico "Progresso médio por componente" ilegível** — o gráfico usado
+   no PDF já não é uma cópia do gráfico pequeno do ecrã; é desenhado de
+   propósito, maior e com letra maior, especificamente para o PDF. As
+   componentes usam códigos curtos no eixo (C.1, C.2...) com uma
+   **legenda por baixo do gráfico** a explicar o que cada código
+   significa, para nunca mais faltar espaço para o texto.
+2. **Coluna "Nível" a cortar "Intermédio"** — a coluna ficou mais larga, e
+   "Intermédio" passa a aparecer abreviado como "Interm." só na tabela do
+   PDF (no ecrã continua por extenso).
+3. **Tabelas mais estéticas** — cabeçalho com fundo próprio, linhas
+   alternadas (zebra) para facilitar a leitura, e um traço bordô a marcar
+   claramente o início e o fim de cada tabela — mesmo quando a tabela
+   continua numa página seguinte.

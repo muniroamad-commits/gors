@@ -152,6 +152,7 @@ const ADIN_LOGO_BASE64 = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wB
 // espelho "indicator_values_public", que só contém valores já aprovados.
 let charts = {};
 let latestRows = [];
+let latestComponentLegend = [];
 
 ME.getComponents().forEach(c => document.getElementById('f-component').add(new Option(c, c)));
 ME.getProvinces().forEach(p => document.getElementById('f-province').add(new Option(p, p)));
@@ -277,11 +278,12 @@ async function loadReport() {
     const byComponent = {};
     rows.filter(r => r.ind.component && r.pct !== null).forEach(r => {
       const key = r.ind.component.replace('Componente ', 'C.');
-      if (!byComponent[key]) byComponent[key] = [];
-      byComponent[key].push(r.pct);
+      if (!byComponent[key]) byComponent[key] = { values: [], fullName: r.ind.component };
+      byComponent[key].values.push(r.pct);
     });
     const compLabels = Object.keys(byComponent);
-    const compValues = compLabels.map(k => Math.round(byComponent[k].reduce((a, b) => a + b, 0) / byComponent[k].length));
+    const compValues = compLabels.map(k => Math.round(byComponent[k].values.reduce((a, b) => a + b, 0) / byComponent[k].values.length));
+    latestComponentLegend = compLabels.map((k, i) => ({ short: k, full: byComponent[k].fullName }));
     charts.component = new Chart(document.getElementById('chart-component'), {
       type: 'bar',
       data: { labels: compLabels, datasets: [{ data: compValues, backgroundColor: '#9D212B', borderRadius: 4 }] },
@@ -368,48 +370,127 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
     doc.line(margin, y, pageWidth - margin, y);
     y += 24;
 
-    {
-      const c1 = document.getElementById('chart-level');
-      const c2 = document.getElementById('chart-component');
-      const imgWidth = (pageWidth - margin * 2 - 20) / 2;
-      const h1 = (c1.height / c1.width) * imgWidth;
-      const h2 = (c2.height / c2.width) * imgWidth;
-      const rowHeight = Math.max(h1, h2);
-      doc.addImage(c1.toDataURL('image/png', 1.0), 'PNG', margin, y, imgWidth, h1);
-      doc.addImage(c2.toDataURL('image/png', 1.0), 'PNG', margin + imgWidth + 20, y, imgWidth, h2);
-      y += rowHeight + 36;
-    }
+    // ---- Gráficos (versões maiores e com letra maior, próprias para o
+    // PDF — não são só uma captura dos gráficos pequenos do ecrã) ----
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.text('Indicadores por nível', margin, y);
+    doc.text('Progresso médio por componente', margin + (pageWidth - margin * 2) / 2 + 14, y);
+    y += 10;
+
+    const halfWidth = (pageWidth - margin * 2 - 20) / 2;
+    const levelChartImg = await renderOffscreenChart({
+      type: 'doughnut',
+      data: charts.level.data,
+      options: {
+        responsive: false,
+        animation: false,
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 16, font: { size: 15 }, padding: 14 } } },
+      },
+    }, 640, 520);
+    const componentChartImg = await renderOffscreenChart({
+      type: 'bar',
+      data: {
+        labels: latestComponentLegend.map(c => c.short),
+        datasets: [{ data: charts.component.data.datasets[0].data, backgroundColor: '#9D212B', borderRadius: 6 }],
+      },
+      options: {
+        responsive: false,
+        animation: false,
+        indexAxis: 'y',
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { max: 100, ticks: { callback: v => v + '%', font: { size: 15 } } },
+          y: { ticks: { font: { size: 17 } } },
+        },
+      },
+    }, 640, 520);
+
+    const h1 = (520 / 640) * halfWidth;
+    const h2 = (520 / 640) * halfWidth;
+    const rowHeight = Math.max(h1, h2);
+    doc.addImage(levelChartImg, 'PNG', margin, y, halfWidth, h1);
+    doc.addImage(componentChartImg, 'PNG', margin + halfWidth + 20, y, halfWidth, h2);
+    y += rowHeight + 14;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(90, 67, 68);
+    latestComponentLegend.forEach(c => {
+      doc.text(`${c.short} = ${c.full}`, margin, y);
+      y += 11;
+    });
+    y += 14;
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(13);
+    doc.setTextColor(0, 0, 0);
     doc.text('Detalhe por indicador', margin, y);
-    y += 18;
+    y += 16;
 
-    doc.setFontSize(8.5);
-    const colX = [margin, margin + 40, margin + 250, margin + 320, margin + 420, margin + 480];
+    const tableRight = pageWidth - margin;
+    const colX = [margin + 4, margin + 62, margin + 250, margin + 320, margin + 420, margin + 480];
     const headers = ['Nível', 'Indicador', 'Base', 'Valor', 'Meta', 'Progr.'];
-    doc.setFont('helvetica', 'bold');
-    headers.forEach((h, i) => doc.text(h, colX[i], y));
-    y += 6;
-    doc.setDrawColor(221, 214, 210);
-    doc.line(margin, y, pageWidth - margin, y);
-    y += 12;
-    doc.setFont('helvetica', 'normal');
+    const levelAbbrev = { 'Intermédio': 'Interm.' };
+    const rowHPad = 4;
+
+    function drawTableHeader(yPos) {
+      doc.setFillColor(245, 238, 233);
+      doc.rect(margin, yPos - 12, tableRight - margin, 18, 'F');
+      doc.setDrawColor(157, 33, 43);
+      doc.setLineWidth(1);
+      doc.line(margin, yPos - 12, tableRight, yPos - 12);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.setTextColor(90, 33, 38);
+      headers.forEach((h, i) => doc.text(h, colX[i], yPos));
+      doc.setDrawColor(221, 214, 210);
+      doc.setLineWidth(0.6);
+      doc.line(margin, yPos + 6, tableRight, yPos + 6);
+      return yPos + 6 + 12;
+    }
+
+    doc.setLineWidth(0.6);
+    y = drawTableHeader(y);
+    let rowIndex = 0;
 
     latestRows.forEach(r => {
-      if (y > pageHeight - margin - 20) {
+      const nameLines = doc.splitTextToSize(r.ind.name, 165);
+      const rowHeight2 = Math.max(15, nameLines.length * 10 + rowHPad);
+
+      if (y + rowHeight2 > pageHeight - margin - 10) {
+        doc.setDrawColor(157, 33, 43);
+        doc.setLineWidth(1);
+        doc.line(margin, y - 4, tableRight, y - 4);
         doc.addPage();
         y = 50;
+        y = drawTableHeader(y);
+        rowIndex = 0;
       }
-      const nameLines = doc.splitTextToSize(r.ind.name, 205);
-      doc.text(r.ind.level, colX[0], y);
+
+      if (rowIndex % 2 === 1) {
+        doc.setFillColor(250, 247, 245);
+        doc.rect(margin, y - 9, tableRight - margin, rowHeight2, 'F');
+      }
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(0, 0, 0);
+      const levelText = levelAbbrev[r.ind.level] || r.ind.level;
+      doc.text(levelText, colX[0], y);
       doc.text(nameLines, colX[1], y);
       doc.text(String(r.ind.baseline), colX[2], y);
       doc.text(r.currentValue !== null ? `${r.currentValue}` : '—', colX[3], y);
       doc.text(`${r.finalTarget.value}`, colX[4], y);
       doc.text(r.pct !== null ? `${r.pct}%` : '—', colX[5], y);
-      y += Math.max(14, nameLines.length * 10);
+
+      y += rowHeight2;
+      rowIndex += 1;
     });
+
+    doc.setDrawColor(157, 33, 43);
+    doc.setLineWidth(1);
+    doc.line(margin, y - 4, tableRight, y - 4);
 
     doc.save(`relatorio-publico-me-mozcommunity-${new Date().toISOString().slice(0, 10)}.pdf`);
   } catch (err) {
@@ -428,6 +509,16 @@ function periodInAnalysisLabel() {
   const MONTHS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
   const now = new Date();
   return `Maio/2026 a ${MONTHS[now.getMonth()]}/${now.getFullYear()}`;
+}
+
+async function renderOffscreenChart(config, width, height) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const chart = new Chart(canvas, { ...config, options: { ...config.options, animation: false, responsive: false } });
+  const dataUrl = canvas.toDataURL('image/png', 1.0);
+  chart.destroy();
+  return dataUrl;
 }
 
 function escapeHtml(str) {
