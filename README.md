@@ -440,3 +440,47 @@ Corrigi três coisas nos dois relatórios em PDF (interno e público):
    alternadas (zebra) para facilitar a leitura, e um traço bordô a marcar
    claramente o início e o fim de cada tabela — mesmo quando a tabela
    continua numa página seguinte.
+
+## Relatórios redesenhados: gráficos de coluna e 4 vistas separadas
+
+Reformulação grande dos relatórios (interno e público):
+
+**Gráficos** — todos passaram a gráficos de **coluna** (barras verticais):
+- **Indicadores por nível**: só PrDO e PDO (os indicadores intermédios já
+  aparecem separados por componente no gráfico ao lado)
+- **Progresso médio por componente**: eixo com códigos curtos **C1, C2,
+  C3, C4** (sem ponto), com legenda por baixo a dizer o que cada um é
+- **Estágio dos indicadores** (novo): quantos estão **em atraso**, quantos
+  já **alcançaram a meta**, e quantos estão **dentro do prazo** — a
+  classificação compara o valor actual com a meta-marco mais recente já
+  passada no calendário (ex: se já passou Maio/2027 e o valor ainda não
+  chegou à meta desse ano, conta como "em atraso")
+
+**Tabelas** — a tabela única "Detalhe por indicador" foi substituída por
+três tabelas separadas:
+1. **Indicadores de Programa (PrDO e PDO)**
+2. **Indicadores Intermédios** (com a componente em vez do nível, já que
+   todos são "Intermédio")
+3. **Progresso médio por nível** — uma tabela-resumo com PrDO, PDO e
+   Intermédio lado a lado, cada um com o número de indicadores e o
+   progresso médio
+
+Todas as tabelas mantêm o desenho com cabeçalho, zebra, e traços de
+início/fim introduzido anteriormente.
+
+## Relatório Descritivo (compilação das notas de processo)
+
+Nova secção, no **relatório interno** (`relatorios.html`), tanto no ecrã
+como no PDF: **"Relatório Descritivo"**. Compila, indicador a indicador,
+todos os resumos de processo ("Descreva o resumo do processo") escritos
+ao longo das submissões aprovadas — com o período, quem submeteu, e a
+data — dando uma narrativa legível de como cada indicador foi apurado,
+sem teres de ir ver o histórico de cada indicador manualmente.
+
+**Nota importante**: esta secção só existe no relatório **interno**, não
+no relatório público. As notas de processo nunca foram guardadas no
+espelho público (por serem informação de processo interno, potencialmente
+com detalhes sensíveis) — se quiseres que o relatório público também
+tenha esta secção, é preciso decidir conscientemente tornar essas notas
+públicas, o que implica alterar o que é guardado no espelho público. Diz-
+me se queres isso e eu faço a alteração.

@@ -711,6 +711,44 @@ const ME = (() => {
     return { value: sorted[0].value, isSum: false, period: sorted[0].period };
   }
 
+  // Classifica o estágio de um indicador face às suas metas:
+  // - 'alcancada'  → já atingiu ou ultrapassou a meta final
+  // - 'atraso'     → já passou pelo menos uma meta-marco (checkpoint) e
+  //                  o valor actual ainda está abaixo dela
+  // - 'prazo'      → ainda dentro do previsto (nenhuma meta-marco já
+  //                  passada, ou já cumpriu a mais recente que passou)
+  // - null         → não classificável (indicador de texto, ou sem metas
+  //                  numéricas/Sim-Não definidas)
+  function classifyStage(ind, currentValue) {
+    const isNumeric = !ind.isTextIndicator && !ind.isYesNoIndicator;
+    if (ind.isTextIndicator) return null;
+    if (!ind.targets || !ind.targets.length) return null;
+
+    const finalTarget = ind.targets[ind.targets.length - 1];
+    const nowKey = (() => {
+      const d = new Date();
+      return (d.getFullYear()) * 100 + (d.getMonth() + 1);
+    })();
+
+    if (isNumeric) {
+      if (currentValue !== null && typeof finalTarget.value === 'number' && currentValue >= finalTarget.value) return 'alcancada';
+      const passed = ind.targets.filter(t => typeof t.value === 'number' && periodSortKey(t.period) <= nowKey);
+      if (!passed.length) return 'prazo';
+      const mostRecent = passed.reduce((a, b) => (periodSortKey(b.period) > periodSortKey(a.period) ? b : a));
+      const value = currentValue || 0;
+      return value >= mostRecent.value ? 'prazo' : 'atraso';
+    }
+
+    // Sim/Não: compara o valor mais recente com a meta do checkpoint mais
+    // recente já passado (ex: já devia ser "Sim" a partir de determinada data).
+    if (currentValue !== null && currentValue === finalTarget.value) return 'alcancada';
+    const passed = ind.targets.filter(t => periodSortKey(t.period) <= nowKey);
+    if (!passed.length) return 'prazo';
+    const mostRecent = passed.reduce((a, b) => (periodSortKey(b.period) > periodSortKey(a.period) ? b : a));
+    if (currentValue === null) return 'atraso';
+    return currentValue === mostRecent.value ? 'prazo' : 'atraso';
+  }
+
   async function reviewValue(valueId, { approve, review_note }) {
     const admin = getCurrentAdminSync();
     if (!admin || admin.noProfile) throw new Error('A tua conta não tem permissões configuradas.');
@@ -857,7 +895,7 @@ const ME = (() => {
     getIndicators, getIndicator, getComponents, getLevels, getSubmissionPeriodFields, combinePeriod, periodSortKey,
     upsertIndicator, deleteIndicator,
     getProvinces, getDistricts, getBeneficiaryStatuses,
-    submitValue, listValues, listApprovedValues, computeCurrentValue, reviewValue, deleteValue, resetAllValues, listPublicValues, subscribePendingCount,
+    submitValue, listValues, listApprovedValues, computeCurrentValue, classifyStage, reviewValue, deleteValue, resetAllValues, listPublicValues, subscribePendingCount,
     adminLogin, adminLogout, onAuthChange, getCurrentAdminSync, changeAdminPassword,
     listAdminUsers, upsertAdminUser, removeAdminUser,
   };

@@ -19,6 +19,11 @@
   .progress-bar { width: 100%; height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; }
   .progress-bar-fill { height: 100%; background: var(--teal); }
   .level-tag { font-size: 0.72rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: var(--gold-tint); color: #8A5F13; white-space: nowrap; }
+  .desc-card { background: var(--paper-raised); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; margin-bottom: 14px; }
+  .desc-card h4 { font-size: 0.95rem; margin: 0 0 4px; }
+  .desc-entry { border-top: 1px solid var(--line); padding: 8px 0; font-size: 0.85rem; }
+  .desc-entry:first-of-type { border-top: none; padding-top: 4px; }
+  .desc-entry .desc-meta { font-family: var(--font-mono); font-size: 0.72rem; color: var(--ink-muted); margin-bottom: 2px; }
 </style>
 </head>
 <body>
@@ -119,27 +124,57 @@
   <section style="padding-top:0;">
     <div class="container" style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
       <div class="chart-card">
-        <h3>Indicadores por nível</h3>
-        <div class="chart-sub">De acordo com os filtros seleccionados</div>
-        <canvas id="chart-level" height="200"></canvas>
+        <h3>Indicadores por nível (PrDO / PDO)</h3>
+        <div class="chart-sub">Programa e Projecto — indicadores intermédios são vistos por componente</div>
+        <canvas id="chart-level" height="220"></canvas>
       </div>
       <div class="chart-card">
         <h3>Progresso médio por componente</h3>
-        <div class="chart-sub">Indicadores numéricos apenas (%)</div>
-        <canvas id="chart-component" height="200"></canvas>
+        <div class="chart-sub">C1–C4 · indicadores intermédios numéricos</div>
+        <canvas id="chart-component" height="220"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding-top:0;">
+    <div class="container">
+      <div class="chart-card">
+        <h3>Estágio dos indicadores</h3>
+        <div class="chart-sub">Face às metas do Quadro de Resultados, à data de hoje</div>
+        <canvas id="chart-stage" height="140"></canvas>
       </div>
     </div>
   </section>
 
   <section>
     <div class="container">
-      <h3 style="margin-bottom:14px;">Detalhe por indicador</h3>
-      <table class="report-table" id="report-table">
+      <h3 style="margin-bottom:14px;">Indicadores de Programa (PrDO e PDO)</h3>
+      <table class="report-table" id="table-program">
         <thead><tr><th>Nível</th><th>Indicador</th><th>Base</th><th>Valor do indicador</th><th>Meta</th><th>Progresso</th></tr></thead>
-        <tbody id="report-tbody">
+        <tbody id="tbody-program">
           <tr><td colspan="6" class="skeleton" style="height:40px;"></td></tr>
         </tbody>
       </table>
+
+      <h3 style="margin:32px 0 14px;">Indicadores Intermédios</h3>
+      <table class="report-table" id="table-intermediate">
+        <thead><tr><th>Componente</th><th>Indicador</th><th>Base</th><th>Valor do indicador</th><th>Meta</th><th>Progresso</th></tr></thead>
+        <tbody id="tbody-intermediate">
+          <tr><td colspan="6" class="skeleton" style="height:40px;"></td></tr>
+        </tbody>
+      </table>
+
+      <h3 style="margin:32px 0 14px;">Progresso médio por nível</h3>
+      <table class="report-table" id="table-avg-level">
+        <thead><tr><th>Nível</th><th>Nº de indicadores</th><th>Progresso médio</th></tr></thead>
+        <tbody id="tbody-avg-level">
+          <tr><td colspan="3" class="skeleton" style="height:40px;"></td></tr>
+        </tbody>
+      </table>
+
+      <h3 style="margin:32px 0 6px;">Relatório Descritivo</h3>
+      <p class="small-note" style="margin:0 0 14px;">Compilação dos resumos de processo escritos ao registar cada valor aprovado — explica, indicador a indicador, como o progresso foi apurado.</p>
+      <div id="descriptive-report"></div>
     </div>
   </section>
 </main>
@@ -160,6 +195,11 @@ const ADIN_LOGO_BASE64 = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wB
 
 let charts = {};
 let latestRows = [];
+let latestProgramRows = [];
+let latestIntermediateRows = [];
+let latestAvgByLevel = [];
+let latestStageCounts = { atraso: 0, alcancada: 0, prazo: 0 };
+let latestDescriptiveRows = [];
 let latestComponentLegend = []; // [{short: 'C.1', full: 'Componente 1 — ...'}]
 let currentAdmin = null;
 
@@ -238,7 +278,9 @@ async function loadReport() {
     status: document.getElementById('f-status').value,
   };
 
-  document.getElementById('report-tbody').innerHTML = `<tr><td colspan="6" class="skeleton" style="height:40px;"></td></tr>`;
+  ['tbody-program', 'tbody-intermediate', 'tbody-avg-level'].forEach(id => {
+    document.getElementById(id).innerHTML = `<tr><td colspan="6" class="skeleton" style="height:40px;"></td></tr>`;
+  });
 
   let indicators = await ME.getIndicators();
   if (level) indicators = indicators.filter(i => i.level === level);
@@ -267,7 +309,16 @@ async function loadReport() {
       if (isNumeric && currentValue !== null && typeof finalTarget.value === 'number' && finalTarget.value > 0) {
         pct = Math.min(100, Math.round((currentValue / finalTarget.value) * 100));
       }
-      return { ind, currentValue, hasApproved: approved.length > 0, finalTarget, isNumeric, pct };
+      const stage = ME.classifyStage(ind, currentValue);
+
+      // Notas ("resumo do processo") de cada submissão aprovada, para
+      // compilar o relatório descritivo mais abaixo.
+      const notes = approved
+        .filter(v => v.note && v.note.trim())
+        .map(v => ({ period: v.period, note: v.note.trim(), submitted_by: v.submitted_by, submitted_at: v.submitted_at }))
+        .sort((a, b) => ME.periodSortKey(a.period) - ME.periodSortKey(b.period));
+
+      return { ind, currentValue, hasApproved: approved.length > 0, finalTarget, isNumeric, pct, stage, notes };
     }));
     latestRows = rows;
 
@@ -285,48 +336,107 @@ async function loadReport() {
       <div class="stat-tile"><div class="n">${avgPct ?? '—'}${avgPct !== null ? '%' : ''}</div><div class="label">Progresso médio</div></div>
     `;
 
-    // ---- Tabela ----
-    document.getElementById('report-tbody').innerHTML = rows.map(r => `
+    // ---- Separação: Programa (PrDO/PDO) vs Intermédios ----
+    const programRows = rows.filter(r => r.ind.level === 'PrDO' || r.ind.level === 'PDO');
+    const intermediateRows = rows.filter(r => r.ind.level === 'Intermédio');
+    latestProgramRows = programRows;
+    latestIntermediateRows = intermediateRows;
+
+    const rowHtml = (r, firstColHtml) => `
       <tr>
-        <td><span class="level-tag">${r.ind.level}</span></td>
+        <td>${firstColHtml}</td>
         <td>${escapeHtml(r.ind.name)}</td>
         <td class="small-note">${escapeHtml(String(r.ind.baseline))}</td>
         <td>${r.currentValue !== null ? escapeHtml(String(r.currentValue)) : '<span class="small-note">—</span>'}</td>
         <td class="small-note">${escapeHtml(String(r.finalTarget.value))}</td>
         <td>${r.pct !== null ? `<div class="progress-bar"><div class="progress-bar-fill" style="width:${r.pct}%;"></div></div><span class="small-note">${r.pct}%</span>` : '<span class="small-note">—</span>'}</td>
+      </tr>`;
+
+    document.getElementById('tbody-program').innerHTML = programRows
+      .map(r => rowHtml(r, `<span class="level-tag">${r.ind.level}</span>`)).join('')
+      || `<tr><td colspan="6" class="small-note" style="padding:20px;">Nenhum indicador de programa encontrado com estes filtros.</td></tr>`;
+
+    document.getElementById('tbody-intermediate').innerHTML = intermediateRows
+      .map(r => rowHtml(r, `<span class="small-note">${escapeHtml((r.ind.component || '').replace('Componente ', 'C'))}</span>`)).join('')
+      || `<tr><td colspan="6" class="small-note" style="padding:20px;">Nenhum indicador intermédio encontrado com estes filtros.</td></tr>`;
+
+    // ---- Progresso médio por nível ----
+    const levels = ['PrDO', 'PDO', 'Intermédio'];
+    const avgByLevel = levels.map(lv => {
+      const lvRows = rows.filter(r => r.ind.level === lv && r.pct !== null);
+      const avg = lvRows.length ? Math.round(lvRows.reduce((a, b) => a + b.pct, 0) / lvRows.length) : null;
+      return { level: lv, count: rows.filter(r => r.ind.level === lv).length, avg };
+    });
+    latestAvgByLevel = avgByLevel;
+    document.getElementById('tbody-avg-level').innerHTML = avgByLevel.map(l => `
+      <tr>
+        <td><span class="level-tag">${l.level}</span></td>
+        <td>${l.count}</td>
+        <td>${l.avg !== null ? `<div class="progress-bar" style="max-width:160px;"><div class="progress-bar-fill" style="width:${l.avg}%;"></div></div><span class="small-note">${l.avg}%</span>` : '<span class="small-note">—</span>'}</td>
       </tr>
-    `).join('') || `<tr><td colspan="6" class="small-note" style="padding:20px;">Nenhum indicador encontrado com estes filtros.</td></tr>`;
+    `).join('') || `<tr><td colspan="3" class="small-note" style="padding:20px;">Sem dados.</td></tr>`;
 
-    // ---- Gráficos ----
+    // ---- Relatório Descritivo (compilação das notas por indicador) ----
+    const withNotes = rows.filter(r => r.notes.length);
+    latestDescriptiveRows = withNotes;
+    document.getElementById('descriptive-report').innerHTML = withNotes.length
+      ? withNotes.map(r => `
+        <div class="desc-card">
+          <span class="level-tag">${r.ind.level}</span>
+          <h4>${escapeHtml(r.ind.name)}</h4>
+          ${r.notes.map(n => `
+            <div class="desc-entry">
+              <div class="desc-meta">${escapeHtml(n.period)} · ${escapeHtml(n.submitted_by)} · ${formatDate(n.submitted_at)}</div>
+              <div>${escapeHtml(n.note)}</div>
+            </div>
+          `).join('')}
+        </div>
+      `).join('')
+      : `<p class="small-note">Ainda não há resumos de processo registados para os indicadores nestes filtros.</p>`;
+
+    // ---- Estágio dos indicadores ----
+    const stageCounts = { atraso: 0, alcancada: 0, prazo: 0 };
+    rows.forEach(r => { if (r.stage) stageCounts[r.stage] += 1; });
+    latestStageCounts = stageCounts;
+
+    // ---- Gráficos (todos de coluna, conforme pedido) ----
     destroyCharts();
-    const PALETTE = ['#9D212B', '#FAA842', '#5A4344', '#D9773A', '#C8555F', '#7A1921', '#E8B98A', '#B08A80'];
 
-    const byLevel = {};
-    rows.forEach(r => { byLevel[r.ind.level] = (byLevel[r.ind.level] || 0) + 1; });
+    const byLevelProgram = { PrDO: 0, PDO: 0 };
+    rows.forEach(r => { if (byLevelProgram.hasOwnProperty(r.ind.level)) byLevelProgram[r.ind.level] += 1; });
     charts.level = new Chart(document.getElementById('chart-level'), {
-      type: 'doughnut',
-      data: { labels: Object.keys(byLevel), datasets: [{ data: Object.values(byLevel), backgroundColor: PALETTE, borderWidth: 0 }] },
-      options: { plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { family: 'Public Sans' } } } } }
+      type: 'bar',
+      data: { labels: Object.keys(byLevelProgram), datasets: [{ data: Object.values(byLevelProgram), backgroundColor: ['#9D212B', '#FAA842'], borderRadius: 4 }] },
+      options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
     });
 
     const byComponent = {};
     rows.filter(r => r.ind.component && r.pct !== null).forEach(r => {
-      const key = r.ind.component.replace('Componente ', 'C.');
+      const m = r.ind.component.match(/Componente (\d)/);
+      const key = m ? `C${m[1]}` : r.ind.component;
       if (!byComponent[key]) byComponent[key] = { values: [], fullName: r.ind.component };
       byComponent[key].values.push(r.pct);
     });
-    const compLabels = Object.keys(byComponent);
+    const compLabels = Object.keys(byComponent).sort();
     const compValues = compLabels.map(k => Math.round(byComponent[k].values.reduce((a, b) => a + b, 0) / byComponent[k].values.length));
-    const compFullNames = compLabels.map(k => byComponent[k].fullName);
-    latestComponentLegend = compLabels.map((k, i) => ({ short: k, full: compFullNames[i] }));
+    latestComponentLegend = compLabels.map(k => ({ short: k, full: byComponent[k].fullName }));
     charts.component = new Chart(document.getElementById('chart-component'), {
       type: 'bar',
       data: { labels: compLabels, datasets: [{ data: compValues, backgroundColor: '#9D212B', borderRadius: 4 }] },
-      options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { max: 100, ticks: { callback: v => v + '%' } } } }
+      options: { plugins: { legend: { display: false } }, scales: { y: { max: 100, beginAtZero: true, ticks: { callback: v => v + '%' } } } }
+    });
+
+    charts.stage = new Chart(document.getElementById('chart-stage'), {
+      type: 'bar',
+      data: {
+        labels: ['Em atraso', 'Metas alcançadas', 'Dentro do prazo'],
+        datasets: [{ data: [stageCounts.atraso, stageCounts.alcancada, stageCounts.prazo], backgroundColor: ['#9D212B', '#3F7D5C', '#FAA842'], borderRadius: 4 }],
+      },
+      options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } } }
     });
   } catch (err) {
     console.error(err);
-    document.getElementById('report-tbody').innerHTML = `<tr><td colspan="6"><div class="alert alert-error">Não foi possível carregar o relatório.</div></td></tr>`;
+    document.getElementById('tbody-program').innerHTML = `<tr><td colspan="6"><div class="alert alert-error">Não foi possível carregar o relatório.</div></td></tr>`;
   }
 }
 
@@ -405,50 +515,42 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
     doc.line(margin, y, pageWidth - margin, y);
     y += 24;
 
-    // ---- Gráficos (versões maiores e com letra maior, próprias para o
-    // PDF — não são só uma captura dos gráficos pequenos do ecrã) ----
+    // ---- Gráficos (todos de coluna, versões maiores e com letra maior,
+    // próprias para o PDF — não são só uma captura do ecrã) ----
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
-    doc.text('Indicadores por nível', margin, y);
+    doc.text('Indicadores por nível (PrDO/PDO)', margin, y);
     doc.text('Progresso médio por componente', margin + (pageWidth - margin * 2) / 2 + 14, y);
     y += 10;
 
     const halfWidth = (pageWidth - margin * 2 - 20) / 2;
     const levelChartImg = await renderOffscreenChart({
-      type: 'doughnut',
+      type: 'bar',
       data: charts.level.data,
       options: {
-        responsive: false,
-        animation: false,
-        plugins: { legend: { position: 'bottom', labels: { boxWidth: 16, font: { size: 15 }, padding: 14 } } },
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { font: { size: 15 }, stepSize: 1 } }, x: { ticks: { font: { size: 16 } } } },
       },
     }, 640, 520);
     const componentChartImg = await renderOffscreenChart({
       type: 'bar',
-      data: {
-        labels: latestComponentLegend.map(c => c.short),
-        datasets: [{ data: charts.component.data.datasets[0].data, backgroundColor: '#9D212B', borderRadius: 6 }],
-      },
+      data: charts.component.data,
       options: {
-        responsive: false,
-        animation: false,
-        indexAxis: 'y',
         plugins: { legend: { display: false } },
         scales: {
-          x: { max: 100, ticks: { callback: v => v + '%', font: { size: 15 } } },
-          y: { ticks: { font: { size: 17 } } },
+          y: { max: 100, beginAtZero: true, ticks: { callback: v => v + '%', font: { size: 15 } } },
+          x: { ticks: { font: { size: 17 } } },
         },
       },
     }, 640, 520);
 
     const h1 = (520 / 640) * halfWidth;
     const h2 = (520 / 640) * halfWidth;
-    const rowHeight = Math.max(h1, h2);
     doc.addImage(levelChartImg, 'PNG', margin, y, halfWidth, h1);
     doc.addImage(componentChartImg, 'PNG', margin + halfWidth + 20, y, halfWidth, h2);
-    y += rowHeight + 14;
+    y += Math.max(h1, h2) + 14;
 
-    // Legenda dos códigos de componente usados no gráfico (C.1, C.2...)
+    // Legenda dos códigos de componente usados no gráfico (C1, C2...)
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8.5);
     doc.setTextColor(90, 67, 68);
@@ -456,84 +558,120 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
       doc.text(`${c.short} = ${c.full}`, margin, y);
       y += 11;
     });
-    y += 14;
+    y += 18;
 
-    // Tabela de indicadores
+    // Gráfico de estágio dos indicadores (largura total)
+    if (y > pageHeight - margin - 160) { doc.addPage(); y = 50; }
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(13);
+    doc.setFontSize(12);
     doc.setTextColor(0, 0, 0);
-    doc.text('Detalhe por indicador', margin, y);
-    y += 16;
+    doc.text('Estágio dos indicadores face às metas', margin, y);
+    y += 10;
+    const stageChartImg = await renderOffscreenChart({
+      type: 'bar',
+      data: charts.stage.data,
+      options: {
+        indexAxis: 'y',
+        plugins: { legend: { display: false } },
+        scales: { x: { beginAtZero: true, ticks: { font: { size: 15 }, stepSize: 1 } }, y: { ticks: { font: { size: 16 } } } },
+      },
+    }, 900, 320);
+    const stageImgWidth = pageWidth - margin * 2;
+    const stageImgHeight = (320 / 900) * stageImgWidth;
+    doc.addImage(stageChartImg, 'PNG', margin, y, stageImgWidth, stageImgHeight);
+    y += stageImgHeight + 24;
 
-    // ---- Desenho da tabela: cabeçalho com fundo, linhas alternadas,
-    // e traços claros de início/fim, mesmo quando quebra para página nova.
+    // ---- Tabelas ----
     const tableRight = pageWidth - margin;
-    const colX = [margin + 4, margin + 62, margin + 250, margin + 320, margin + 420, margin + 480];
-    const headers = ['Nível', 'Indicador', 'Base', 'Valor', 'Meta', 'Progr.'];
-    const levelAbbrev = { 'Intermédio': 'Interm.' };
-    const rowHPad = 4;
 
-    function drawTableHeader(yPos) {
-      doc.setFillColor(245, 238, 233);
-      doc.rect(margin, yPos - 12, tableRight - margin, 18, 'F');
-      doc.setDrawColor(157, 33, 43);
-      doc.setLineWidth(1);
-      doc.line(margin, yPos - 12, tableRight, yPos - 12);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8.5);
-      doc.setTextColor(90, 33, 38);
-      headers.forEach((h, i) => doc.text(h, colX[i], yPos));
-      doc.setDrawColor(221, 214, 210);
-      doc.setLineWidth(0.6);
-      doc.line(margin, yPos + 6, tableRight, yPos + 6);
-      return yPos + 6 + 12;
-    }
-
-    doc.setLineWidth(0.6);
-    y = drawTableHeader(y);
-    let rowIndex = 0;
-
-    latestRows.forEach(r => {
-      const nameLines = doc.splitTextToSize(r.ind.name, 165);
-      const rowHeight = Math.max(15, nameLines.length * 10 + rowHPad);
-
-      if (y + rowHeight > pageHeight - margin - 10) {
-        // Fecha a tabela na página actual com um traço final, e reabre
-        // o cabeçalho na página seguinte.
-        doc.setDrawColor(157, 33, 43);
-        doc.setLineWidth(1);
-        doc.line(margin, y - 4, tableRight, y - 4);
-        doc.addPage();
-        y = 50;
-        y = drawTableHeader(y);
-        rowIndex = 0;
-      }
-
-      // Fundo alternado (zebra) para facilitar a leitura
-      if (rowIndex % 2 === 1) {
-        doc.setFillColor(250, 247, 245);
-        doc.rect(margin, y - 9, tableRight - margin, rowHeight, 'F');
-      }
-
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8.5);
-      doc.setTextColor(0, 0, 0);
-      const levelText = levelAbbrev[r.ind.level] || r.ind.level;
-      doc.text(levelText, colX[0], y);
-      doc.text(nameLines, colX[1], y);
-      doc.text(String(r.ind.baseline), colX[2], y);
-      doc.text(r.currentValue !== null ? `${r.currentValue}` : '—', colX[3], y);
-      doc.text(`${r.finalTarget.value}`, colX[4], y);
-      doc.text(r.pct !== null ? `${r.pct}%` : '—', colX[5], y);
-
-      y += rowHeight;
-      rowIndex += 1;
+    y = renderPdfTable(doc, y, {
+      title: 'Indicadores de Programa (PrDO e PDO)',
+      headers: ['Nível', 'Indicador', 'Base', 'Valor', 'Meta', 'Progr.'],
+      colX: [margin + 4, margin + 62, margin + 250, margin + 320, margin + 420, margin + 480],
+      nameColIndex: 1,
+      wrapWidth: 165,
+      rows: latestProgramRows,
+      cellFn: r => [r.ind.level, r.ind.name, String(r.ind.baseline), r.currentValue !== null ? `${r.currentValue}` : '—', `${r.finalTarget.value}`, r.pct !== null ? `${r.pct}%` : '—'],
+      margin, tableRight, pageWidth, pageHeight,
     });
+    y += 24;
 
-    // Traço final a fechar a tabela
-    doc.setDrawColor(157, 33, 43);
-    doc.setLineWidth(1);
-    doc.line(margin, y - 4, tableRight, y - 4);
+    if (y > pageHeight - margin - 60) { doc.addPage(); y = 50; }
+    y = renderPdfTable(doc, y, {
+      title: 'Indicadores Intermédios',
+      headers: ['Comp.', 'Indicador', 'Base', 'Valor', 'Meta', 'Progr.'],
+      colX: [margin + 4, margin + 62, margin + 250, margin + 320, margin + 420, margin + 480],
+      nameColIndex: 1,
+      wrapWidth: 165,
+      rows: latestIntermediateRows,
+      cellFn: r => [(r.ind.component || '').replace('Componente ', 'C').match(/C\d/)?.[0] || '—', r.ind.name, String(r.ind.baseline), r.currentValue !== null ? `${r.currentValue}` : '—', `${r.finalTarget.value}`, r.pct !== null ? `${r.pct}%` : '—'],
+      margin, tableRight, pageWidth, pageHeight,
+    });
+    y += 24;
+
+    if (y > pageHeight - margin - 100) { doc.addPage(); y = 50; }
+    y = renderPdfTable(doc, y, {
+      title: 'Progresso médio por nível',
+      headers: ['Nível', 'Nº de indicadores', 'Progresso médio'],
+      colX: [margin + 4, margin + 130, margin + 260],
+      nameColIndex: -1,
+      wrapWidth: 0,
+      rows: latestAvgByLevel,
+      cellFn: l => [l.level, String(l.count), l.avg !== null ? `${l.avg}%` : '—'],
+      margin, tableRight, pageWidth, pageHeight,
+    });
+    y += 28;
+
+    // ---- Relatório Descritivo (compilação das notas por indicador) ----
+    if (latestDescriptiveRows.length) {
+      doc.addPage();
+      y = 50;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(15);
+      doc.setTextColor(0, 0, 0);
+      doc.text('Relatório Descritivo', margin, y);
+      y += 14;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(90, 67, 68);
+      const introLines = doc.splitTextToSize('Compilação dos resumos de processo escritos ao registar cada valor aprovado — explica, indicador a indicador, como o progresso foi apurado.', pageWidth - margin * 2);
+      doc.text(introLines, margin, y);
+      y += introLines.length * 11 + 16;
+
+      latestDescriptiveRows.forEach(r => {
+        // Cabeçalho do indicador — garante que não fica sozinho no fundo da página
+        if (y > pageHeight - margin - 60) { doc.addPage(); y = 50; }
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10.5);
+        doc.setTextColor(157, 33, 43);
+        const titleLines = doc.splitTextToSize(`${r.ind.level} — ${r.ind.name}`, pageWidth - margin * 2);
+        doc.text(titleLines, margin, y);
+        y += titleLines.length * 12 + 4;
+        doc.setDrawColor(221, 214, 210);
+        doc.setLineWidth(0.6);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 12;
+
+        r.notes.forEach(n => {
+          const noteLines = doc.splitTextToSize(n.note, pageWidth - margin * 2);
+          const blockHeight = 12 + noteLines.length * 11 + 10;
+          if (y + blockHeight > pageHeight - margin - 10) { doc.addPage(); y = 50; }
+
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(8.5);
+          doc.setTextColor(90, 67, 68);
+          doc.text(`${n.period} · ${n.submitted_by} · ${formatDate(n.submitted_at)}`, margin, y);
+          y += 12;
+
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(9);
+          doc.setTextColor(0, 0, 0);
+          doc.text(noteLines, margin, y);
+          y += noteLines.length * 11 + 10;
+        });
+        y += 8;
+      });
+    }
 
     doc.save(`relatorio-indicadores-me-mozcommunity-${new Date().toISOString().slice(0, 10)}.pdf`);
   } catch (err) {
@@ -565,6 +703,92 @@ async function renderOffscreenChart(config, width, height) {
   const dataUrl = canvas.toDataURL('image/png', 1.0);
   chart.destroy();
   return dataUrl;
+}
+
+// Desenha uma tabela com título, cabeçalho com fundo, linhas alternadas
+// (zebra), e traços claros de início/fim — mesmo quando a tabela quebra
+// para uma página nova. Devolve a posição Y final (depois da tabela).
+function renderPdfTable(doc, startY, opts) {
+  const { title, headers, colX, rows, cellFn, nameColIndex, wrapWidth, margin, tableRight, pageHeight } = opts;
+  let y = startY;
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.setTextColor(0, 0, 0);
+  doc.text(title, margin, y);
+  y += 16;
+
+  if (!rows.length) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(90, 67, 68);
+    doc.text('Nenhum indicador encontrado com estes filtros.', margin, y);
+    return y + 20;
+  }
+
+  const rowHPad = 4;
+  function drawHeader(yPos) {
+    doc.setFillColor(245, 238, 233);
+    doc.rect(margin, yPos - 12, tableRight - margin, 18, 'F');
+    doc.setDrawColor(157, 33, 43);
+    doc.setLineWidth(1);
+    doc.line(margin, yPos - 12, tableRight, yPos - 12);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.setTextColor(90, 33, 38);
+    headers.forEach((h, i) => doc.text(h, colX[i], yPos));
+    doc.setDrawColor(221, 214, 210);
+    doc.setLineWidth(0.6);
+    doc.line(margin, yPos + 6, tableRight, yPos + 6);
+    return yPos + 6 + 12;
+  }
+
+  doc.setLineWidth(0.6);
+  y = drawHeader(y);
+  let rowIndex = 0;
+
+  rows.forEach(r => {
+    const cells = cellFn(r);
+    const nameLines = nameColIndex >= 0 ? doc.splitTextToSize(cells[nameColIndex], wrapWidth) : null;
+    const rowHeight = Math.max(15, (nameLines ? nameLines.length : 1) * 10 + rowHPad);
+
+    if (y + rowHeight > pageHeight - margin - 10) {
+      doc.setDrawColor(157, 33, 43);
+      doc.setLineWidth(1);
+      doc.line(margin, y - 4, tableRight, y - 4);
+      doc.addPage();
+      y = 50;
+      y = drawHeader(y);
+      rowIndex = 0;
+    }
+
+    if (rowIndex % 2 === 1) {
+      doc.setFillColor(250, 247, 245);
+      doc.rect(margin, y - 9, tableRight - margin, rowHeight, 'F');
+    }
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(0, 0, 0);
+    cells.forEach((c, i) => {
+      if (i === nameColIndex) doc.text(nameLines, colX[i], y);
+      else doc.text(c, colX[i], y);
+    });
+
+    y += rowHeight;
+    rowIndex += 1;
+  });
+
+  doc.setDrawColor(157, 33, 43);
+  doc.setLineWidth(1);
+  doc.line(margin, y - 4, tableRight, y - 4);
+  return y;
+}
+
+function formatDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 function escapeHtml(str) {
