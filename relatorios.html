@@ -234,7 +234,7 @@ async function loadReport() {
 
   document.getElementById('report-tbody').innerHTML = `<tr><td colspan="6" class="skeleton" style="height:40px;"></td></tr>`;
 
-  let indicators = ME.getIndicators();
+  let indicators = await ME.getIndicators();
   if (level) indicators = indicators.filter(i => i.level === level);
   if (component) indicators = indicators.filter(i => i.component === component);
 

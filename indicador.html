@@ -88,7 +88,7 @@ document.getElementById('logout-link').addEventListener('click', (e) => {
 });
 
 async function loadIndicator() {
-  const ind = ME.getIndicator(indicatorId);
+  const ind = await ME.getIndicator(indicatorId);
   if (!ind) {
     contentEl.innerHTML = '<div class="alert alert-error">Indicador não encontrado.</div>';
     return;
@@ -112,7 +112,6 @@ function render(ind, values) {
     pct = Math.min(100, Math.round((Number(latest.value) / finalTarget.value) * 100));
   }
 
-  const targetsRows = ind.targets.map(t => `<tr><td>${t.period}</td><td>${escapeHtml(String(t.value))}${t.disagg ? ' · ' + Object.entries(t.disagg).map(([k, v]) => `${k}: ${v}`).join(', ') : ''}</td></tr>`).join('');
 
   const statusBadge = { submetido: 'badge-em_analise', aprovado: 'badge-resolvida', rejeitado: 'badge-encerrada' };
   const statusLabel = { submetido: 'Submetido', aprovado: 'Aprovado', rejeitado: 'Rejeitado' };
@@ -156,11 +155,11 @@ function render(ind, values) {
   }
 
   const disaggFieldsHtml = (ind.disaggregation || []).map(d => `
-    <div class="field"><label>${escapeHtml(d)}</label><input type="number" class="disagg-input" data-key="${escapeHtml(d)}" placeholder="Opcional"></div>
+    <div class="field"><label>${escapeHtml(d)} <span class="required">*</span></label><input type="number" class="disagg-input" data-key="${escapeHtml(d)}" required></div>
   `).join('');
 
   const statusFieldsHtml = ME.getBeneficiaryStatuses().map(s => `
-    <div class="field"><label>${escapeHtml(s)}</label><input type="number" class="status-input" data-key="${escapeHtml(s)}" placeholder="Opcional"></div>
+    <div class="field"><label>${escapeHtml(s)} <span class="required">*</span></label><input type="number" class="status-input" data-key="${escapeHtml(s)}" required></div>
   `).join('');
 
   const submitFormHtml = canSubmit ? `
@@ -168,31 +167,31 @@ function render(ind, values) {
       <p class="small-note" style="margin:0 0 12px;">Periodicidade deste indicador: <strong>${escapeHtml(ind.frequency)}</strong></p>
       ${periodFieldsHtml}
       <div class="field">
-        <label for="val-value">Valor ${ind.isYesNoIndicator ? '(Sim/Não)' : ind.isTextIndicator ? '(descrição)' : `(${ind.unit})`}</label>
+        <label for="val-value">Valor ${ind.isYesNoIndicator ? '(Sim/Não)' : ind.isTextIndicator ? '(descrição)' : `(${ind.unit})`} <span class="required">*</span></label>
         ${ind.isYesNoIndicator
-          ? `<select id="val-value"><option value="Sim">Sim</option><option value="Não">Não</option></select>`
+          ? `<select id="val-value" required><option value="Sim">Sim</option><option value="Não">Não</option></select>`
           : ind.isTextIndicator
-            ? `<textarea id="val-value" placeholder="Descreva o estado actual"></textarea>`
-            : `<input type="number" id="val-value" placeholder="Ex: 25">`
+            ? `<textarea id="val-value" placeholder="Descreva o estado actual" required></textarea>`
+            : `<input type="number" id="val-value" placeholder="Ex: 25" required>`
         }
       </div>
       <div class="form-row">
         <div class="field">
-          <label for="val-province">Província <span class="small-note">(opcional)</span></label>
-          <select id="val-province"><option value="">—</option>${ME.getProvinces().map(p => `<option value="${p}">${p}</option>`).join('')}</select>
+          <label for="val-province">Província <span class="required">*</span></label>
+          <select id="val-province" required><option value="">Seleccione...</option>${ME.getProvinces().map(p => `<option value="${p}">${p}</option>`).join('')}</select>
         </div>
         <div class="field">
-          <label for="val-district">Distrito <span class="small-note">(opcional)</span></label>
-          <select id="val-district" disabled><option value="">Seleccione primeiro a província...</option></select>
+          <label for="val-district">Distrito <span class="required">*</span></label>
+          <select id="val-district" disabled required><option value="">Seleccione primeiro a província...</option></select>
         </div>
       </div>
       ${disaggFieldsHtml}
-      <p class="small-note" style="margin:14px 0 6px;">Desagregação por estatuto de beneficiário (opcional):</p>
+      <p class="small-note" style="margin:14px 0 6px;">Desagregação por estatuto de beneficiário:</p>
       ${statusFieldsHtml}
       <div class="field"><label for="val-note">Descreva o resumo do processo <span class="required">*</span></label><textarea id="val-note" placeholder="Explica como este valor foi apurado: o que foi feito, onde, e como foi confirmado" required></textarea></div>
       <div class="field">
-        <label for="val-evidence">Anexar evidência (opcional)</label>
-        <input type="file" id="val-evidence" accept=".jpg,.jpeg,.png,.webp,.pdf" style="padding:8px;">
+        <label for="val-evidence">Anexar evidência <span class="required">*</span></label>
+        <input type="file" id="val-evidence" accept=".jpg,.jpeg,.png,.webp,.pdf" style="padding:8px;" required>
         <div class="hint">Até 200KB, 2 ficheiros.</div>
       </div>
       <button type="button" class="btn btn-primary btn-block" id="submit-value-btn">Submeter para aprovação</button>
@@ -200,7 +199,10 @@ function render(ind, values) {
   ` : '';
 
   contentEl.innerHTML = `
-    <a href="dashboard.html" class="small-note" style="text-decoration:none;">&larr; Voltar aos indicadores</a>
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+      <a href="dashboard.html" class="small-note" style="text-decoration:none;">&larr; Voltar aos indicadores</a>
+      ${currentAdmin.role === 'admin' ? `<a href="indicator-edit.html?id=${encodeURIComponent(ind.id)}" class="btn btn-secondary btn-sm">Editar indicador</a>` : ''}
+    </div>
     <div style="margin-top:14px;">
       <span class="level-tag">${ind.level}</span>
       ${ind.component ? `<span class="small-note" style="margin-left:8px;">${escapeHtml(ind.component)}</span>` : ''}
@@ -237,11 +239,8 @@ function render(ind, values) {
           }
         </div>
 
-        <h3 style="font-size:1.1rem; margin-top:28px;">Valores submetidos e aprovados, por ano e período</h3>
+        <h3 style="font-size:1.1rem; margin-top:28px;">Metas e valores realizados, por ano e período</h3>
         <div style="overflow-x:auto;">${buildYearPeriodTable(ind, values)}</div>
-
-        <h3 style="font-size:1.1rem; margin-top:28px;">Metas por período</h3>
-        <table class="targets-table"><thead><tr><th>Período</th><th>Meta</th></tr></thead><tbody>${targetsRows}</tbody></table>
 
         <h3 style="font-size:1.1rem; margin-top:28px;">Histórico de submissões</h3>
         <ul class="thread-timeline">${historyHtml}</ul>
@@ -275,6 +274,9 @@ function buildYearPeriodTable(ind, values) {
       latestByPeriod[v.period] = v;
     }
   });
+  // Metas por período exacto, para cruzar com os valores na mesma célula.
+  const targetByPeriod = {};
+  ind.targets.forEach(t => { targetByPeriod[t.period] = t.value; });
 
   let columns; // lista de sub-períodos (colunas), ou ['Valor'] se não houver sub-divisão
   let rowsAreYears = true;
@@ -289,12 +291,18 @@ function buildYearPeriodTable(ind, values) {
     rowsAreYears = false;
   }
 
+  // Só mostra os anos que têm meta definida ou algum valor submetido —
+  // para a tabela corresponder exactamente às metas do Quadro de
+  // Resultados, sem linhas vazias sem meta nem dados.
   const rowKeys = new Set();
   if (rowsAreYears) {
-    periodFields.years.forEach(y => rowKeys.add(y));
+    ind.targets.forEach(t => {
+      const y = periodSortKeyToYear(t.period);
+      if (y) rowKeys.add(y);
+    });
     Object.keys(latestByPeriod).forEach(p => {
-      const key = periodSortKeyToYear(p);
-      if (key) rowKeys.add(key);
+      const y = periodSortKeyToYear(p);
+      if (y) rowKeys.add(y);
     });
   } else {
     ind.targets.forEach(t => rowKeys.add(t.period));
@@ -303,17 +311,22 @@ function buildYearPeriodTable(ind, values) {
   const sortedRowKeys = Array.from(rowKeys).sort((a, b) => rowsAreYears ? (a - b) : (ME.periodSortKey(a) - ME.periodSortKey(b)));
 
   if (!sortedRowKeys.length) {
-    return '<p class="small-note">Ainda sem dados para apresentar.</p>';
+    return '<p class="small-note">Ainda sem metas nem dados para apresentar.</p>';
   }
 
   const theadCols = rowsAreYears
-    ? `<th>Ano</th>${columns.map(c => `<th>${escapeHtml(c)}</th>`).join('')}<th>Total</th><th>Observações</th>`
-    : `<th>Período</th><th>Valor</th>`;
+    ? `<th>Ano</th>${columns.map(c => `<th>${escapeHtml(c)}</th>`).join('')}<th>Total realizado</th><th>Observações</th>`
+    : `<th>Período</th><th>Meta</th><th>Realizado</th>`;
 
   const bodyRows = sortedRowKeys.map(rowKey => {
     if (!rowsAreYears) {
+      const target = targetByPeriod[rowKey];
       const v = latestByPeriod[rowKey];
-      return `<tr><td>${escapeHtml(rowKey)}</td><td>${v ? escapeHtml(String(v.value)) + (statusTag[v.status] || '') : '<span class="small-note">—</span>'}</td></tr>`;
+      return `<tr>
+        <td>${escapeHtml(rowKey)}</td>
+        <td>${target !== undefined ? escapeHtml(String(target)) : '<span class="small-note">—</span>'}</td>
+        <td>${v ? escapeHtml(String(v.value)) + (statusTag[v.status] || '') : '<span class="small-note">—</span>'}</td>
+      </tr>`;
     }
 
     let total = 0;
@@ -323,14 +336,22 @@ function buildYearPeriodTable(ind, values) {
       const period = periodFields.mode === 'year-only'
         ? ME.combinePeriod(periodFields, rowKey, null)
         : ME.combinePeriod(periodFields, rowKey, col);
+      const target = targetByPeriod[period];
       const v = latestByPeriod[period];
-      if (!v) return '<td><span class="small-note">—</span></td>';
-      if (v.status === 'aprovado' && typeof v.value !== 'undefined' && !isNaN(Number(v.value))) {
+
+      if (v && v.status === 'aprovado' && typeof v.value !== 'undefined' && !isNaN(Number(v.value))) {
         total += Number(v.value);
         hasNumericTotal = true;
       }
-      if (v.note) notes.push(`${col === 'Valor' ? rowKey : col}: ${v.note}`);
-      return `<td>${escapeHtml(String(v.value))}${statusTag[v.status] || ''}</td>`;
+      if (v && v.note) notes.push(`${col === 'Valor' ? rowKey : col}: ${v.note}`);
+
+      const metaLine = target !== undefined ? `<div class="small-note">Meta: ${escapeHtml(String(target))}</div>` : '';
+      const valorLine = v
+        ? `<div>Realizado: ${escapeHtml(String(v.value))}${statusTag[v.status] || ''}</div>`
+        : (target !== undefined ? '<div class="small-note">Realizado: —</div>' : '');
+
+      if (!metaLine && !valorLine) return '<td><span class="small-note">—</span></td>';
+      return `<td>${metaLine}${valorLine}</td>`;
     }).join('');
 
     return `<tr><td>${rowKey}</td>${cellsHtml}<td>${hasNumericTotal ? escapeHtml(String(total)) : '<span class="small-note">—</span>'}</td><td class="small-note">${notes.length ? escapeHtml(notes.join('; ')) : '—'}</td></tr>`;
@@ -409,20 +430,35 @@ function wireEvents(ind) {
       const alertEl = document.getElementById('submit-alert');
       alertEl.innerHTML = '';
 
+      const missing = [];
+
+      const valueEl = document.getElementById('val-value');
+      if (!valueEl.value || !String(valueEl.value).trim()) missing.push('Valor');
+
+      if (provinceEl && !provinceEl.value) missing.push('Província');
+      if (districtEl && !districtEl.value) missing.push('Distrito');
+
+      const disaggInputs = document.querySelectorAll('.disagg-input');
+      disaggInputs.forEach(inp => { if (inp.value === '') missing.push(inp.dataset.key); });
+
+      const statusInputs = document.querySelectorAll('.status-input');
+      statusInputs.forEach(inp => { if (inp.value === '') missing.push(inp.dataset.key); });
+
       const noteValue = document.getElementById('val-note').value.trim();
-      if (!noteValue) {
-        alertEl.innerHTML = '<div class="alert alert-error">Descreve o resumo do processo — este campo é obrigatório.</div>';
+      if (!noteValue) missing.push('Descreva o resumo do processo');
+
+      const fileList = document.getElementById('val-evidence').files;
+      if (!fileList || !fileList.length) missing.push('Anexar evidência');
+
+      if (missing.length) {
+        alertEl.innerHTML = `<div class="alert alert-error">Todos os campos são obrigatórios. Falta preencher: ${missing.map(escapeHtml).join(', ')}.</div>`;
         return;
       }
 
       const disagg = {};
-      document.querySelectorAll('.disagg-input').forEach(inp => {
-        if (inp.value !== '') disagg[inp.dataset.key] = Number(inp.value);
-      });
+      disaggInputs.forEach(inp => { disagg[inp.dataset.key] = Number(inp.value); });
       const statusDisagg = {};
-      document.querySelectorAll('.status-input').forEach(inp => {
-        if (inp.value !== '') statusDisagg[inp.dataset.key] = Number(inp.value);
-      });
+      statusInputs.forEach(inp => { statusDisagg[inp.dataset.key] = Number(inp.value); });
       submitBtn.disabled = true;
       submitBtn.innerHTML = '<span class="spinner"></span>';
       try {
@@ -430,11 +466,10 @@ function wireEvents(ind) {
         const yearEl = document.getElementById('val-year');
         const subEl = document.getElementById('val-sub');
         const period = ME.combinePeriod(periodFields, yearEl ? Number(yearEl.value) : null, subEl ? subEl.value : null);
-        const fileList = document.getElementById('val-evidence').files;
         const result = await ME.submitValue({
           indicator_id: ind.id,
           period,
-          value: document.getElementById('val-value').value,
+          value: valueEl.value,
           disagg: Object.keys(disagg).length ? disagg : null,
           status_disagg: Object.keys(statusDisagg).length ? statusDisagg : null,
           province: provinceEl ? provinceEl.value : null,

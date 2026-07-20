@@ -12,12 +12,20 @@ const ME = (() => {
   // aprovado; nunca contém submissões pendentes ou rejeitadas.
   const VALUES_PUBLIC = 'indicator_values_public';
   const ADMINS = 'admins';
+  // Catálogo de indicadores — vive no Firestore, não no código, para que
+  // o Administrador geral consiga editar/adicionar indicadores a partir
+  // do próprio painel, sem precisar de mexer em ficheiros. A lista abaixo
+  // ("DEFAULT_INDICATORS") só é usada UMA VEZ, para semear a colecção
+  // "indicators" quando ela ainda estiver vazia (primeira utilização).
+  const INDICATORS_COL = 'indicators';
 
-  // ---------- Catálogo de indicadores (Quadro de Resultados) ----------
+  // ---------- Catálogo por defeito (semente inicial do Quadro de Resultados) ----------
   // Fonte: PAD do projecto (Banco Mundial, P514199), secção "Results
-  // Framework and Monitoring". "targets" usa os mesmos períodos do
-  // documento original; "baseline" é o valor de partida (Maio/2026).
-  const INDICATORS = [
+  // Framework and Monitoring", com nomes revistos de acordo com o Quadro
+  // de Resultados oficial fornecido pelo cliente. "targets" usa os mesmos
+  // períodos do documento original; "baseline" é o valor de partida
+  // (Maio/2026).
+  const DEFAULT_INDICATORS = [
     // ---- Nível de Programa (PrDO) — todo o Norte, Fases I e II ----
     {
       id: 'prdo-localities',
@@ -117,21 +125,21 @@ const ME = (() => {
       id: 'c1-nrcf',
       level: 'Intermédio', component: 'Componente 1 — Colaboração Comunidades-Governo',
       name: 'Fórum Consultivo Regional do Norte (NRCF) operacional',
-      unit: 'Texto (sim/estado)', frequency: 'Semestral',
+      unit: 'Sim/Não', frequency: 'Semestral',
       responsible: 'ADIN, MPD',
       description: 'Os membros do NRCF realizam pelo menos reuniões semestrais; publicam as actas e a lista de participantes; e monitoram a implementação das estratégias de desenvolvimento provincial.',
       dataSource: 'Relatórios de progresso',
       methodology: 'Revisão das actas das reuniões.',
       disaggregation: [],
-      baseline: 'Termos de Referência preparados pela ADIN, aprovação formal do Conselho de Ministros',
+      baseline: 'Não',
       targets: [
-        { period: 'Mai/2027', value: 'Reuniões semestrais, actas e lista de participantes publicadas' },
-        { period: 'Mai/2028', value: 'Reuniões semestrais, actas e lista de participantes publicadas' },
-        { period: 'Mai/2029', value: 'Reuniões semestrais, actas e lista de participantes publicadas' },
-        { period: 'Mai/2030', value: 'Reuniões semestrais, actas e lista de participantes publicadas' },
-        { period: 'Jun/2031', value: 'Reuniões semestrais, actas e lista de participantes publicadas' },
+        { period: 'Mai/2027', value: 'Sim' },
+        { period: 'Mai/2028', value: 'Sim' },
+        { period: 'Mai/2029', value: 'Sim' },
+        { period: 'Mai/2030', value: 'Sim' },
+        { period: 'Jun/2031', value: 'Sim' },
       ],
-      isTextIndicator: true,
+      isYesNoIndicator: true,
     },
     {
       id: 'c1-observatorios',
@@ -364,15 +372,105 @@ const ME = (() => {
     },
   ];
 
-  function getIndicators() {
-    return INDICATORS.slice();
+  let indicatorsCache = null; // cache em memória, invalidada após criar/editar/apagar
+
+  async function ensureSeeded() {
+    const snap = await db.collection(INDICATORS_COL).limit(1).get();
+    if (!snap.empty) return;
+    // Colecção vazia — primeira utilização: semeia com o catálogo por
+    // defeito, um documento por indicador (ID do documento = id do
+    // indicador), incluindo um campo "order" para manter a ordenação
+    // original do Quadro de Resultados.
+    // Só o Administrador geral tem permissão para escrever aqui — se for
+    // outra pessoa (ou o relatório público, sem login) a carregar a
+    // página pela primeira vez, a escrita falha silenciosamente e a
+    // leitura simplesmente devolve uma lista vazia até o administrador
+    // geral entrar pelo menos uma vez (ver README, "Arranque inicial").
+    try {
+      const batch = db.batch();
+      DEFAULT_INDICATORS.forEach((ind, i) => {
+        const ref = db.collection(INDICATORS_COL).doc(ind.id);
+        batch.set(ref, { ...ind, order: i });
+      });
+      await batch.commit();
+    } catch (err) {
+      console.warn('Não foi possível semear o catálogo de indicadores (normal se não fores o Administrador geral):', err.message);
+    }
   }
-  function getIndicator(id) {
-    return INDICATORS.find(i => i.id === id) || null;
+
+  async function getIndicators() {
+    if (indicatorsCache) return indicatorsCache.slice();
+    await ensureSeeded();
+    const snap = await db.collection(INDICATORS_COL).get();
+    const list = snap.docs.map(d => d.data());
+    list.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+    indicatorsCache = list;
+    return list.slice();
   }
+
+  async function getIndicator(id) {
+    const list = await getIndicators();
+    return list.find(i => i.id === id) || null;
+  }
+
+  function invalidateIndicatorsCache() {
+    indicatorsCache = null;
+  }
+
+  function slugify(text) {
+    return (text || '')
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // remove acentos
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '')
+      .slice(0, 60);
+  }
+
+  // Criar ou editar um indicador — exclusivo do Administrador geral.
+  async function upsertIndicator(indicatorData) {
+    const admin = getCurrentAdminSync();
+    if (!admin || admin.noProfile) throw new Error('A tua conta não tem permissões configuradas.');
+    if (admin.role !== 'admin') throw new Error('Só o Administrador geral pode criar ou editar indicadores.');
+
+    if (!indicatorData.name || !indicatorData.name.trim()) throw new Error('Indique o nome do indicador.');
+    if (!indicatorData.level) throw new Error('Indique o nível do indicador.');
+    if (!indicatorData.targets || !indicatorData.targets.length) throw new Error('Indique pelo menos uma meta.');
+
+    let id = indicatorData.id;
+    let order = indicatorData.order;
+    if (!id) {
+      // Novo indicador: gera um ID a partir do nome e coloca-o no fim da lista.
+      id = slugify(indicatorData.name) || `indicador-${Date.now()}`;
+      const existing = await db.collection(INDICATORS_COL).doc(id).get();
+      if (existing.exists) id = `${id}-${Date.now().toString().slice(-5)}`;
+      const all = await getIndicators();
+      order = all.length;
+    }
+
+    const doc = { ...indicatorData, id, order };
+    delete doc._isNew;
+    await db.collection(INDICATORS_COL).doc(id).set(doc);
+    invalidateIndicatorsCache();
+    return id;
+  }
+
+  // Apagar um indicador — exclusivo do Administrador geral. Não apaga as
+  // submissões já feitas para ele (ficam associadas a um indicador que já
+  // não existe no catálogo — o histórico não se perde).
+  async function deleteIndicator(id) {
+    const admin = getCurrentAdminSync();
+    if (!admin || admin.role !== 'admin') throw new Error('Só o Administrador geral pode apagar indicadores.');
+    await db.collection(INDICATORS_COL).doc(id).delete();
+    invalidateIndicatorsCache();
+  }
+
   function getComponents() {
-    const set = new Set(INDICATORS.map(i => i.component).filter(Boolean));
-    return Array.from(set);
+    return [
+      'Componente 1 — Colaboração Comunidades-Governo',
+      'Componente 2 — Oportunidades Económicas e Emprego',
+      'Componente 3 — Infraestrutura Resiliente ao Clima',
+      'Componente 4 — Gestão do Projecto e Aprendizagem',
+    ];
   }
   function getLevels() {
     return ['PrDO', 'PDO', 'Intermédio'];
@@ -482,7 +580,7 @@ const ME = (() => {
     if (!admin || admin.noProfile) throw new Error('A tua conta não tem permissões configuradas.');
     if (admin.role === 'readonly') throw new Error('A tua conta tem acesso apenas de leitura.');
 
-    const indicator = getIndicator(payload.indicator_id);
+    const indicator = await getIndicator(payload.indicator_id);
     if (!indicator) throw new Error('Indicador não encontrado.');
     if (!payload.period) throw new Error('Indique o período a que este valor se refere.');
     if (payload.value === '' || payload.value === undefined || payload.value === null) {
@@ -491,6 +589,16 @@ const ME = (() => {
     if (!payload.note || !payload.note.trim()) {
       throw new Error('Descreve o resumo do processo — este campo é obrigatório.');
     }
+    if (!payload.province) throw new Error('Indique a província.');
+    if (!payload.district) throw new Error('Indique o distrito.');
+    if (!fileList || !fileList.length) throw new Error('Anexa pelo menos um ficheiro de evidência.');
+    if ((indicator.disaggregation || []).length) {
+      const missingDisagg = indicator.disaggregation.filter(d => !payload.disagg || payload.disagg[d] === undefined || payload.disagg[d] === null || payload.disagg[d] === '');
+      if (missingDisagg.length) throw new Error(`Preenche a desagregação: ${missingDisagg.join(', ')}.`);
+    }
+    const requiredStatuses = getBeneficiaryStatuses();
+    const missingStatus = requiredStatuses.filter(s => !payload.status_disagg || payload.status_disagg[s] === undefined || payload.status_disagg[s] === null || payload.status_disagg[s] === '');
+    if (missingStatus.length) throw new Error(`Preenche a desagregação por estatuto: ${missingStatus.join(', ')}.`);
 
     const { evidence, skipped } = await filesToEvidence(fileList);
     const timestamp = nowIso();
@@ -653,6 +761,7 @@ const ME = (() => {
 
   return {
     getIndicators, getIndicator, getComponents, getLevels, getSubmissionPeriodFields, combinePeriod, periodSortKey,
+    upsertIndicator, deleteIndicator,
     getProvinces, getDistricts, getBeneficiaryStatuses,
     submitValue, listValues, listApprovedValues, reviewValue, deleteValue, listPublicValues,
     adminLogin, adminLogout, onAuthChange, getCurrentAdminSync, changeAdminPassword,

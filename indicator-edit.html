@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Editar Indicador — M&amp;E MozCommunity</title>
+<link rel="icon" href="img/logo-adin.jpg" type="image/jpeg">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .denied { max-width: 520px; margin: 60px auto; text-align: center; }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="index.html" class="brand">
+      <span class="brand-mark"><img src="img/logo-adin.jpg" alt="Logótipo ADIN"></span>
+      <span class="brand-name">M&amp;E MozCommunity<small>Monitoria de Indicadores — ADIN</small></span>
+    </a>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Abrir menu" aria-expanded="false">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <nav class="main-nav">
+      <a href="dashboard.html">Indicadores</a>
+      <a href="relatorios.html">Relatórios</a>
+      <a href="approvals.html" id="approvals-link" style="display:none;">Aprovações</a>
+      <a href="users.html" id="users-link" style="display:none;">Utilizadores</a>
+      <span class="small-note" id="admin-name-label" style="margin-right:8px;"></span>
+      <a href="#" id="logout-link">Sair</a>
+    </nav>
+  </div>
+</header>
+
+<div id="denied-area" class="container" style="display:none;">
+  <div class="denied">
+    <h2>Acesso restrito</h2>
+    <p>Só o Administrador geral pode criar ou editar indicadores.</p>
+    <a href="dashboard.html" class="btn btn-secondary">Voltar aos indicadores</a>
+  </div>
+</div>
+
+<main id="main-area" style="display:none;">
+  <section>
+    <div class="container" style="max-width:760px;">
+      <a href="dashboard.html" class="small-note" style="text-decoration:none;">&larr; Voltar aos indicadores</a>
+      <h1 id="page-title" style="font-size:clamp(1.6rem,3vw,2.1rem); margin-top:10px;">Novo indicador</h1>
+
+      <div id="alert-box"></div>
+
+      <div class="form-card">
+        <div class="form-section-title">Identificação</div>
+        <div class="field">
+          <label for="f-name">Nome do indicador <span class="required">*</span></label>
+          <input type="text" id="f-name" placeholder="Ex: Localidades que implementam processos participativos de planificação local">
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label for="f-level">Nível <span class="required">*</span></label>
+            <select id="f-level">
+              <option value="PrDO">PrDO (Programa)</option>
+              <option value="PDO">PDO (Projecto)</option>
+              <option value="Intermédio" selected>Intermédio</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-component">Componente <span class="small-note">(deixa vazio para indicadores PrDO/PDO)</span></label>
+            <select id="f-component">
+              <option value="">— Nenhuma —</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-section-title" style="margin-top:24px;">Ficha técnica</div>
+        <div class="field">
+          <label for="f-type">Tipo de indicador <span class="required">*</span></label>
+          <select id="f-type">
+            <option value="numeric">Numérico (número, percentagem...)</option>
+            <option value="yesno">Sim/Não</option>
+            <option value="text">Texto (descrição livre)</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label for="f-unit">Unidade <span class="required">*</span></label>
+            <input type="text" id="f-unit" placeholder="Ex: Número, Percentagem, Sim/Não">
+          </div>
+          <div class="field">
+            <label for="f-frequency">Periodicidade <span class="required">*</span></label>
+            <select id="f-frequency">
+              <option value="Trimestral">Trimestral</option>
+              <option value="Semestral">Semestral</option>
+              <option value="Anual">Anual</option>
+              <option value="Bienal">Bienal</option>
+              <option value="custom">Outra (escrever)</option>
+            </select>
+            <input type="text" id="f-frequency-custom" placeholder="Ex: Meio-termo e encerramento" style="display:none; margin-top:8px;">
+          </div>
+        </div>
+        <div class="field">
+          <label for="f-responsible">Responsável pela recolha</label>
+          <input type="text" id="f-responsible" placeholder="Ex: ADIN, PPTs, DITs">
+        </div>
+        <div class="field">
+          <label for="f-datasource">Meios de Verificação</label>
+          <input type="text" id="f-datasource" placeholder="Ex: Relatórios de progresso">
+        </div>
+        <div class="field">
+          <label for="f-description">Descrição / Definição</label>
+          <textarea id="f-description" placeholder="Explica o que este indicador mede e como se enquadra no projecto"></textarea>
+        </div>
+        <div class="field">
+          <label for="f-methodology">Metodologia de recolha de dados</label>
+          <textarea id="f-methodology" placeholder="Ex: Revisão de relatórios de progresso, visitas de campo"></textarea>
+        </div>
+        <div class="field">
+          <label for="f-disaggregation">Desagregações <span class="small-note">(separadas por vírgula, ex: Mulheres, Jovens)</span></label>
+          <input type="text" id="f-disaggregation" placeholder="Mulheres, Jovens">
+        </div>
+
+        <div class="form-section-title" style="margin-top:24px;">Base e metas</div>
+        <div class="field">
+          <label for="f-baseline">Valor de base (Mai/2026) <span class="required">*</span></label>
+          <input type="text" id="f-baseline" placeholder="Ex: 0, Não, ou uma descrição">
+        </div>
+        <div class="field">
+          <label for="f-targets">Metas por período <span class="required">*</span></label>
+          <textarea id="f-targets" rows="6" placeholder="Uma meta por linha, no formato:&#10;Período | Valor&#10;&#10;Exemplo:&#10;Mai/2027 | 20&#10;Mai/2028 | 30&#10;Jun/2031 | 80"></textarea>
+          <div class="hint">Uma linha por período, separando o período e o valor com uma barra vertical "|". Para indicadores Sim/Não escreve "Sim" ou "Não" como valor.</div>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:24px; flex-wrap:wrap;">
+          <button type="button" class="btn btn-primary" id="save-btn">Guardar indicador</button>
+          <button type="button" class="btn btn-secondary" id="delete-btn" style="display:none; border-color:var(--brick); color:var(--brick);">Apagar indicador</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/store.js"></script>
+<script>
+const indicatorId = new URLSearchParams(window.location.search).get('id'); // null = novo indicador
+let existingIndicator = null;
+
+ME.getComponents().forEach(c => document.getElementById('f-component').add(new Option(c, c)));
+
+document.getElementById('f-frequency').addEventListener('change', () => {
+  document.getElementById('f-frequency-custom').style.display = document.getElementById('f-frequency').value === 'custom' ? 'block' : 'none';
+});
+
+ME.onAuthChange(async admin => {
+  if (!admin) { window.location.href = 'index.html'; return; }
+  if (admin.noProfile) {
+    alert('A tua conta não tem permissões configuradas nesta plataforma.');
+    ME.adminLogout().then(() => window.location.href = 'index.html');
+    return;
+  }
+  if (admin.role !== 'admin') {
+    document.getElementById('denied-area').style.display = 'block';
+    document.getElementById('admin-name-label').textContent = admin.name;
+    return;
+  }
+  document.getElementById('main-area').style.display = 'block';
+  document.getElementById('admin-name-label').textContent = admin.name;
+  document.getElementById('approvals-link').style.display = '';
+  document.getElementById('users-link').style.display = '';
+
+  if (indicatorId) {
+    document.getElementById('page-title').textContent = 'Editar indicador';
+    document.getElementById('delete-btn').style.display = '';
+    existingIndicator = await ME.getIndicator(indicatorId);
+    if (!existingIndicator) {
+      document.getElementById('alert-box').innerHTML = '<div class="alert alert-error">Indicador não encontrado.</div>';
+      return;
+    }
+    fillForm(existingIndicator);
+  }
+});
+
+document.getElementById('logout-link').addEventListener('click', (e) => {
+  e.preventDefault();
+  ME.adminLogout().then(() => window.location.href = 'index.html');
+});
+
+function fillForm(ind) {
+  document.getElementById('f-name').value = ind.name || '';
+  document.getElementById('f-level').value = ind.level || 'Intermédio';
+  document.getElementById('f-component').value = ind.component || '';
+  document.getElementById('f-type').value = ind.isYesNoIndicator ? 'yesno' : ind.isTextIndicator ? 'text' : 'numeric';
+  document.getElementById('f-unit').value = ind.unit || '';
+
+  const knownFreq = ['Trimestral', 'Semestral', 'Anual', 'Bienal'];
+  if (knownFreq.includes(ind.frequency)) {
+    document.getElementById('f-frequency').value = ind.frequency;
+  } else {
+    document.getElementById('f-frequency').value = 'custom';
+    document.getElementById('f-frequency-custom').value = ind.frequency || '';
+    document.getElementById('f-frequency-custom').style.display = 'block';
+  }
+
+  document.getElementById('f-responsible').value = ind.responsible || '';
+  document.getElementById('f-datasource').value = ind.dataSource || '';
+  document.getElementById('f-description').value = ind.description || '';
+  document.getElementById('f-methodology').value = ind.methodology || '';
+  document.getElementById('f-disaggregation').value = (ind.disaggregation || []).join(', ');
+  document.getElementById('f-baseline').value = ind.baseline === undefined || ind.baseline === null ? '' : String(ind.baseline);
+  document.getElementById('f-targets').value = (ind.targets || []).map(t => `${t.period} | ${t.value}`).join('\n');
+}
+
+function parseTargets(text, isNumeric) {
+  return text.split('\n').map(line => line.trim()).filter(Boolean).map(line => {
+    const parts = line.split('|').map(p => p.trim());
+    if (parts.length < 2) throw new Error(`Linha inválida em "Metas por período": "${line}". Usa o formato "Período | Valor".`);
+    const [period, rawValue] = parts;
+    const value = isNumeric && !isNaN(Number(rawValue)) ? Number(rawValue) : rawValue;
+    return { period, value };
+  });
+}
+
+document.getElementById('save-btn').addEventListener('click', async () => {
+  const alertBox = document.getElementById('alert-box');
+  alertBox.innerHTML = '';
+  const btn = document.getElementById('save-btn');
+
+  try {
+    const type = document.getElementById('f-type').value;
+    const isNumeric = type === 'numeric';
+    const frequency = document.getElementById('f-frequency').value === 'custom'
+      ? document.getElementById('f-frequency-custom').value.trim()
+      : document.getElementById('f-frequency').value;
+
+    const targetsText = document.getElementById('f-targets').value;
+    const targets = parseTargets(targetsText, isNumeric);
+
+    const baselineRaw = document.getElementById('f-baseline').value.trim();
+    const baseline = isNumeric && !isNaN(Number(baselineRaw)) ? Number(baselineRaw) : baselineRaw;
+
+    const disaggregation = document.getElementById('f-disaggregation').value
+      .split(',').map(s => s.trim()).filter(Boolean);
+
+    const data = {
+      id: existingIndicator ? existingIndicator.id : undefined,
+      order: existingIndicator ? existingIndicator.order : undefined,
+      name: document.getElementById('f-name').value.trim(),
+      level: document.getElementById('f-level').value,
+      component: document.getElementById('f-component').value || null,
+      unit: document.getElementById('f-unit').value.trim(),
+      frequency,
+      responsible: document.getElementById('f-responsible').value.trim(),
+      dataSource: document.getElementById('f-datasource').value.trim(),
+      description: document.getElementById('f-description').value.trim(),
+      methodology: document.getElementById('f-methodology').value.trim(),
+      disaggregation,
+      baseline,
+      targets,
+      isYesNoIndicator: type === 'yesno',
+      isTextIndicator: type === 'text',
+    };
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>';
+    const id = await ME.upsertIndicator(data);
+    window.location.href = `indicador.html?id=${encodeURIComponent(id)}`;
+  } catch (err) {
+    console.error(err);
+    alertBox.innerHTML = `<div class="alert alert-error">${err.message || 'Não foi possível guardar o indicador.'}</div>`;
+    btn.disabled = false;
+    btn.textContent = 'Guardar indicador';
+  }
+});
+
+document.getElementById('delete-btn').addEventListener('click', async () => {
+  if (!existingIndicator) return;
+  const typed = prompt(`Isto apaga PERMANENTEMENTE o indicador "${existingIndicator.name}" do catálogo (os valores já submetidos para ele não são apagados, mas ficam órfãos). Para confirmar, escreve exactamente: APAGAR`);
+  if (typed !== 'APAGAR') {
+    if (typed !== null) alert('Texto não corresponde — nada foi apagado.');
+    return;
+  }
+  try {
+    await ME.deleteIndicator(existingIndicator.id);
+    window.location.href = 'dashboard.html';
+  } catch (err) {
+    console.error(err);
+    alert(err.message || 'Não foi possível apagar o indicador.');
+  }
+});
+
+document.getElementById('nav-toggle')?.addEventListener('click', () => {
+  const nav = document.querySelector('.main-nav');
+  const open = nav.classList.toggle('is-open');
+  document.getElementById('nav-toggle').setAttribute('aria-expanded', String(open));
+});
+</script>
+</body>
+</html>

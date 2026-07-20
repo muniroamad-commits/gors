@@ -204,3 +204,59 @@ submissões que tenham essa desagregação indicada no momento em que foram
 submetidas. Submissões antigas, feitas antes desta actualização, não têm
 essa informação e não aparecem quando esses filtros estão activos —
 continuam a aparecer normalmente sem filtro nenhum.
+
+## Indicador do NRCF corrigido
+
+O indicador "Fórum Consultivo Regional do Norte (NRCF) operacional"
+deixou de ser um indicador de texto livre (com o texto dos Termos de
+Referência como base) e passou a **Sim/Não**: base = "Não", meta = "Sim"
+em cada período — mais simples de acompanhar na prática.
+
+## Indicadores agora editáveis (só Administrador geral)
+
+O catálogo de indicadores deixou de estar fixo no código — passou a viver
+no Firestore, para poderes **editar ou adicionar indicadores directamente
+na plataforma**, sem precisares de mexer em ficheiros.
+
+- Botão **"+ Adicionar indicador"** no topo da lista de Indicadores.
+- Botão **"Editar indicador"** dentro da página de cada indicador.
+- Ambos só aparecem para o Administrador geral.
+- É possível apagar um indicador (os valores já submetidos para ele não
+  são apagados, mas deixam de estar associados a um indicador visível no
+  catálogo).
+
+### ⚠️ Arranque inicial — importante
+
+O catálogo de 19 indicadores só é copiado automaticamente para o
+Firestore **na primeira vez que o Administrador geral abrir a página
+"Indicadores"**, depois de publicares esta actualização. Por isso:
+
+1. Depois de publicares e colares as novas regras, **entra tu primeiro**
+   (com a tua conta de Administrador geral) e abre "Indicadores".
+2. Isso semeia automaticamente o catálogo completo no Firestore.
+3. A partir daí, qualquer pessoa (incluindo o relatório público, sem
+   login) já vê os indicadores normalmente.
+
+Se mais ninguém tiver acesso antes de fazeres este primeiro login, não há
+nada a fazer — a plataforma resolve isto sozinha.
+
+## Tabela única de Metas e Valores (coerência garantida)
+
+As duas tabelas separadas ("Metas por período" e "Valores submetidos e
+aprovados") foram unidas numa só: **"Metas e valores realizados, por ano
+e período"**. Cada célula mostra a Meta definida no Quadro de Resultados
+e o valor Realizado (submetido/aprovado) lado a lado, para o mesmo
+período exacto — sem risco de as duas tabelas mostrarem períodos
+diferentes ou darem uma ideia inconsistente do progresso. As linhas
+mostradas são só os anos que têm meta definida ou algum valor submetido
+(não o intervalo todo do projecto, para não haver linhas vazias).
+
+## Formulário de submissão — tudo obrigatório
+
+Todos os campos do formulário de submissão de um novo valor passaram a
+ser obrigatórios: Valor, Província, Distrito, todas as desagregações do
+indicador (quando aplicável), a desagregação por estatuto de beneficiário
+(Deslocados/Retornados/Anfitriões), a descrição do resumo do processo, e
+o anexo de evidência. Isto é validado tanto na interface (mostra
+exactamente o que falta preencher) como no motor de dados, para garantir
+que não é possível contornar a regra.

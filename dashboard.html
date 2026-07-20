@@ -81,6 +81,7 @@
         <h2 style="margin:0;">Indicadores do Quadro de Resultados</h2>
         <p class="small-note" style="margin:2px 0 0;" id="results-count">A carregar...</p>
       </div>
+      <a href="indicator-edit.html" id="add-indicator-link" class="btn btn-primary btn-sm" style="display:none;">+ Adicionar indicador</a>
     </div>
 
     <table class="cases">
@@ -113,6 +114,7 @@ ME.onAuthChange(admin => {
   document.getElementById('admin-name-label').textContent = `${admin.name} · ${roleLabels[admin.role] || admin.role}`;
   document.getElementById('approvals-link').style.display = admin.role === 'admin' ? '' : 'none';
   document.getElementById('users-link').style.display = admin.role === 'admin' ? '' : 'none';
+  document.getElementById('add-indicator-link').style.display = admin.role === 'admin' ? '' : 'none';
 
   renderComponentFilters();
   loadIndicators();
@@ -143,7 +145,7 @@ async function loadIndicators() {
   const tbody = document.getElementById('indicators-tbody');
   tbody.innerHTML = `<tr><td colspan="6" class="skeleton" style="height:40px;"></td></tr>`;
 
-  let indicators = ME.getIndicators();
+  let indicators = await ME.getIndicators();
   if (state.level) indicators = indicators.filter(i => i.level === state.level);
   if (state.component) indicators = indicators.filter(i => i.component === state.component);
 

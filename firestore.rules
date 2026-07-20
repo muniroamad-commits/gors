@@ -64,6 +64,15 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Catálogo de indicadores (nome, metas, descrição, metodologia...).
+    // Leitura pública (não é informação sensível — é o que está a ser
+    // medido, não os dados em si), mas só o Administrador geral pode
+    // criar, editar ou apagar indicadores.
+    match /indicators/{indicatorId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdminGeral();
+    }
+
     match /admins/{adminId} {
       allow get: if isSignedIn() && request.auth.uid == adminId;
       allow list: if isAdminGeral();
