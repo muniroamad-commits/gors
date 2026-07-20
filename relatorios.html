@@ -36,21 +36,21 @@
   <div class="container">
     <a href="index.html" class="brand">
       <span class="brand-mark"><img src="img/logo-adin.jpg" alt="Logótipo ADIN"></span>
-      <span class="brand-name">M&amp;E MozCommunity<small data-i18n="brand_tagline">Monitoria de Indicadores — ADIN</small></span>
+      <span class="brand-name">M&amp;E MozCommunity<small>Monitoria de Indicadores — ADIN</small></span>
     </a>
     <button class="nav-toggle" id="nav-toggle" aria-label="Abrir menu" aria-expanded="false">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
     <nav class="main-nav">
-      <a href="dashboard.html" data-i18n="nav_indicators">Indicadores</a>
-      <a href="relatorios.html" class="is-active" data-i18n="nav_reports">Relatórios</a>
-      <a href="approvals.html" id="approvals-link" style="display:none;" data-i18n="nav_approvals">Aprovações</a>
-      <a href="users.html" id="users-link" style="display:none;" data-i18n="nav_users">Utilizadores</a>
+      <a href="dashboard.html">Indicadores</a>
+      <a href="relatorios.html" class="is-active">Relatórios</a>
+      <a href="approvals.html" id="approvals-link" style="display:none;">Aprovações</a>
+      <a href="users.html" id="users-link" style="display:none;">Utilizadores</a>
       <span class="small-note" id="admin-name-label" style="margin-right:8px;"></span>
             <a href="approvals.html" id="notif-bell" title="Aprovações pendentes" style="display:none; position:relative; text-decoration:none; color:var(--ink); margin-right:6px; font-size:1.1rem;">
         🔔<span id="notif-badge" style="display:none; position:absolute; top:-6px; right:-10px; background:var(--brick); color:#fff; font-size:0.62rem; font-weight:700; padding:1px 5px; border-radius:999px; line-height:1.3;">0</span>
       </a>
-      <a href="#" id="logout-link" data-i18n="nav_logout">Sair</a>
+      <a href="#" id="logout-link">Sair</a>
     </nav>
   </div>
 </header>
@@ -58,9 +58,9 @@
 <main>
   <section style="padding-bottom:0;">
     <div class="container">
-      <span class="eyebrow" data-i18n="reports_eyebrow">Progresso do projecto</span>
-      <h1 style="font-size:clamp(1.8rem,3vw,2.4rem)" data-i18n="reports_title">Relatórios</h1>
-      <p class="lead" style="max-width:60ch" data-i18n="reports_lead">Progresso dos indicadores face às metas do Quadro de Resultados, com base apenas em valores aprovados.</p>
+      <span class="eyebrow">Progresso do projecto</span>
+      <h1 style="font-size:clamp(1.8rem,3vw,2.4rem)">Relatórios</h1>
+      <p class="lead" style="max-width:60ch">Progresso dos indicadores face às metas do Quadro de Resultados, com base apenas em valores aprovados.</p>
     </div>
   </section>
 
@@ -68,59 +68,59 @@
     <div class="container">
 
       <div class="filters-card">
-        <h3 style="font-size:0.95rem; margin-bottom:14px;" data-i18n="report_filters">Filtros do relatório</h3>
+        <h3 style="font-size:0.95rem; margin-bottom:14px;">Filtros do relatório</h3>
         <div class="filters-grid">
           <div class="field" style="margin:0;">
-            <label for="f-level" data-i18n="col_level">Nível</label>
+            <label for="f-level">Nível</label>
             <select id="f-level">
-              <option value="" data-i18n="filter_all">Todos</option>
-              <option value="PrDO" data-i18n="filter_prdo">PrDO (Programa)</option>
-              <option value="PDO" data-i18n="filter_pdo">PDO (Projecto)</option>
-              <option value="Intermédio" data-i18n="filter_intermediate">Intermédio</option>
+              <option value="">Todos</option>
+              <option value="PrDO">PrDO (Programa)</option>
+              <option value="PDO">PDO (Projecto)</option>
+              <option value="Intermédio">Intermédio</option>
             </select>
           </div>
           <div class="field" style="margin:0;">
-            <label for="f-component" data-i18n="col_component">Componente</label>
-            <select id="f-component"><option value="" data-i18n="filter_all_f">Todas</option></select>
+            <label for="f-component">Componente</label>
+            <select id="f-component"><option value="">Todas</option></select>
           </div>
           <div class="field" style="margin:0;">
-            <label for="f-group" data-i18n="gender_label">Género</label>
+            <label for="f-group">Género</label>
             <select id="f-group">
-              <option value="" data-i18n="filter_all">Todos</option>
-              <option value="Mulheres" data-i18n="women">Mulheres</option>
-              <option value="Jovens" data-i18n="youth">Jovens</option>
+              <option value="">Todos</option>
+              <option value="Mulheres">Mulheres</option>
+              <option value="Jovens">Jovens</option>
             </select>
           </div>
           <div class="field" style="margin:0;">
-            <label for="f-province" data-i18n="province_label">Província</label>
-            <select id="f-province"><option value="" data-i18n="filter_all_f">Todas</option></select>
+            <label for="f-province">Província</label>
+            <select id="f-province"><option value="">Todas</option></select>
           </div>
           <div class="field" style="margin:0;">
-            <label for="f-district" data-i18n="district_label">Distrito</label>
-            <select id="f-district" disabled><option value="" data-i18n="select_province_first">Seleccione primeiro a província...</option></select>
+            <label for="f-district">Distrito</label>
+            <select id="f-district" disabled><option value="">Seleccione primeiro a província...</option></select>
           </div>
           <div class="field" style="margin:0;">
-            <label for="f-status" data-i18n="status_label">Estatuto</label>
+            <label for="f-status">Estatuto</label>
             <select id="f-status">
-              <option value="" data-i18n="filter_all">Todos</option>
-              <option value="Deslocados" data-i18n="displaced">Deslocados</option>
-              <option value="Retornados" data-i18n="returnees">Retornados</option>
-              <option value="Anfitriões" data-i18n="host">Anfitriões</option>
+              <option value="">Todos</option>
+              <option value="Deslocados">Deslocados</option>
+              <option value="Retornados">Retornados</option>
+              <option value="Anfitriões">Anfitriões</option>
             </select>
           </div>
         </div>
         <div class="filters-actions">
-          <button type="button" class="btn btn-primary btn-sm" id="apply-filters-btn" data-i18n="apply_filters">Aplicar filtros</button>
-          <button type="button" class="btn btn-secondary btn-sm" id="clear-filters-btn" data-i18n="clear_filters">Limpar filtros</button>
-          <button type="button" class="btn btn-secondary btn-sm" id="download-pdf-btn" style="margin-left:auto; border-color:var(--teal); color:var(--teal-dark);" data-i18n="download_pdf">⬇ Descarregar relatório em PDF</button>
+          <button type="button" class="btn btn-primary btn-sm" id="apply-filters-btn">Aplicar filtros</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="clear-filters-btn">Limpar filtros</button>
+          <button type="button" class="btn btn-secondary btn-sm" id="download-pdf-btn" style="margin-left:auto; border-color:var(--teal); color:var(--teal-dark);">⬇ Descarregar relatório em PDF</button>
         </div>
       </div>
 
       <div class="stat-grid" id="stat-tiles">
-        <div class="stat-tile"><div class="n skeleton" style="height:2.1rem;width:60px;"></div><div class="label" data-i18n="tile_indicators">Indicadores</div></div>
-        <div class="stat-tile"><div class="n skeleton" style="height:2.1rem;width:60px;"></div><div class="label" data-i18n="tile_with_value">Com valor aprovado</div></div>
-        <div class="stat-tile"><div class="n skeleton" style="height:2.1rem;width:60px;"></div><div class="label" data-i18n="tile_without_value">Sem nenhum valor ainda</div></div>
-        <div class="stat-tile"><div class="n skeleton" style="height:2.1rem;width:60px;"></div><div class="label" data-i18n="tile_avg_progress">Progresso médio</div></div>
+        <div class="stat-tile"><div class="n skeleton" style="height:2.1rem;width:60px;"></div><div class="label">Indicadores</div></div>
+        <div class="stat-tile"><div class="n skeleton" style="height:2.1rem;width:60px;"></div><div class="label">Com valor aprovado</div></div>
+        <div class="stat-tile"><div class="n skeleton" style="height:2.1rem;width:60px;"></div><div class="label">Sem nenhum valor ainda</div></div>
+        <div class="stat-tile"><div class="n skeleton" style="height:2.1rem;width:60px;"></div><div class="label">Progresso médio</div></div>
       </div>
     </div>
   </section>
@@ -128,13 +128,13 @@
   <section style="padding-top:0;">
     <div class="container" style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
       <div class="chart-card">
-        <h3 data-i18n="chart_by_level">Indicadores por nível (PrDO / PDO)</h3>
-        <div class="chart-sub" data-i18n="chart_by_level_sub">Programa e Projecto — indicadores intermédios são vistos por componente</div>
+        <h3>Indicadores por nível (PrDO / PDO)</h3>
+        <div class="chart-sub">Programa e Projecto — indicadores intermédios são vistos por componente</div>
         <canvas id="chart-level" height="220"></canvas>
       </div>
       <div class="chart-card">
-        <h3 data-i18n="chart_by_component">Progresso médio por componente</h3>
-        <div class="chart-sub" data-i18n="chart_by_component_sub">C1–C4 · indicadores intermédios numéricos</div>
+        <h3>Progresso médio por componente</h3>
+        <div class="chart-sub">C1–C4 · indicadores intermédios numéricos</div>
         <canvas id="chart-component" height="220"></canvas>
       </div>
     </div>
@@ -143,8 +143,8 @@
   <section style="padding-top:0;">
     <div class="container">
       <div class="chart-card">
-        <h3 data-i18n="chart_stage">Estágio dos indicadores</h3>
-        <div class="chart-sub" data-i18n="chart_stage_sub">Face às metas do Quadro de Resultados, à data de hoje</div>
+        <h3>Estágio dos indicadores</h3>
+        <div class="chart-sub">Face às metas do Quadro de Resultados, à data de hoje</div>
         <canvas id="chart-stage" height="140"></canvas>
       </div>
     </div>
@@ -152,33 +152,33 @@
 
   <section>
     <div class="container">
-      <h3 style="margin-bottom:14px;" data-i18n="program_indicators_title">Indicadores de Programa (PrDO e PDO)</h3>
+      <h3 style="margin-bottom:14px;">Indicadores de Programa (PrDO e PDO)</h3>
       <table class="report-table" id="table-program">
-        <thead><tr><th data-i18n="col_level">Nível</th><th data-i18n="col_indicator">Indicador</th><th data-i18n="col_baseline">Base</th><th data-i18n="col_current_value">Valor do indicador</th><th data-i18n="target">Meta</th><th data-i18n="col_progress">Progresso</th><th data-i18n="col_stage">Estágio</th></tr></thead>
+        <thead><tr><th>Nível</th><th>Indicador</th><th>Base</th><th>Valor do indicador</th><th>Meta</th><th>Progresso</th><th>Estágio</th></tr></thead>
         <tbody id="tbody-program">
           <tr><td colspan="7" class="skeleton" style="height:40px;"></td></tr>
         </tbody>
       </table>
 
-      <h3 style="margin:32px 0 14px;" data-i18n="intermediate_indicators_title">Indicadores Intermédios</h3>
+      <h3 style="margin:32px 0 14px;">Indicadores Intermédios</h3>
       <table class="report-table" id="table-intermediate">
-        <thead><tr><th data-i18n="col_component">Componente</th><th data-i18n="col_indicator">Indicador</th><th data-i18n="col_baseline">Base</th><th data-i18n="col_current_value">Valor do indicador</th><th data-i18n="target">Meta</th><th data-i18n="col_progress">Progresso</th><th data-i18n="col_stage">Estágio</th></tr></thead>
+        <thead><tr><th>Componente</th><th>Indicador</th><th>Base</th><th>Valor do indicador</th><th>Meta</th><th>Progresso</th><th>Estágio</th></tr></thead>
         <tbody id="tbody-intermediate">
           <tr><td colspan="7" class="skeleton" style="height:40px;"></td></tr>
         </tbody>
       </table>
 
-      <h3 style="margin:32px 0 14px;" data-i18n="avg_by_level_title">Progresso médio por nível</h3>
+      <h3 style="margin:32px 0 14px;">Progresso médio por nível</h3>
       <table class="report-table" id="table-avg-level">
-        <thead><tr><th data-i18n="col_level">Nível</th><th data-i18n="col_num_indicators">Nº de indicadores</th><th data-i18n="col_avg_progress">Progresso médio</th></tr></thead>
+        <thead><tr><th>Nível</th><th>Nº de indicadores</th><th>Progresso médio</th></tr></thead>
         <tbody id="tbody-avg-level">
           <tr><td colspan="3" class="skeleton" style="height:40px;"></td></tr>
         </tbody>
       </table>
 
       <div style="display:flex; justify-content:space-between; align-items:center; margin:32px 0 6px; gap:12px; flex-wrap:wrap;">
-        <h3 style="margin:0;" data-i18n="descriptive_report_title">Relatório Descritivo</h3>
-        <button type="button" id="ai-narrative-btn" class="btn btn-secondary btn-sm" data-i18n="ai_improve_btn">🤖 Melhorar com IA (Claude)</button>
+        <h3 style="margin:0;">Relatório Descritivo</h3>
+        <button type="button" id="ai-narrative-btn" class="btn btn-secondary btn-sm">🤖 Melhorar com IA (Claude)</button>
       </div>
       <p class="small-note" id="ai-narrative-status" style="margin:0 0 12px; display:none;"></p>
       <div id="descriptive-report"></div>
@@ -198,7 +198,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-functions-compat.js"></script>
 <script src="js/firebase-config.js"></script>
 <script src="js/store.js"></script>
-<script src="js/i18n.js"></script>
 <script>
 const ADIN_LOGO_BASE64 = 'data:image/jpeg;base64,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';
 
@@ -218,8 +217,6 @@ let latestDescriptiveRows = [];
 let latestComponentLegend = []; // [{short: 'C.1', full: 'Componente 1 — ...'}]
 let currentAdmin = null;
 
-I18N.applyStaticTranslations();
-I18N.injectToggle('.main-nav');
 
 ME.onAuthChange(admin => {
   if (!admin) { window.location.href = 'index.html'; return; }
@@ -229,7 +226,7 @@ ME.onAuthChange(admin => {
     return;
   }
   currentAdmin = admin;
-  const roleLabels = { admin: I18N.t('role_admin'), submitter: I18N.t('role_submitter'), readonly: I18N.t('role_readonly') };
+  const roleLabels = { admin: 'Administrador geral', submitter: 'Equipa de reporte', readonly: 'Só leitura' };
   document.getElementById('admin-name-label').textContent = `${admin.name} · ${roleLabels[admin.role] || admin.role}`;
   document.getElementById('approvals-link').style.display = admin.role === 'admin' ? '' : 'none';
   document.getElementById('users-link').style.display = admin.role === 'admin' ? '' : 'none';
@@ -352,10 +349,10 @@ async function loadReport() {
     const avgPct = pctValues.length ? Math.round(pctValues.reduce((a, b) => a + b, 0) / pctValues.length) : null;
 
     document.getElementById('stat-tiles').innerHTML = `
-      <div class="stat-tile"><div class="n">${total}</div><div class="label">${I18N.t('tile_indicators')}</div></div>
-      <div class="stat-tile"><div class="n">${withValue}</div><div class="label">${I18N.t('tile_with_value')}</div></div>
-      <div class="stat-tile"><div class="n">${withoutValue}</div><div class="label">${I18N.t('tile_without_value')}</div></div>
-      <div class="stat-tile"><div class="n">${avgPct ?? '—'}${avgPct !== null ? '%' : ''}</div><div class="label">${I18N.t('tile_avg_progress')}</div></div>
+      <div class="stat-tile"><div class="n">${total}</div><div class="label">${'Indicadores'}</div></div>
+      <div class="stat-tile"><div class="n">${withValue}</div><div class="label">${'Com valor aprovado'}</div></div>
+      <div class="stat-tile"><div class="n">${withoutValue}</div><div class="label">${'Sem nenhum valor ainda'}</div></div>
+      <div class="stat-tile"><div class="n">${avgPct ?? '—'}${avgPct !== null ? '%' : ''}</div><div class="label">${'Progresso médio'}</div></div>
     `;
 
     // ---- Separação: Programa (PrDO/PDO) vs Intermédios ----
@@ -366,9 +363,9 @@ async function loadReport() {
     latestProgramRows = programRows;
     latestIntermediateRows = intermediateRows;
 
-    const stageLabels = { atraso: I18N.t('stage_atraso'), alcancada: I18N.t('stage_alcancada'), prazo: I18N.t('stage_prazo') };
+    const stageLabels = { atraso: '🔴 Em atraso', alcancada: '🟢 Meta alcançada', prazo: '🟡 Dentro do prazo' };
     const rowHtml = (r, firstColHtml) => {
-      const indT = I18N.translateIndicator(r.ind);
+      const indT = r.ind;
       return `
       <tr>
         <td>${firstColHtml}</td>
@@ -382,12 +379,12 @@ async function loadReport() {
     };
 
     document.getElementById('tbody-program').innerHTML = programRows
-      .map(r => rowHtml(r, `<span class="level-tag">${I18N.translateLevel(r.ind.level)}</span>`)).join('')
-      || `<tr><td colspan="7" class="small-note" style="padding:20px;">${I18N.getLang() === 'en' ? 'No program indicators found with these filters.' : 'Nenhum indicador de programa encontrado com estes filtros.'}</td></tr>`;
+      .map(r => rowHtml(r, `<span class="level-tag">${r.ind.level}</span>`)).join('')
+      || `<tr><td colspan="7" class="small-note" style="padding:20px;">${'Nenhum indicador de programa encontrado com estes filtros.'}</td></tr>`;
 
     document.getElementById('tbody-intermediate').innerHTML = intermediateRows
-      .map(r => rowHtml(r, `<span class="small-note">${escapeHtml(I18N.translateComponent(r.ind.component || '').replace(/^(Componente|Component) /, 'C'))}</span>`)).join('')
-      || `<tr><td colspan="7" class="small-note" style="padding:20px;">${I18N.getLang() === 'en' ? 'No intermediate indicators found with these filters.' : 'Nenhum indicador intermédio encontrado com estes filtros.'}</td></tr>`;
+      .map(r => rowHtml(r, `<span class="small-note">${escapeHtml((r.ind.component || '').replace(/^(Componente|Component) /, 'C'))}</span>`)).join('')
+      || `<tr><td colspan="7" class="small-note" style="padding:20px;">${'Nenhum indicador intermédio encontrado com estes filtros.'}</td></tr>`;
 
     // ---- Progresso médio por nível ----
     const levels = ['PrDO', 'PDO', 'Intermédio'];
@@ -399,27 +396,27 @@ async function loadReport() {
     latestAvgByLevel = avgByLevel;
     document.getElementById('tbody-avg-level').innerHTML = avgByLevel.map(l => `
       <tr>
-        <td><span class="level-tag">${I18N.translateLevel(l.level)}</span></td>
+        <td><span class="level-tag">${l.level}</span></td>
         <td>${l.count}</td>
         <td>${l.avg !== null ? `<div class="progress-bar" style="max-width:160px;"><div class="progress-bar-fill" style="width:${l.avg}%;"></div></div><span class="small-note">${l.avg}%</span>` : '<span class="small-note">—</span>'}</td>
       </tr>
-    `).join('') || `<tr><td colspan="3" class="small-note" style="padding:20px;">${I18N.getLang() === 'en' ? 'No data.' : 'Sem dados.'}</td></tr>`;
+    `).join('') || `<tr><td colspan="3" class="small-note" style="padding:20px;">${'Sem dados.'}</td></tr>`;
 
     // ---- Relatório Descritivo (narrativa compilada por indicador) ----
     const withNotes = rows.filter(r => r.notes.length);
     latestDescriptiveRows = withNotes.map(r => ({ ...r, narrative: buildDescriptiveNarrative(r.ind, r.notes, r.currentValue, r.pct) }));
     document.getElementById('descriptive-report').innerHTML = latestDescriptiveRows.length
       ? latestDescriptiveRows.map(r => {
-        const indT = I18N.translateIndicator(r.ind);
+        const indT = r.ind;
         return `
         <div class="desc-card">
-          <span class="level-tag">${I18N.translateLevel(r.ind.level)}</span>
+          <span class="level-tag">${r.ind.level}</span>
           <h4>${escapeHtml(indT.name)}</h4>
           <p style="margin:8px 0 0;">${escapeHtml(r.narrative)}</p>
         </div>
       `;
       }).join('')
-      : `<p class="small-note">${I18N.t('no_descriptive_data')}</p>`;
+      : `<p class="small-note">${'Ainda não há resumos de processo registados para os indicadores nestes filtros.'}</p>`;
 
     // ---- Estágio dos indicadores ----
     const stageCounts = { atraso: 0, alcancada: 0, prazo: 0 };
@@ -435,7 +432,6 @@ async function loadReport() {
       type: 'bar',
       data: { labels: Object.keys(byLevelProgram), datasets: [{ data: Object.values(byLevelProgram), backgroundColor: ['#9D212B', '#FAA842'], borderRadius: 4 }] },
       options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } },
-      plugins: [makeValueLabelsPlugin(12, '')],
     });
 
     const byComponent = {};
@@ -452,28 +448,26 @@ async function loadReport() {
       type: 'bar',
       data: { labels: compLabels, datasets: [{ data: compValues, backgroundColor: '#9D212B', borderRadius: 4 }] },
       options: { plugins: { legend: { display: false } }, scales: { y: { max: 100, beginAtZero: true, ticks: { callback: v => v + '%' } } } },
-      plugins: [makeValueLabelsPlugin(12, '%')],
     });
 
     charts.stage = new Chart(document.getElementById('chart-stage'), {
       type: 'bar',
       data: {
-        labels: I18N.getLang() === 'en' ? ['Overdue', 'Targets achieved', 'On track'] : ['Em atraso', 'Metas alcançadas', 'Dentro do prazo'],
+        labels: false ? ['Overdue', 'Targets achieved', 'On track'] : ['Em atraso', 'Metas alcançadas', 'Dentro do prazo'],
         datasets: [{ data: [stageCounts.atraso, stageCounts.alcancada, stageCounts.prazo], backgroundColor: ['#D32F2F', '#2E7D32', '#F9A825'], borderRadius: 4 }],
       },
       options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } } },
-      plugins: [makeValueLabelsPlugin(12, '')],
     });
   } catch (err) {
     console.error(err);
-    document.getElementById('tbody-program').innerHTML = `<tr><td colspan="7"><div class="alert alert-error">${I18N.getLang() === 'en' ? 'Could not load the report.' : 'Não foi possível carregar o relatório.'}</div></td></tr>`;
+    document.getElementById('tbody-program').innerHTML = `<tr><td colspan="7"><div class="alert alert-error">${'Não foi possível carregar o relatório.'}</div></td></tr>`;
   }
 }
 
 document.getElementById('apply-filters-btn').addEventListener('click', loadReport);
 
 document.getElementById('ai-narrative-btn').addEventListener('click', async () => {
-  const en = I18N.getLang() === 'en';
+  const en = false;
   const btn = document.getElementById('ai-narrative-btn');
   const status = document.getElementById('ai-narrative-status');
   if (!latestDescriptiveRows.length) {
@@ -519,10 +513,10 @@ document.getElementById('ai-narrative-btn').addEventListener('click', async () =
 
   // Volta a desenhar a secção com as narrativas actualizadas
   document.getElementById('descriptive-report').innerHTML = latestDescriptiveRows.map(r => {
-    const indT = I18N.translateIndicator(r.ind);
+    const indT = r.ind;
     return `
     <div class="desc-card">
-      <span class="level-tag">${I18N.translateLevel(r.ind.level)}</span>
+      <span class="level-tag">${r.ind.level}</span>
       <h4>${escapeHtml(indT.name)}</h4>
       <p style="margin:8px 0 0;">${escapeHtml(r.narrative)}</p>
     </div>
@@ -530,7 +524,7 @@ document.getElementById('ai-narrative-btn').addEventListener('click', async () =
   }).join('');
 
   btn.disabled = false;
-  btn.textContent = I18N.t('ai_improve_btn');
+  btn.textContent = '🤖 Melhorar com IA (Claude)';
   status.textContent = failCount
     ? (en
       ? `${okCount} narrative(s) improved with AI. ${failCount} could not be improved (kept the automatic version) — check whether the Cloud Function is already published.`
@@ -554,7 +548,7 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
   const original = btn.textContent;
   btn.disabled = true;
   btn.textContent = 'A preparar PDF...';
-  const stageAbbrev = I18N.getLang() === 'en'
+  const stageAbbrev = false
     ? { atraso: 'Overdue', alcancada: 'Achieved', prazo: 'On track' }
     : { atraso: 'Atrasado', alcancada: 'Alcançada', prazo: 'No prazo' };
 
@@ -577,18 +571,18 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
     doc.setTextColor(90, 67, 68);
-    doc.text(I18N.getLang() === 'en' ? 'PROJECT COORDINATION UNIT' : 'UNIDADE DE COORDENAÇÃO DE PROJECTOS', pageWidth / 2, y, { align: 'center' });
+    doc.text('UNIDADE DE COORDENAÇÃO DE PROJECTOS', pageWidth / 2, y, { align: 'center' });
     y += 20;
     doc.setFontSize(16);
     doc.setTextColor(0, 0, 0);
-    doc.text(I18N.getLang() === 'en' ? 'Indicator Progress Report' : 'Relatório de Progresso de Indicadores', pageWidth / 2, y, { align: 'center' });
+    doc.text('Relatório de Progresso de Indicadores', pageWidth / 2, y, { align: 'center' });
     y += 18;
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
     doc.setTextColor(90, 67, 68);
-    doc.text(`${I18N.t('analysis_period')}: ${periodInAnalysisLabel()}`, pageWidth / 2, y, { align: 'center' });
+    doc.text(`${'Período em análise'}: ${periodInAnalysisLabel()}`, pageWidth / 2, y, { align: 'center' });
     y += 14;
-    doc.text(`${I18N.t('generated_on')} ${new Date().toLocaleString(I18N.getLang() === 'en' ? 'en-GB' : 'pt-MZ')}`, pageWidth / 2, y, { align: 'center' });
+    doc.text(`${'Gerado em'} ${new Date().toLocaleString('pt-MZ')}`, pageWidth / 2, y, { align: 'center' });
     y += 24;
     doc.setDrawColor(221, 214, 210);
     doc.line(margin, y, pageWidth - margin, y);
@@ -602,10 +596,10 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
     const status = document.getElementById('f-status').value;
     doc.setFontSize(10);
     doc.setTextColor(0, 0, 0);
-    const enF = I18N.getLang() === 'en';
+    const enF = false;
     const filterPairs = [
-      [I18N.t('col_level'), level || I18N.t('filter_all')], [I18N.t('col_component'), component ? I18N.translateComponent(component) : I18N.t('filter_all_f')], [I18N.t('gender_label'), group ? I18N.t(group === 'Mulheres' ? 'women' : 'youth') : I18N.t('filter_all')],
-      [I18N.t('province_label'), province || I18N.t('filter_all_f')], [I18N.t('district_label'), district || I18N.t('filter_all')], [I18N.t('status_label'), status || I18N.t('filter_all')],
+      ['Nível', level || 'Todos'], ['Componente', component || 'Todas'], ['Género', group || 'Todos'],
+      ['Província', province || 'Todas'], ['Distrito', district || 'Todos'], ['Estatuto', status || 'Todos'],
     ];
     const filterColWidth = (pageWidth - margin * 2) / 3;
     filterPairs.forEach(([label, value], i) => {
@@ -635,7 +629,6 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
         plugins: { legend: { display: false } },
         scales: { y: { beginAtZero: true, ticks: { font: { size: 15 }, stepSize: 1 } }, x: { ticks: { font: { size: 16 } } } },
       },
-      plugins: [makeValueLabelsPlugin(20, '')],
     }, 640, 520);
     const componentChartImg = await renderOffscreenChart({
       type: 'bar',
@@ -647,7 +640,6 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
           x: { ticks: { font: { size: 17 } } },
         },
       },
-      plugins: [makeValueLabelsPlugin(20, '%')],
     }, 640, 520);
 
     const h1 = (520 / 640) * halfWidth;
@@ -681,7 +673,6 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
         plugins: { legend: { display: false } },
         scales: { x: { beginAtZero: true, ticks: { font: { size: 15 }, stepSize: 1 } }, y: { ticks: { font: { size: 16 } } } },
       },
-      plugins: [makeValueLabelsPlugin(20, '')],
     }, 900, 320);
     const stageImgWidth = pageWidth - margin * 2;
     const stageImgHeight = (320 / 900) * stageImgWidth;
@@ -693,13 +684,13 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
     const tableRight = pageWidth - margin;
 
     y = renderPdfTable(doc, y, {
-      title: I18N.t('program_indicators_title'),
-      headers: [I18N.t('col_level'), I18N.t('col_indicator'), I18N.t('col_baseline'), I18N.t('col_current_value'), I18N.t('target'), I18N.t('col_progress'), I18N.t('col_stage')],
+      title: 'Indicadores de Programa (PrDO e PDO)',
+      headers: ['Nível', 'Indicador', 'Base', 'Valor actual', 'Meta', 'Progresso', 'Estágio'],
       colX: [margin + 4, margin + 58, margin + 235, margin + 300, margin + 375, margin + 430, margin + 475],
       nameColIndex: 1,
       wrapWidth: 172,
       rows: latestProgramRows,
-      cellFn: r => { const t = I18N.translateIndicator(r.ind); return [t.level, t.name, String(t.baseline), r.currentValue !== null ? `${r.currentValue}` : '—', `${r.finalTarget.value}`, r.pct !== null ? `${r.pct}%` : '—', stageAbbrev[r.stage] || '—']; },
+      cellFn: r => { const t = r.ind; return [t.level, t.name, String(t.baseline), r.currentValue !== null ? `${r.currentValue}` : '—', `${r.finalTarget.value}`, r.pct !== null ? `${r.pct}%` : '—', stageAbbrev[r.stage] || '—']; },
       stageColIndex: 6, rowStage: r => r.stage,
       margin, tableRight, pageWidth, pageHeight,
     });
@@ -707,13 +698,13 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
 
     if (y > pageHeight - margin - 60) { doc.addPage(); y = 50; }
     y = renderPdfTable(doc, y, {
-      title: I18N.t('intermediate_indicators_title'),
-      headers: [I18N.getLang() === 'en' ? 'Comp.' : 'Comp.', I18N.t('col_indicator'), I18N.t('col_baseline'), I18N.t('col_current_value'), I18N.t('target'), I18N.t('col_progress'), I18N.t('col_stage')],
+      title: 'Indicadores Intermédios',
+      headers: ['Comp.', 'Indicador', 'Base', 'Valor actual', 'Meta', 'Progresso', 'Estágio'],
       colX: [margin + 4, margin + 58, margin + 235, margin + 300, margin + 375, margin + 430, margin + 475],
       nameColIndex: 1,
       wrapWidth: 172,
       rows: latestIntermediateRows,
-      cellFn: r => { const t = I18N.translateIndicator(r.ind); return [(r.ind.component || '').replace('Componente ', 'C').match(/C\d/)?.[0] || '—', t.name, String(t.baseline), r.currentValue !== null ? `${r.currentValue}` : '—', `${r.finalTarget.value}`, r.pct !== null ? `${r.pct}%` : '—', stageAbbrev[r.stage] || '—']; },
+      cellFn: r => { const t = r.ind; return [(r.ind.component || '').replace('Componente ', 'C').match(/C\d/)?.[0] || '—', t.name, String(t.baseline), r.currentValue !== null ? `${r.currentValue}` : '—', `${r.finalTarget.value}`, r.pct !== null ? `${r.pct}%` : '—', stageAbbrev[r.stage] || '—']; },
       stageColIndex: 6, rowStage: r => r.stage,
       margin, tableRight, pageWidth, pageHeight,
     });
@@ -721,13 +712,13 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
 
     if (y > pageHeight - margin - 100) { doc.addPage(); y = 50; }
     y = renderPdfTable(doc, y, {
-      title: I18N.t('avg_by_level_title'),
-      headers: [I18N.t('col_level'), I18N.t('col_num_indicators'), I18N.t('col_avg_progress')],
+      title: 'Progresso médio por nível',
+      headers: ['Nível', 'Nº de indicadores', 'Progresso médio'],
       colX: [margin + 4, margin + 130, margin + 260],
       nameColIndex: -1,
       wrapWidth: 0,
       rows: latestAvgByLevel,
-      cellFn: l => [I18N.translateLevel(l.level), String(l.count), l.avg !== null ? `${l.avg}%` : '—'],
+      cellFn: l => [l.level, String(l.count), l.avg !== null ? `${l.avg}%` : '—'],
       margin, tableRight, pageWidth, pageHeight,
     });
     y += 28;
@@ -739,7 +730,7 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(15);
       doc.setTextColor(0, 0, 0);
-      doc.text(I18N.t('descriptive_report_title'), margin, y);
+      doc.text('Relatório Descritivo', margin, y);
       y += 26;
 
       latestDescriptiveRows.forEach(r => {
@@ -775,7 +766,7 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
     doc.save(`relatorio-indicadores-me-mozcommunity-${new Date().toISOString().slice(0, 10)}.pdf`);
   } catch (err) {
     console.error(err);
-    alert(I18N.getLang() === 'en' ? 'Could not generate the PDF.' : 'Não foi possível gerar o PDF.');
+    alert('Não foi possível gerar o PDF.');
   } finally {
     btn.disabled = false;
     btn.textContent = original;
@@ -901,37 +892,6 @@ function periodInAnalysisLabel() {
 // Plugin Chart.js "caseiro" (sem depender de bibliotecas externas) que
 // desenha o valor exacto em cima de cada barra (colunas) ou ao lado dela
 // (barras horizontais).
-function makeValueLabelsPlugin(fontSize, suffix) {
-  return {
-    id: 'valueLabels',
-    afterDatasetsDraw(chart) {
-      const { ctx } = chart;
-      const isHorizontal = chart.options.indexAxis === 'y';
-      chart.data.datasets.forEach((dataset, di) => {
-        const meta = chart.getDatasetMeta(di);
-        if (meta.hidden) return;
-        meta.data.forEach((el, i) => {
-          const value = dataset.data[i];
-          if (value === null || value === undefined) return;
-          const pos = el.getProps(['x', 'y'], true);
-          ctx.save();
-          ctx.fillStyle = '#3A2A2A';
-          ctx.font = `bold ${fontSize}px 'Public Sans', Helvetica, sans-serif`;
-          if (isHorizontal) {
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(`${value}${suffix}`, pos.x + 6, pos.y);
-          } else {
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'bottom';
-            ctx.fillText(`${value}${suffix}`, pos.x, pos.y - 4);
-          }
-          ctx.restore();
-        });
-      });
-    },
-  };
-}
 
 async function renderOffscreenChart(config, width, height) {
   const canvas = document.createElement('canvas');
@@ -961,7 +921,7 @@ function renderPdfTable(doc, startY, opts) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     doc.setTextColor(90, 67, 68);
-    doc.text(I18N.getLang() === 'en' ? 'No indicators found with these filters.' : 'Nenhum indicador encontrado com estes filtros.', margin, y);
+    doc.text('Nenhum indicador encontrado com estes filtros.', margin, y);
     return y + 20;
   }
 

@@ -464,6 +464,33 @@ const ME = (() => {
     invalidateIndicatorsCache();
   }
 
+  // Move um indicador uma posição para cima ou para baixo na lista
+  // completa (não filtrada) do catálogo, trocando o campo "order" com o
+  // vizinho imediato. Útil para colocar um indicador recém-criado junto
+  // de outro relacionado (ex: um novo indicador de Componente 2 a seguir
+  // ao indicador de VBG existente).
+  async function moveIndicator(id, direction) {
+    const admin = getCurrentAdminSync();
+    if (!admin || admin.role !== 'admin') throw new Error('Só o Administrador geral pode reordenar indicadores.');
+
+    const all = await getIndicators(); // já vem ordenada por "order"
+    const index = all.findIndex(i => i.id === id);
+    if (index === -1) throw new Error('Indicador não encontrado.');
+    const neighborIndex = direction === 'up' ? index - 1 : index + 1;
+    if (neighborIndex < 0 || neighborIndex >= all.length) return; // já está na ponta, não faz nada
+
+    const current = all[index];
+    const neighbor = all[neighborIndex];
+    const currentOrder = current.order ?? index;
+    const neighborOrder = neighbor.order ?? neighborIndex;
+
+    const batch = db.batch();
+    batch.update(db.collection(INDICATORS_COL).doc(current.id), { order: neighborOrder });
+    batch.update(db.collection(INDICATORS_COL).doc(neighbor.id), { order: currentOrder });
+    await batch.commit();
+    invalidateIndicatorsCache();
+  }
+
   function getComponents() {
     return [
       'Componente 1 — Colaboração Comunidades-Governo',
@@ -925,7 +952,7 @@ const ME = (() => {
 
   return {
     getIndicators, getIndicator, getComponents, getLevels, getSubmissionPeriodFields, combinePeriod, periodSortKey,
-    upsertIndicator, deleteIndicator,
+    upsertIndicator, deleteIndicator, moveIndicator,
     getProvinces, getDistricts, getBeneficiaryStatuses,
     submitValue, listValues, listApprovedValues, computeCurrentValue, classifyStage, getPeriodDeadline, reviewValue, deleteValue, resetAllValues, listPublicValues, subscribePendingCount,
     adminLogin, adminLogout, onAuthChange, getCurrentAdminSync, changeAdminPassword,

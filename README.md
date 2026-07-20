@@ -665,3 +665,48 @@ computador.
 guardada no Firestore), qualquer pessoa que abrir a plataforma pode
 escolher o idioma que preferir, independentemente do que outra pessoa
 tiver escolhido — a preferência é só local a cada dispositivo/browser.
+
+## Actualização: tradução só no Relatório Público
+
+Retirei o botão de tradução PT/EN de todas as páginas internas (painel de
+Indicadores, página de cada indicador, Aprovações, Utilizadores, Editar
+Indicador, e a página de Relatório interna) — ficam sempre e só em
+português, tal como antes desta funcionalidade existir. O botão EN/PT
+**fica apenas no relatório público** (`relatorio-publico.html`), que é o
+único sítio pensado para ser visto por gente de fora (ex: Banco Mundial,
+parceiros internacionais), fazendo sentido ser o único bilingue.
+
+O ficheiro `js/i18n.js` mantém-se no projecto (é usado pelo relatório
+público), mas já não é carregado em mais nenhuma página.
+
+## Correcções ao relatório público (tradução completa) e novos ajustes
+
+**Tradução mais completa no relatório público**: encontrei e corrigi
+vários sítios que ainda ficavam em português mesmo no modo inglês —
+títulos dos gráficos e tabelas no PDF, a legenda dos componentes (C1 =
+...), o nome do ficheiro descarregado (agora `public-report-me-
+mozcommunity-...pdf` em inglês, `relatorio-publico-me-mozcommunity-
+...pdf` em português), as datas (usa `en-GB` em vez de `pt-MZ` quando em
+inglês), o título da página do browser, e alguns textos que tinham
+ficado esquecidos no formulário de filtros. Também encontrei e corrigi
+um pequeno bug: o texto "Dados abertos" estava a ser trocado por engano
+por "Progresso do projecto" assim que a página carregava — já está
+corrigido.
+
+**Números nas barras/colunas removidos**: como pediste, retirei essa
+funcionalidade dos dois relatórios (interno e público) — os gráficos
+voltam a mostrar só as barras, sem o número escrito por cima.
+
+## Reordenar indicadores (novo)
+
+Adicionei botões **↑ / ↓** na lista de indicadores do painel principal
+(só visíveis para o Administrador geral), para reordenares os
+indicadores dentro do catálogo — por exemplo, para colocares um
+indicador novo logo a seguir a outro relacionado.
+
+**Para resolveres o indicador de VBG que ficou deslocado**: entra no
+painel de Indicadores com a tua conta de administrador, encontra o novo
+indicador (deve estar no fundo da lista, onde os indicadores novos
+aparecem por defeito), e clica na seta **↑** repetidamente até ele ficar
+logo a seguir a "Beneficiários de acções de prevenção e resposta à
+VBG". Cada clique troca de posição com o indicador imediatamente acima.

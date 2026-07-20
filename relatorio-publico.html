@@ -43,9 +43,9 @@
 <main>
   <section style="padding-bottom:0;">
     <div class="container">
-      <span class="eyebrow" data-i18n="reports_eyebrow">Dados abertos</span>
+      <span class="eyebrow" data-i18n="open_data_label">Dados abertos</span>
       <h1 style="font-size:clamp(1.8rem,3vw,2.4rem)" data-i18n="reports_title">Relatório Público de Progresso</h1>
-      <p class="lead" style="max-width:64ch">Progresso dos indicadores do projecto "Jobs, Social Cohesion and Community Resilience in Northern Mozambique — Phase I", com base apenas em valores já aprovados. Acesso livre, sem necessidade de login.</p>
+      <p class="lead" style="max-width:64ch" data-i18n="public_report_lead">Progresso dos indicadores do projecto "Jobs, Social Cohesion and Community Resilience in Northern Mozambique — Phase I", com base apenas em valores já aprovados. Acesso livre, sem necessidade de login.</p>
     </div>
   </section>
 
@@ -190,6 +190,7 @@ let latestStageCounts = { atraso: 0, alcancada: 0, prazo: 0 };
 let latestComponentLegend = [];
 
 I18N.applyStaticTranslations();
+document.title = I18N.t('public_report_page_title');
 I18N.injectToggle('.main-nav');
 
 ME.getComponents().forEach(c => document.getElementById('f-component').add(new Option(c, c)));
@@ -199,7 +200,7 @@ document.getElementById('f-province').addEventListener('change', () => {
   const districtEl = document.getElementById('f-district');
   const province = document.getElementById('f-province').value;
   if (!province) {
-    districtEl.innerHTML = '<option value="">Seleccione primeiro a província...</option>';
+    districtEl.innerHTML = `<option value="">${I18N.t('select_province_first')}</option>`;
     districtEl.disabled = true;
     return;
   }
@@ -349,14 +350,13 @@ async function loadReport() {
       type: 'bar',
       data: { labels: Object.keys(byLevelProgram), datasets: [{ data: Object.values(byLevelProgram), backgroundColor: ['#9D212B', '#FAA842'], borderRadius: 4 }] },
       options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } },
-      plugins: [makeValueLabelsPlugin(12, '')],
     });
 
     const byComponent = {};
     rows.filter(r => r.ind.component && r.pct !== null).forEach(r => {
       const m = r.ind.component.match(/Componente (\d)/);
       const key = m ? `C${m[1]}` : r.ind.component;
-      if (!byComponent[key]) byComponent[key] = { values: [], fullName: r.ind.component };
+      if (!byComponent[key]) byComponent[key] = { values: [], fullName: I18N.translateComponent(r.ind.component) };
       byComponent[key].values.push(r.pct);
     });
     const compLabels = Object.keys(byComponent).sort();
@@ -366,7 +366,6 @@ async function loadReport() {
       type: 'bar',
       data: { labels: compLabels, datasets: [{ data: compValues, backgroundColor: '#9D212B', borderRadius: 4 }] },
       options: { plugins: { legend: { display: false } }, scales: { y: { max: 100, beginAtZero: true, ticks: { callback: v => v + '%' } } } },
-      plugins: [makeValueLabelsPlugin(12, '%')],
     });
 
     charts.stage = new Chart(document.getElementById('chart-stage'), {
@@ -376,7 +375,6 @@ async function loadReport() {
         datasets: [{ data: [stageCounts.atraso, stageCounts.alcancada, stageCounts.prazo], backgroundColor: ['#D32F2F', '#2E7D32', '#F9A825'], borderRadius: 4 }],
       },
       options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } } },
-      plugins: [makeValueLabelsPlugin(12, '')],
     });
   } catch (err) {
     console.error(err);
@@ -390,14 +388,14 @@ document.getElementById('clear-filters-btn').addEventListener('click', () => {
   document.getElementById('f-component').value = '';
   document.getElementById('f-group').value = '';
   document.getElementById('f-province').value = '';
-  document.getElementById('f-district').innerHTML = '<option value="">Seleccione primeiro a província...</option>';
+  document.getElementById('f-district').innerHTML = `<option value="">${I18N.t('select_province_first')}</option>`;
   document.getElementById('f-district').disabled = true;
   document.getElementById('f-status').value = '';
   loadReport();
 });
 
 document.getElementById('download-pdf-btn').addEventListener('click', async () => {
-  if (!latestRows.length) { alert('Aguarda o relatório carregar antes de descarregar.'); return; }
+  if (!latestRows.length) { alert(I18N.getLang() === 'en' ? 'Wait for the report to load before downloading.' : 'Aguarda o relatório carregar antes de descarregar.'); return; }
   const btn = document.getElementById('download-pdf-btn');
   const original = btn.textContent;
   btn.disabled = true;
@@ -470,8 +468,8 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
     // próprias para o PDF — não são só uma captura do ecrã) ----
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
-    doc.text('Indicadores por nível (PrDO/PDO)', margin, y);
-    doc.text('Progresso médio por componente', margin + (pageWidth - margin * 2) / 2 + 14, y);
+    doc.text(I18N.t('chart_by_level'), margin, y);
+    doc.text(I18N.t('chart_by_component'), margin + (pageWidth - margin * 2) / 2 + 14, y);
     y += 10;
 
     const halfWidth = (pageWidth - margin * 2 - 20) / 2;
@@ -482,7 +480,6 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
         plugins: { legend: { display: false } },
         scales: { y: { beginAtZero: true, ticks: { font: { size: 15 }, stepSize: 1 } }, x: { ticks: { font: { size: 16 } } } },
       },
-      plugins: [makeValueLabelsPlugin(20, '')],
     }, 640, 520);
     const componentChartImg = await renderOffscreenChart({
       type: 'bar',
@@ -494,7 +491,6 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
           x: { ticks: { font: { size: 17 } } },
         },
       },
-      plugins: [makeValueLabelsPlugin(20, '%')],
     }, 640, 520);
 
     const h1 = (520 / 640) * halfWidth;
@@ -516,7 +512,7 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
     doc.setTextColor(0, 0, 0);
-    doc.text('Estágio dos indicadores face às metas', margin, y);
+    doc.text(I18N.getLang() === 'en' ? 'Indicator stage against targets' : 'Estágio dos indicadores face às metas', margin, y);
     y += 10;
     const stageChartImg = await renderOffscreenChart({
       type: 'bar',
@@ -526,7 +522,6 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
         plugins: { legend: { display: false } },
         scales: { x: { beginAtZero: true, ticks: { font: { size: 15 }, stepSize: 1 } }, y: { ticks: { font: { size: 16 } } } },
       },
-      plugins: [makeValueLabelsPlugin(20, '')],
     }, 900, 320);
     const stageImgWidth = pageWidth - margin * 2;
     const stageImgHeight = (320 / 900) * stageImgWidth;
@@ -576,7 +571,7 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
       margin, tableRight, pageWidth, pageHeight,
     });
 
-    doc.save(`relatorio-publico-me-mozcommunity-${new Date().toISOString().slice(0, 10)}.pdf`);
+    doc.save(`${I18N.getLang() === 'en' ? 'public-report' : 'relatorio-publico'}-me-mozcommunity-${new Date().toISOString().slice(0, 10)}.pdf`);
   } catch (err) {
     console.error(err);
     alert(I18N.getLang() === 'en' ? 'Could not generate the PDF.' : 'Não foi possível gerar o PDF.');
@@ -590,42 +585,14 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
 // (Maio/2026) até ao mês/ano actual — este relatório é cumulativo, não
 // tem um filtro de datas próprio.
 function periodInAnalysisLabel() {
-  const MONTHS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+  const MONTHS_PT = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+  const MONTHS_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const en = I18N.getLang() === 'en';
+  const MONTHS = en ? MONTHS_EN : MONTHS_PT;
   const now = new Date();
-  return `Maio/2026 a ${MONTHS[now.getMonth()]}/${now.getFullYear()}`;
+  return en ? `May/2026 to ${MONTHS[now.getMonth()]}/${now.getFullYear()}` : `Maio/2026 a ${MONTHS[now.getMonth()]}/${now.getFullYear()}`;
 }
 
-function makeValueLabelsPlugin(fontSize, suffix) {
-  return {
-    id: 'valueLabels',
-    afterDatasetsDraw(chart) {
-      const { ctx } = chart;
-      const isHorizontal = chart.options.indexAxis === 'y';
-      chart.data.datasets.forEach((dataset, di) => {
-        const meta = chart.getDatasetMeta(di);
-        if (meta.hidden) return;
-        meta.data.forEach((el, i) => {
-          const value = dataset.data[i];
-          if (value === null || value === undefined) return;
-          const pos = el.getProps(['x', 'y'], true);
-          ctx.save();
-          ctx.fillStyle = '#3A2A2A';
-          ctx.font = `bold ${fontSize}px 'Public Sans', Helvetica, sans-serif`;
-          if (isHorizontal) {
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(`${value}${suffix}`, pos.x + 6, pos.y);
-          } else {
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'bottom';
-            ctx.fillText(`${value}${suffix}`, pos.x, pos.y - 4);
-          }
-          ctx.restore();
-        });
-      });
-    },
-  };
-}
 
 async function renderOffscreenChart(config, width, height) {
   const canvas = document.createElement('canvas');

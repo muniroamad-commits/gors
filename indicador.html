@@ -31,21 +31,21 @@
   <div class="container">
     <a href="index.html" class="brand">
       <span class="brand-mark"><img src="img/logo-adin.jpg" alt="Logótipo ADIN"></span>
-      <span class="brand-name">M&amp;E MozCommunity<small data-i18n="brand_tagline">Monitoria de Indicadores — ADIN</small></span>
+      <span class="brand-name">M&amp;E MozCommunity<small>Monitoria de Indicadores — ADIN</small></span>
     </a>
     <button class="nav-toggle" id="nav-toggle" aria-label="Abrir menu" aria-expanded="false">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
     <nav class="main-nav">
-      <a href="dashboard.html" data-i18n="nav_indicators">Indicadores</a>
-      <a href="relatorios.html" data-i18n="nav_reports">Relatórios</a>
-      <a href="approvals.html" id="approvals-link" style="display:none;" data-i18n="nav_approvals">Aprovações</a>
-      <a href="users.html" id="users-link" style="display:none;" data-i18n="nav_users">Utilizadores</a>
+      <a href="dashboard.html">Indicadores</a>
+      <a href="relatorios.html">Relatórios</a>
+      <a href="approvals.html" id="approvals-link" style="display:none;">Aprovações</a>
+      <a href="users.html" id="users-link" style="display:none;">Utilizadores</a>
       <span class="small-note" id="admin-name-label" style="margin-right:8px;"></span>
             <a href="approvals.html" id="notif-bell" title="Aprovações pendentes" style="display:none; position:relative; text-decoration:none; color:var(--ink); margin-right:6px; font-size:1.1rem;">
         🔔<span id="notif-badge" style="display:none; position:absolute; top:-6px; right:-10px; background:var(--brick); color:#fff; font-size:0.62rem; font-weight:700; padding:1px 5px; border-radius:999px; line-height:1.3;">0</span>
       </a>
-      <a href="#" id="logout-link" data-i18n="nav_logout">Sair</a>
+      <a href="#" id="logout-link">Sair</a>
     </nav>
   </div>
 </header>
@@ -63,15 +63,12 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="js/firebase-config.js"></script>
 <script src="js/store.js"></script>
-<script src="js/i18n.js"></script>
 <script>
 let currentAdmin = null;
 let resultsChart = null;
 const indicatorId = new URLSearchParams(window.location.search).get('id');
 const contentEl = document.getElementById('content');
 
-I18N.applyStaticTranslations();
-I18N.injectToggle('.main-nav');
 
 ME.onAuthChange(admin => {
   if (!admin) { window.location.href = 'index.html'; return; }
@@ -81,7 +78,7 @@ ME.onAuthChange(admin => {
     return;
   }
   currentAdmin = admin;
-  const roleLabels = { admin: I18N.t('role_admin'), submitter: I18N.t('role_submitter'), readonly: I18N.t('role_readonly') };
+  const roleLabels = { admin: 'Administrador geral', submitter: 'Equipa de reporte', readonly: 'Só leitura' };
   document.getElementById('admin-name-label').textContent = `${admin.name} · ${roleLabels[admin.role] || admin.role}`;
   document.getElementById('approvals-link').style.display = admin.role === 'admin' ? '' : 'none';
   document.getElementById('users-link').style.display = admin.role === 'admin' ? '' : 'none';
@@ -101,7 +98,7 @@ document.getElementById('logout-link').addEventListener('click', (e) => {
 async function loadIndicator() {
   const ind = await ME.getIndicator(indicatorId);
   if (!ind) {
-    contentEl.innerHTML = `<div class="alert alert-error">${I18N.getLang() === 'en' ? 'Indicator not found.' : 'Indicador não encontrado.'}</div>`;
+    contentEl.innerHTML = `<div class="alert alert-error">${'Indicador não encontrado.'}</div>`;
     return;
   }
   try {
@@ -109,12 +106,12 @@ async function loadIndicator() {
     render(ind, values);
   } catch (err) {
     console.error(err);
-    contentEl.innerHTML = `<div class="alert alert-error">${I18N.getLang() === 'en' ? 'Could not load the indicator.' : 'Não foi possível carregar o indicador.'}</div>`;
+    contentEl.innerHTML = `<div class="alert alert-error">${'Não foi possível carregar o indicador.'}</div>`;
   }
 }
 
 function render(ind0, values) {
-  const ind = I18N.translateIndicator(ind0);
+  const ind = ind0;
   const approved = values.filter(v => v.status === 'aprovado').sort((a, b) => ME.periodSortKey(a.period) - ME.periodSortKey(b.period));
   const isNumeric = !ind.isTextIndicator && !ind.isYesNoIndicator;
   const finalTarget = ind.targets[ind.targets.length - 1];
@@ -132,11 +129,11 @@ function render(ind0, values) {
     pct = Math.min(100, Math.round((currentValue / finalTarget.value) * 100));
   }
   const stage = ME.classifyStage(ind0, currentValue);
-  const stageLabels = { atraso: I18N.t('stage_atraso'), alcancada: I18N.t('stage_alcancada'), prazo: I18N.t('stage_prazo') };
+  const stageLabels = { atraso: '🔴 Em atraso', alcancada: '🟢 Meta alcançada', prazo: '🟡 Dentro do prazo' };
 
 
   const statusBadge = { submetido: 'badge-em_analise', aprovado: 'badge-resolvida', rejeitado: 'badge-encerrada' };
-  const statusLabel = { submetido: I18N.t('status_submitted'), aprovado: I18N.t('status_approved'), rejeitado: I18N.t('status_rejected') };
+  const statusLabel = { submetido: 'Submetido', aprovado: 'Aprovado', rejeitado: 'Rejeitado' };
 
   const historyHtml = values.length ? values.slice().sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at)).map(v => `
     <li>
@@ -150,16 +147,16 @@ function render(ind0, values) {
       </div>
       ${v.note ? `<div class="tl-note">${escapeHtml(v.note)}</div>` : ''}
       ${(v.evidence || []).map(e => `<div class="tl-note"><a href="${e.dataUrl}" download="${escapeHtml(e.name)}" class="btn btn-secondary btn-sm">📎 ${escapeHtml(e.name)}</a></div>`).join('')}
-      <div class="tl-date">${I18N.t('submitted_by')} ${escapeHtml(v.submitted_by)} · ${formatDate(v.submitted_at)}</div>
-      ${v.reviewed_by ? `<div class="tl-date">${I18N.t('reviewed_by')} ${escapeHtml(v.reviewed_by)} · ${formatDate(v.reviewed_at)}${v.review_note ? ' · ' + escapeHtml(v.review_note) : ''}</div>` : ''}
+      <div class="tl-date">${'Submetido por'} ${escapeHtml(v.submitted_by)} · ${formatDate(v.submitted_at)}</div>
+      ${v.reviewed_by ? `<div class="tl-date">${'Revisto por'} ${escapeHtml(v.reviewed_by)} · ${formatDate(v.reviewed_at)}${v.review_note ? ' · ' + escapeHtml(v.review_note) : ''}</div>` : ''}
       ${(currentAdmin.role === 'admin' && v.status === 'submetido') ? `
         <div style="display:flex; gap:8px; margin-top:6px;">
-          <button type="button" class="btn btn-primary btn-sm review-btn" data-id="${v.id}" data-approve="true">${I18N.t('approve')}</button>
-          <button type="button" class="btn btn-secondary btn-sm review-btn" data-id="${v.id}" data-approve="false">${I18N.t('reject')}</button>
+          <button type="button" class="btn btn-primary btn-sm review-btn" data-id="${v.id}" data-approve="true">${'Aprovar'}</button>
+          <button type="button" class="btn btn-secondary btn-sm review-btn" data-id="${v.id}" data-approve="false">${'Rejeitar'}</button>
         </div>
       ` : ''}
     </li>
-  `).join('') : `<li class="small-note">${I18N.t('no_submissions_yet')}</li>`;
+  `).join('') : `<li class="small-note">${'Ainda não há submissões para este indicador.'}</li>`;
 
   const canSubmit = currentAdmin && currentAdmin.role !== 'readonly';
   const periodFields = ME.getSubmissionPeriodFields(ind0);
@@ -167,13 +164,13 @@ function render(ind0, values) {
   if (periodFields.mode === 'year+sub') {
     periodFieldsHtml = `
       <div class="form-row">
-        <div class="field"><label for="val-year">${I18N.t('year')}</label><select id="val-year">${periodFields.years.map(y => `<option value="${y}">${y}</option>`).join('')}</select></div>
+        <div class="field"><label for="val-year">${'Ano'}</label><select id="val-year">${periodFields.years.map(y => `<option value="${y}">${y}</option>`).join('')}</select></div>
         <div class="field"><label for="val-sub">${escapeHtml(periodFields.subLabel)}</label><select id="val-sub">${periodFields.subOptions.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('')}</select></div>
       </div>`;
   } else if (periodFields.mode === 'year-only') {
-    periodFieldsHtml = `<div class="field"><label for="val-year">${periodFields.biennial ? (I18N.getLang() === 'en' ? 'Biennium start year' : 'Ano de início do biénio') : I18N.t('year')}</label><select id="val-year">${periodFields.years.map(y => `<option value="${y}">${y}${periodFields.biennial ? '–' + (y + 1) : ''}</option>`).join('')}</select></div>`;
+    periodFieldsHtml = `<div class="field"><label for="val-year">${periodFields.biennial ? ('Ano de início do biénio') : 'Ano'}</label><select id="val-year">${periodFields.years.map(y => `<option value="${y}">${y}${periodFields.biennial ? '–' + (y + 1) : ''}</option>`).join('')}</select></div>`;
   } else {
-    periodFieldsHtml = `<div class="field"><label for="val-sub">${I18N.t('period')}</label><select id="val-sub">${periodFields.options.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('')}</select></div>`;
+    periodFieldsHtml = `<div class="field"><label for="val-sub">${'Período'}</label><select id="val-sub">${periodFields.options.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('')}</select></div>`;
   }
 
   // A desagregação (género e estatuto de beneficiário) só faz sentido em
@@ -186,14 +183,14 @@ function render(ind0, values) {
   // Firestore, usada pelos relatórios) — só o texto mostrado ao
   // utilizador é traduzido.
   const DISAGG_LABEL_EN = { 'Mulheres': 'Women', 'Jovens': 'Youth', 'Mulheres (%)': 'Women (%)' };
-  const translateDisaggLabel = (d) => (I18N.getLang() === 'en' && DISAGG_LABEL_EN[d]) ? DISAGG_LABEL_EN[d] : d;
+  const translateDisaggLabel = (d) => (false && DISAGG_LABEL_EN[d]) ? DISAGG_LABEL_EN[d] : d;
 
   const disaggFieldsHtml = (ind0.disaggregation || []).map(d => `
     <div class="field"><label>${escapeHtml(translateDisaggLabel(d))} <span class="required">*</span></label><input type="number" class="disagg-input" data-key="${escapeHtml(d)}" required></div>
   `).join('');
 
   const STATUS_LABEL_EN = { 'Deslocados': 'Displaced', 'Retornados': 'Returnees', 'Anfitriões': 'Host communities' };
-  const translateStatusLabel = (s) => (I18N.getLang() === 'en' && STATUS_LABEL_EN[s]) ? STATUS_LABEL_EN[s] : s;
+  const translateStatusLabel = (s) => (false && STATUS_LABEL_EN[s]) ? STATUS_LABEL_EN[s] : s;
 
   const statusFieldsHtml = isAboutPeople ? ME.getBeneficiaryStatuses().map(s => `
     <div class="field"><label>${escapeHtml(translateStatusLabel(s))} <span class="required">*</span></label><input type="number" class="status-input" data-key="${escapeHtml(s)}" required></div>
@@ -201,10 +198,10 @@ function render(ind0, values) {
 
   const submitFormHtml = canSubmit ? `
     <div class="form-card" style="padding:18px;">
-      <p class="small-note" style="margin:0 0 12px;">${I18N.t('frequency_label')}: <strong>${escapeHtml(ind.frequency)}</strong></p>
+      <p class="small-note" style="margin:0 0 12px;">${'Periodicidade'}: <strong>${escapeHtml(ind.frequency)}</strong></p>
       ${periodFieldsHtml}
       <div class="field">
-        <label for="val-value">${I18N.t('value_label')} ${ind.isYesNoIndicator ? '(Sim/Não)' : ind.isTextIndicator ? '(descrição)' : `(${ind.unit})`} <span class="required">*</span></label>
+        <label for="val-value">${'Valor'} ${ind.isYesNoIndicator ? '(Sim/Não)' : ind.isTextIndicator ? '(descrição)' : `(${ind.unit})`} <span class="required">*</span></label>
         ${ind.isYesNoIndicator
           ? `<select id="val-value" required><option value="Sim">Sim</option><option value="Não">Não</option></select>`
           : ind.isTextIndicator
@@ -214,30 +211,30 @@ function render(ind0, values) {
       </div>
       <div class="form-row">
         <div class="field">
-          <label for="val-province">${I18N.t('province_label')} <span class="required">*</span></label>
-          <select id="val-province" required><option value="">${I18N.t('select_placeholder')}</option>${ME.getProvinces().map(p => `<option value="${p}">${p}</option>`).join('')}</select>
+          <label for="val-province">${'Província'} <span class="required">*</span></label>
+          <select id="val-province" required><option value="">${'Seleccione...'}</option>${ME.getProvinces().map(p => `<option value="${p}">${p}</option>`).join('')}</select>
         </div>
         <div class="field">
-          <label for="val-district">${I18N.t('district_label')} <span class="required">*</span></label>
-          <select id="val-district" disabled required><option value="">${I18N.t('select_province_first')}</option></select>
+          <label for="val-district">${'Distrito'} <span class="required">*</span></label>
+          <select id="val-district" disabled required><option value="">${'Seleccione primeiro a província...'}</option></select>
         </div>
       </div>
       ${disaggFieldsHtml}
-      ${isAboutPeople ? `<p class="small-note" style="margin:14px 0 6px;">${I18N.t('beneficiary_status_disagg')}</p>${statusFieldsHtml}` : ''}
-      <div class="field"><label for="val-note">${I18N.t('process_summary_label')} <span class="required">*</span></label><textarea id="val-note" placeholder="${I18N.t('process_summary_placeholder')}" required></textarea></div>
+      ${isAboutPeople ? `<p class="small-note" style="margin:14px 0 6px;">${'Desagregação por estatuto de beneficiário:'}</p>${statusFieldsHtml}` : ''}
+      <div class="field"><label for="val-note">${'Descreva o resumo do processo'} <span class="required">*</span></label><textarea id="val-note" placeholder="${'Explica como este valor foi apurado: o que foi feito, onde, e como foi confirmado'}" required></textarea></div>
       <div class="field">
-        <label for="val-evidence">${I18N.t('attach_evidence')} <span class="required">*</span></label>
+        <label for="val-evidence">${'Anexar evidência'} <span class="required">*</span></label>
         <input type="file" id="val-evidence" accept=".jpg,.jpeg,.png,.webp,.pdf" style="padding:8px;" required>
-        <div class="hint">${I18N.getLang() === 'en' ? 'Up to 200KB, 2 files.' : 'Até 200KB, 2 ficheiros.'}</div>
+        <div class="hint">${'Até 200KB, 2 ficheiros.'}</div>
       </div>
-      <button type="button" class="btn btn-primary btn-block" id="submit-value-btn">${I18N.t('submit_for_approval')}</button>
+      <button type="button" class="btn btn-primary btn-block" id="submit-value-btn">${'Submeter para aprovação'}</button>
     </div>
   ` : '';
 
   contentEl.innerHTML = `
     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-      <a href="dashboard.html" class="small-note" style="text-decoration:none;">${I18N.t('back_to_indicators')}</a>
-      ${currentAdmin.role === 'admin' ? `<a href="indicator-edit.html?id=${encodeURIComponent(ind.id)}" class="btn btn-secondary btn-sm">${I18N.t('edit_indicator')}</a>` : ''}
+      <a href="dashboard.html" class="small-note" style="text-decoration:none;">${'← Voltar aos indicadores'}</a>
+      ${currentAdmin.role === 'admin' ? `<a href="indicator-edit.html?id=${encodeURIComponent(ind.id)}" class="btn btn-secondary btn-sm">${'Editar indicador'}</a>` : ''}
     </div>
     <div style="margin-top:14px;">
       <span class="level-tag">${ind.level}</span>
@@ -246,47 +243,47 @@ function render(ind0, values) {
     <h1 style="font-size:clamp(1.5rem,2.6vw,2rem); margin:10px 0 0;">${escapeHtml(ind.name)}</h1>
 
     <div class="meta-grid">
-      <div class="meta-item"><dt>${I18N.t('unit_label')}</dt><dd>${escapeHtml(ind.unit)}</dd></div>
-      <div class="meta-item"><dt>${I18N.t('frequency_label')}</dt><dd>${escapeHtml(ind.frequency)}</dd></div>
-      <div class="meta-item"><dt>${I18N.t('verification_means')}</dt><dd>${escapeHtml(ind.dataSource || '—')}</dd></div>
-      <div class="meta-item"><dt>${I18N.t('responsible_label')}</dt><dd>${escapeHtml(ind.responsible)}</dd></div>
-      <div class="meta-item"><dt>${I18N.t('baseline_full')}</dt><dd>${escapeHtml(String(ind.baseline))}</dd></div>
-      <div class="meta-item"><dt>${I18N.t('col_final_target')}</dt><dd>${escapeHtml(String(finalTarget.value))}</dd></div>
-      <div class="meta-item"><dt>${I18N.t('current_value_sum')}</dt><dd>${currentValue !== null ? escapeHtml(String(currentValue)) : '—'}</dd></div>
-      <div class="meta-item"><dt>${I18N.t('col_progress')}</dt><dd>${pct !== null ? pct + '%' : '—'}</dd></div>
-      <div class="meta-item"><dt>${I18N.t('col_stage')}</dt><dd>${stage ? `<span class="stage-flag ${stage}">${stageLabels[stage]}</span>` : '—'}</dd></div>
+      <div class="meta-item"><dt>${'Unidade'}</dt><dd>${escapeHtml(ind.unit)}</dd></div>
+      <div class="meta-item"><dt>${'Periodicidade'}</dt><dd>${escapeHtml(ind.frequency)}</dd></div>
+      <div class="meta-item"><dt>${'Meios de Verificação'}</dt><dd>${escapeHtml(ind.dataSource || '—')}</dd></div>
+      <div class="meta-item"><dt>${'Responsável pela recolha'}</dt><dd>${escapeHtml(ind.responsible)}</dd></div>
+      <div class="meta-item"><dt>${'Base (Mai/2026)'}</dt><dd>${escapeHtml(String(ind.baseline))}</dd></div>
+      <div class="meta-item"><dt>${'Meta final'}</dt><dd>${escapeHtml(String(finalTarget.value))}</dd></div>
+      <div class="meta-item"><dt>${'Valor actual'}</dt><dd>${currentValue !== null ? escapeHtml(String(currentValue)) : '—'}</dd></div>
+      <div class="meta-item"><dt>${'Progresso'}</dt><dd>${pct !== null ? pct + '%' : '—'}</dd></div>
+      <div class="meta-item"><dt>${'Estágio'}</dt><dd>${stage ? `<span class="stage-flag ${stage}">${stageLabels[stage]}</span>` : '—'}</dd></div>
     </div>
 
     <div class="info-block">
-      <h4>${I18N.t('description_label')}</h4>
-      <p>${escapeHtml(ind.description || (I18N.getLang() === 'en' ? 'No description available.' : 'Sem descrição disponível.'))}</p>
+      <h4>${'Descrição / Definição'}</h4>
+      <p>${escapeHtml(ind.description || ('Sem descrição disponível.'))}</p>
     </div>
     <div class="info-block">
-      <h4>${I18N.t('methodology_label')}</h4>
-      <p>${escapeHtml(ind.methodology || (I18N.getLang() === 'en' ? 'No methodology available.' : 'Sem metodologia disponível.'))}</p>
+      <h4>${'Metodologia de recolha de dados'}</h4>
+      <p>${escapeHtml(ind.methodology || ('Sem metodologia disponível.'))}</p>
     </div>
 
     <div class="two-col" style="margin-top:28px;">
       <div>
-        <h3 style="font-size:1.1rem;">${I18N.t('results_chart')}</h3>
+        <h3 style="font-size:1.1rem;">${'Gráfico de resultados'}</h3>
         <div class="chart-card" style="margin-top:10px;">
           ${isNumeric
             ? '<canvas id="results-chart" height="220"></canvas>'
-            : `<p class="small-note">${I18N.getLang() === 'en' ? `This indicator is of type ${ind.isYesNoIndicator ? 'Yes/No' : 'text'} — it is not shown as a chart. See the targets table and history below.` : `Este indicador é de tipo ${ind.isYesNoIndicator ? 'Sim/Não' : 'texto'} — não é apresentado em gráfico. Consulta a tabela de metas e o histórico abaixo.`}</p>`
+            : `<p class="small-note">${`Este indicador é de tipo ${ind.isYesNoIndicator ? 'Sim/Não' : 'texto'} — não é apresentado em gráfico. Consulta a tabela de metas e o histórico abaixo.`}</p>`
           }
         </div>
 
-        <h3 style="font-size:1.1rem; margin-top:28px;">${I18N.t('targets_and_values')}</h3>
+        <h3 style="font-size:1.1rem; margin-top:28px;">${'Metas e valores realizados, por ano e período'}</h3>
         <div style="overflow-x:auto;">${buildYearPeriodTable(ind0, approved)}</div>
 
-        <h3 style="font-size:1.1rem; margin-top:28px;">${I18N.t('submission_history')}</h3>
+        <h3 style="font-size:1.1rem; margin-top:28px;">${'Histórico de submissões'}</h3>
         <ul class="thread-timeline">${historyHtml}</ul>
       </div>
 
       <div>
-        <h3 style="font-size:1.1rem;">${I18N.t('submit_new_value')}</h3>
+        <h3 style="font-size:1.1rem;">${'Submeter novo valor'}</h3>
         <div id="submit-alert"></div>
-        ${submitFormHtml || `<p class="small-note">${I18N.t('readonly_note')}</p>`}
+        ${submitFormHtml || `<p class="small-note">${'A tua conta tem acesso apenas de leitura — não podes submeter valores.'}</p>`}
       </div>
     </div>
   `;
@@ -362,8 +359,8 @@ function buildYearPeriodTable(ind, values) {
   }
 
   const theadCols = rowsAreYears
-    ? `<th>${I18N.t('year')}</th><th>${I18N.t('target_of_year')}</th>${columns.map(c => `<th>${escapeHtml(c)}</th>`).join('')}<th>${I18N.t('total_achieved')}</th><th>${I18N.t('notes')}</th>`
-    : `<th>${I18N.t('period')}</th><th>${I18N.t('target')}</th><th>${I18N.t('achieved')}</th>`;
+    ? `<th>${'Ano'}</th><th>${'Meta do ano'}</th>${columns.map(c => `<th>${escapeHtml(c)}</th>`).join('')}<th>${'Total realizado'}</th><th>${'Observações'}</th>`
+    : `<th>${'Período'}</th><th>${'Meta'}</th><th>${'Realizado'}</th>`;
 
   const bodyRows = sortedRowKeys.map(rowKey => {
     if (!rowsAreYears) {
@@ -431,8 +428,8 @@ function renderChart(ind, approved) {
     data: {
       labels: allPeriods,
       datasets: [
-        { label: I18N.t('target'), data: allPeriods.map(p => targetMap[p] ?? null), borderColor: '#D9773A', backgroundColor: 'rgba(217,119,58,0.1)', borderDash: [5, 4], spanGaps: true, tension: 0.2 },
-        { label: I18N.getLang() === 'en' ? 'Achieved (approved)' : 'Realizado (aprovado)', data: allPeriods.map(p => actualMap[p] ?? null), borderColor: '#9D212B', backgroundColor: 'rgba(157,33,43,0.12)', fill: true, spanGaps: true, tension: 0.2 },
+        { label: 'Meta', data: allPeriods.map(p => targetMap[p] ?? null), borderColor: '#D9773A', backgroundColor: 'rgba(217,119,58,0.1)', borderDash: [5, 4], spanGaps: true, tension: 0.2 },
+        { label: 'Realizado (aprovado)', data: allPeriods.map(p => actualMap[p] ?? null), borderColor: '#9D212B', backgroundColor: 'rgba(157,33,43,0.12)', fill: true, spanGaps: true, tension: 0.2 },
       ],
     },
     options: {
@@ -443,7 +440,7 @@ function renderChart(ind, approved) {
 }
 
 function wireEvents(ind) {
-  const en = I18N.getLang() === 'en';
+  const en = false;
   document.querySelectorAll('.review-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
       const approve = btn.dataset.approve === 'true';
@@ -463,7 +460,7 @@ function wireEvents(ind) {
   if (provinceEl && districtEl) {
     provinceEl.addEventListener('change', () => {
       if (!provinceEl.value) {
-        districtEl.innerHTML = `<option value="">${I18N.t('select_province_first')}</option>`;
+        districtEl.innerHTML = `<option value="">${'Seleccione primeiro a província...'}</option>`;
         districtEl.disabled = true;
         return;
       }
@@ -481,10 +478,10 @@ function wireEvents(ind) {
       const missing = [];
 
       const valueEl = document.getElementById('val-value');
-      if (!valueEl.value || !String(valueEl.value).trim()) missing.push(I18N.t('value_label'));
+      if (!valueEl.value || !String(valueEl.value).trim()) missing.push('Valor');
 
-      if (provinceEl && !provinceEl.value) missing.push(I18N.t('province_label'));
-      if (districtEl && !districtEl.value) missing.push(I18N.t('district_label'));
+      if (provinceEl && !provinceEl.value) missing.push('Província');
+      if (districtEl && !districtEl.value) missing.push('Distrito');
 
       const disaggInputs = document.querySelectorAll('.disagg-input');
       disaggInputs.forEach(inp => { if (inp.value === '') missing.push(inp.dataset.key); });
@@ -493,10 +490,10 @@ function wireEvents(ind) {
       statusInputs.forEach(inp => { if (inp.value === '') missing.push(inp.dataset.key); });
 
       const noteValue = document.getElementById('val-note').value.trim();
-      if (!noteValue) missing.push(I18N.t('process_summary_label'));
+      if (!noteValue) missing.push('Descreva o resumo do processo');
 
       const fileList = document.getElementById('val-evidence').files;
-      if (!fileList || !fileList.length) missing.push(I18N.t('attach_evidence'));
+      if (!fileList || !fileList.length) missing.push('Anexar evidência');
 
       if (missing.length) {
         const msg = en ? `All fields are required. Still missing: ${missing.map(escapeHtml).join(', ')}.` : `Todos os campos são obrigatórios. Falta preencher: ${missing.map(escapeHtml).join(', ')}.`;
@@ -533,7 +530,7 @@ function wireEvents(ind) {
         console.error(err);
         alertEl.innerHTML = `<div class="alert alert-error">${err.message || (en ? 'Could not submit.' : 'Não foi possível submeter.')}</div>`;
         submitBtn.disabled = false;
-        submitBtn.textContent = I18N.t('submit_for_approval');
+        submitBtn.textContent = 'Submeter para aprovação';
       }
     });
   }
