@@ -132,9 +132,9 @@
     <div class="container">
       <h3 style="margin-bottom:14px;">Detalhe por indicador</h3>
       <table class="report-table" id="report-table">
-        <thead><tr><th>Nível</th><th>Indicador</th><th>Base</th><th>Último valor aprovado</th><th>Meta final</th><th>Progresso</th></tr></thead>
+        <thead><tr><th>Nível</th><th>Indicador</th><th>Base</th><th>Último valor aprovado</th><th>Meta no período</th><th>Meta final</th><th>Progresso</th></tr></thead>
         <tbody id="report-tbody">
-          <tr><td colspan="6" class="skeleton" style="height:40px;"></td></tr>
+          <tr><td colspan="7" class="skeleton" style="height:40px;"></td></tr>
         </tbody>
       </table>
     </div>
@@ -232,7 +232,7 @@ async function loadReport() {
     status: document.getElementById('f-status').value,
   };
 
-  document.getElementById('report-tbody').innerHTML = `<tr><td colspan="6" class="skeleton" style="height:40px;"></td></tr>`;
+  document.getElementById('report-tbody').innerHTML = `<tr><td colspan="7" class="skeleton" style="height:40px;"></td></tr>`;
 
   let indicators = await ME.getIndicators();
   if (level) indicators = indicators.filter(i => i.level === level);
@@ -250,7 +250,8 @@ async function loadReport() {
       if (isNumeric && latest && typeof finalTarget.value === 'number' && finalTarget.value > 0) {
         pct = Math.min(100, Math.round((Number(latest.value) / finalTarget.value) * 100));
       }
-      return { ind, latest, finalTarget, isNumeric, pct };
+      const periodTarget = latest ? ind.targets.find(t => t.period === latest.period) : null;
+      return { ind, latest, finalTarget, periodTarget, isNumeric, pct };
     }));
     latestRows = rows;
 
@@ -275,10 +276,11 @@ async function loadReport() {
         <td>${escapeHtml(r.ind.name)}</td>
         <td class="small-note">${escapeHtml(String(r.ind.baseline))}</td>
         <td>${r.latest ? `${escapeHtml(String(r.latest.value))} <span class="small-note">(${escapeHtml(r.latest.period)})</span>` : '<span class="small-note">—</span>'}</td>
-        <td class="small-note">${escapeHtml(String(r.finalTarget.value))} (${r.finalTarget.period})</td>
+        <td class="small-note">${r.periodTarget ? escapeHtml(String(r.periodTarget.value)) : '—'}</td>
+        <td class="small-note">${escapeHtml(String(r.finalTarget.value))}</td>
         <td>${r.pct !== null ? `<div class="progress-bar"><div class="progress-bar-fill" style="width:${r.pct}%;"></div></div><span class="small-note">${r.pct}%</span>` : '<span class="small-note">—</span>'}</td>
       </tr>
-    `).join('') || `<tr><td colspan="6" class="small-note" style="padding:20px;">Nenhum indicador encontrado com estes filtros.</td></tr>`;
+    `).join('') || `<tr><td colspan="7" class="small-note" style="padding:20px;">Nenhum indicador encontrado com estes filtros.</td></tr>`;
 
     // ---- Gráficos ----
     destroyCharts();
@@ -307,7 +309,7 @@ async function loadReport() {
     });
   } catch (err) {
     console.error(err);
-    document.getElementById('report-tbody').innerHTML = `<tr><td colspan="6"><div class="alert alert-error">Não foi possível carregar o relatório.</div></td></tr>`;
+    document.getElementById('report-tbody').innerHTML = `<tr><td colspan="7"><div class="alert alert-error">Não foi possível carregar o relatório.</div></td></tr>`;
   }
 }
 
@@ -398,8 +400,8 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
     y += 18;
 
     doc.setFontSize(8.5);
-    const colX = [margin, margin + 40, margin + 260, margin + 330, margin + 420, margin + 480];
-    const headers = ['Nível', 'Indicador', 'Base', 'Último valor', 'Meta final', 'Progr.'];
+    const colX = [margin, margin + 40, margin + 220, margin + 280, margin + 350, margin + 420, margin + 480];
+    const headers = ['Nível', 'Indicador', 'Base', 'Último valor', 'Meta período', 'Meta final', 'Progr.'];
     doc.setFont('helvetica', 'bold');
     headers.forEach((h, i) => doc.text(h, colX[i], y));
     y += 6;
@@ -413,13 +415,14 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
         doc.addPage();
         y = 50;
       }
-      const nameLines = doc.splitTextToSize(r.ind.name, 210);
+      const nameLines = doc.splitTextToSize(r.ind.name, 175);
       doc.text(r.ind.level, colX[0], y);
       doc.text(nameLines, colX[1], y);
       doc.text(String(r.ind.baseline), colX[2], y);
       doc.text(r.latest ? `${r.latest.value} (${r.latest.period})` : '—', colX[3], y);
-      doc.text(`${r.finalTarget.value}`, colX[4], y);
-      doc.text(r.pct !== null ? `${r.pct}%` : '—', colX[5], y);
+      doc.text(r.periodTarget ? `${r.periodTarget.value}` : '—', colX[4], y);
+      doc.text(`${r.finalTarget.value}`, colX[5], y);
+      doc.text(r.pct !== null ? `${r.pct}%` : '—', colX[6], y);
       y += Math.max(14, nameLines.length * 10);
     });
 

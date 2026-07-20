@@ -260,3 +260,12 @@ indicador (quando aplicável), a desagregação por estatuto de beneficiário
 o anexo de evidência. Isto é validado tanto na interface (mostra
 exactamente o que falta preencher) como no motor de dados, para garantir
 que não é possível contornar a regra.
+
+## Ajustes na tabela "Detalhe por indicador" dos relatórios
+
+- **"Meta final"** já não mostra o mês/ano entre parêntesis — só o valor.
+- Nova coluna **"Meta no período"**: mostra a meta definida especificamente
+  para o mesmo período do "Último valor aprovado" (não a meta final do
+  projecto), para comparares directamente o que foi alcançado com o que
+  era esperado nesse período em concreto. Aplicado ao relatório interno,
+  ao relatório público, e ao PDF descarregável de ambos.
