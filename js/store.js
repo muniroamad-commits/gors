@@ -25,6 +25,9 @@ const ME = (() => {
       name: 'Localidades a implementar processos de planeamento local participativo',
       unit: 'Número', frequency: 'Semestral',
       responsible: 'ADIN, DITs',
+      description: 'A meta reflecte o número de localidades, nas Fases I e II, onde os conselhos consultivos de localidade (representantes eleitos de deslocados internos, comunidades de acolhimento, retornados, homens, mulheres, jovens e pessoas com deficiência) identificam projectos comunitários, em colaboração com o governo distrital, usando a ferramenta de planeamento e orçamentação participativa.',
+      dataSource: 'Relatórios de progresso',
+      methodology: 'Revisão de relatórios de progresso de obras, actas de reuniões, e Planos de Desenvolvimento Local Distrital (DLDPs).',
       disaggregation: [],
       baseline: 0,
       targets: [
@@ -40,6 +43,9 @@ const ME = (() => {
       name: 'Mais e melhores empregos (CRI)',
       unit: 'Número', frequency: 'Semestral',
       responsible: 'DITs, PPTs, ADIN',
+      description: 'A meta reflecte o número de pessoas, nas Fases I e II, beneficiadas por empregos de curto e médio/longo prazo resultantes do programa. Os empregos de curto prazo resultam da construção/reabilitação de infraestrutura (10.450 empregos), enquanto os de médio e longo prazo resultam de transferências monetárias a agregados vulneráveis (25.000), subvenções a empresas socioeconómicas (10.000), acções de qualificação de jovens nos SICs (2.500), e da operação de longo prazo dos subprojectos comunitários (600 empregos).',
+      dataSource: 'Relatórios de progresso, visitas de campo',
+      methodology: 'Revisão dos relatórios de progresso de obras, relatórios do programa de transferências monetárias, dos SICs e prestadores de serviços, e relatórios do prestador de serviços do programa de subvenções.',
       disaggregation: [],
       baseline: 0,
       targets: [
@@ -57,6 +63,9 @@ const ME = (() => {
       name: 'Localidades a implementar processos de planeamento local participativo (Áreas-alvo)',
       unit: 'Número', frequency: 'Trimestral',
       responsible: 'ADIN, DITs',
+      description: 'Esta meta reflecte o número de localidades onde os comités consultivos de localidade (representantes eleitos de deslocados internos, comunidades de acolhimento, retornados, homens, mulheres, jovens e pessoas com deficiência) identificam projectos comunitários, em colaboração com o governo distrital, usando a ferramenta de planeamento e orçamentação participativa. As localidades são 80 localidades seleccionadas nas províncias de Niassa, Cabo Delgado e Nampula, nos 56 distritos destas províncias, excluindo as respectivas capitais.',
+      dataSource: 'Relatórios de progresso',
+      methodology: 'Revisão de relatórios de progresso de obras, actas de reuniões, e Planos de Desenvolvimento Local Distrital (DLDPs).',
       disaggregation: [],
       baseline: 0,
       targets: [
@@ -71,6 +80,9 @@ const ME = (() => {
       name: 'Mais e melhores empregos — Áreas-alvo (CRI)',
       unit: 'Número', frequency: 'Trimestral',
       responsible: 'DITs, PPTs, ADIN',
+      description: 'A meta proposta reflecte o número de pessoas beneficiadas por empregos de curto e médio/longo prazo resultantes do projecto. Os empregos de curto prazo resultam da construção/reabilitação de infraestrutura (4.180 empregos), enquanto os de médio e longo prazo resultam de transferências monetárias (10.000), subvenções a empresas socioeconómicas (4.000), acções de qualificação de jovens nos SICs (1.000), e da operação de longo prazo dos subprojectos comunitários (240 empregos). Os empregos serão criados nas três províncias do norte de Moçambique, excluindo as respectivas capitais.',
+      dataSource: 'Relatórios de progresso, visitas de campo',
+      methodology: 'Revisão dos relatórios de progresso de obras, relatórios do programa de transferências monetárias, dos SICs e prestadores de serviços, e relatórios do prestador de serviços do programa de subvenções.',
       disaggregation: [],
       baseline: 0,
       targets: [
@@ -85,6 +97,9 @@ const ME = (() => {
       name: 'Pessoas beneficiadas por infraestrutura resiliente ao clima (CRI)',
       unit: 'Número de pessoas', frequency: 'Trimestral',
       responsible: 'ANOP, ADIN, PPTs, DITs',
+      description: 'A meta proposta reflecte pessoas beneficiadas por infraestrutura pública reabilitada ou nova (222.000) em dez distritos da província de Cabo Delgado, e por infraestrutura comunitária (560.000) em 80 localidades seleccionadas das províncias de Niassa, Cabo Delgado e Nampula. A meta para jovens (15-24 anos) reflecte 17% e a meta para mulheres reflecte 51% da população da Região Norte, segundo cálculos do Banco Mundial com dados de 2022 do Inquérito sobre Orçamento Familiar. O número de beneficiários de infraestrutura pública reflecte cerca de 15% da população dos dez distritos, e o número de beneficiários de infraestrutura comunitária reflecte 80 projectos beneficiando cerca de 7.000 pessoas por projecto, com base na população média das localidades na Região Norte.',
+      dataSource: 'Relatórios de progresso',
+      methodology: 'Revisão de relatórios de progresso de obras, visitas de campo.',
       disaggregation: ['Mulheres', 'Jovens'],
       baseline: 0,
       baselineDisagg: { 'Mulheres': 0, 'Jovens': 0 },
@@ -104,6 +119,9 @@ const ME = (() => {
       name: 'Fórum Regional Consultivo do Norte (NRCF) operacional',
       unit: 'Texto (sim/estado)', frequency: 'Semestral',
       responsible: 'ADIN, MPD',
+      description: 'Os membros do NRCF realizam pelo menos reuniões semestrais; publicam as actas e a lista de participantes; e monitoram a implementação das estratégias de desenvolvimento provincial.',
+      dataSource: 'Relatórios de progresso',
+      methodology: 'Revisão das actas das reuniões.',
       disaggregation: [],
       baseline: 'Termos de Referência preparados pela ADIN, aprovação formal do Conselho de Ministros',
       targets: [
@@ -121,6 +139,9 @@ const ME = (() => {
       name: 'Observatórios provinciais operacionais',
       unit: 'Número', frequency: 'Trimestral (1ª metade) / Semestral (2ª metade)',
       responsible: 'ADIN, PPTs',
+      description: 'Reúnem pelo menos trimestralmente na primeira metade do projecto e pelo menos semestralmente na segunda metade; publicam actas e lista de participantes; e monitoram a implementação das estratégias de desenvolvimento distrital.',
+      dataSource: 'Relatórios de progresso',
+      methodology: 'Revisão das actas das reuniões.',
       disaggregation: [],
       baseline: 0,
       targets: [
@@ -135,6 +156,9 @@ const ME = (() => {
       name: 'Conselhos Consultivos distritais operacionais',
       unit: 'Número', frequency: 'Trimestral',
       responsible: 'ADIN, PPTs, DITs',
+      description: 'Os novos são legalizados pela administração distrital; os novos e existentes reúnem-se pelo menos trimestralmente, publicando actas e listas de participantes; e monitorizam a implementação das actividades de localidade, incluindo os projectos comunitários emblemáticos.',
+      dataSource: 'Relatórios de progresso',
+      methodology: 'Revisão das actas das reuniões.',
       disaggregation: [],
       baseline: 0,
       targets: [
@@ -149,6 +173,9 @@ const ME = (() => {
       name: 'Comités consultivos de localidade operacionais',
       unit: 'Número', frequency: 'Trimestral',
       responsible: 'ADIN, PPTs, DITs',
+      description: 'Os conselhos consultivos (um por cada uma das 80 localidades-alvo) são compostos por representantes eleitos de deslocados internos, comunidades de acolhimento, retornados, homens, mulheres, jovens e pessoas com deficiência, que identificam os projectos emblemáticos.',
+      dataSource: 'Relatórios de progresso',
+      methodology: 'Revisão contínua da composição dos conselhos e das actas de reuniões, visitas de campo.',
       disaggregation: [],
       baseline: 0,
       targets: [
@@ -163,6 +190,9 @@ const ME = (() => {
       name: 'Beneficiários que reportam maior confiança entre a comunidade e com o Estado',
       unit: 'Percentagem', frequency: 'Ano 1 do projecto, meio-termo e encerramento',
       responsible: 'ADIN',
+      description: 'Este indicador mede o resultado de coesão social vertical (comunidades-Estado) e horizontal (dentro das comunidades). Inquéritos de base, de meio-termo e finais entre as comunidades das localidades participantes, nos 56 distritos, determinarão a confiança resultante das principais intervenções do projecto. Entre comunidades: acordo sobre os projectos comunitários a estabelecer. Entre comunidades e o Estado: subvenções a empresas de mulheres e jovens, apoio psicossocial e a vítimas de VBG, e qualificação de jovens.',
+      dataSource: 'Inquéritos',
+      methodology: 'Inquérito a uma amostra de beneficiários.',
       disaggregation: [],
       baseline: 0,
       targets: [
@@ -178,6 +208,9 @@ const ME = (() => {
       name: 'Beneficiários de transferências monetárias (CRI)',
       unit: 'Número de pessoas', frequency: 'Trimestral',
       responsible: 'ADIN',
+      description: 'Este indicador mede o número de pessoas que participam no programa de transferências monetárias. A meta reflecte 10.000 agregados familiares nas três províncias do norte, com uma dimensão média de 5 pessoas por agregado. A meta para jovens (15-24 anos) reflecte 17% e a meta para mulheres reflecte 51% da população da Região Norte, segundo cálculos do Banco Mundial com dados de 2022 do Inquérito sobre Orçamento Familiar.',
+      dataSource: 'Relatórios de progresso',
+      methodology: 'Revisão das transacções realizadas.',
       disaggregation: ['Mulheres', 'Jovens'],
       baseline: 0,
       baselineDisagg: { 'Mulheres': 0, 'Jovens': 0 },
@@ -194,6 +227,9 @@ const ME = (() => {
       name: 'Subvenções a pequenas e médias empresas de mulheres',
       unit: 'Percentagem', frequency: 'Trimestral',
       responsible: 'ADIN, PPTs, DITs',
+      description: 'Percentagem do valor total das subvenções atribuídas a empresas de mulheres.',
+      dataSource: 'Relatórios de progresso',
+      methodology: 'Revisão dos relatórios do prestador de serviços.',
       disaggregation: [],
       baseline: 0,
       targets: [
@@ -208,6 +244,9 @@ const ME = (() => {
       name: 'Subvenções a pequenas e médias empresas de jovens e pessoas com deficiência',
       unit: 'Percentagem', frequency: 'Trimestral',
       responsible: 'ADIN, PPTs, DITs',
+      description: 'Percentagem do valor total das subvenções atribuídas a empresas de jovens e de pessoas com deficiência.',
+      dataSource: 'Relatórios de progresso',
+      methodology: 'Revisão dos relatórios do prestador de serviços.',
       disaggregation: [],
       baseline: 0,
       targets: [
@@ -222,6 +261,9 @@ const ME = (() => {
       name: 'Jovens formados nos Centros de Incubação de Competências (SICs)',
       unit: 'Número', frequency: 'Trimestral',
       responsible: 'ADIN, PPTs',
+      description: 'Número de jovens que recebem formação, mentoria, colocação profissional e/ou apoio ao desenvolvimento de negócios nos Centros de Incubação de Competências (SICs) apoiados pelo projecto.',
+      dataSource: 'Relatórios de progresso, visitas de campo',
+      methodology: 'Revisão dos relatórios dos SICs.',
       disaggregation: [],
       baseline: 0,
       targets: [
@@ -235,6 +277,9 @@ const ME = (() => {
       name: 'Beneficiários de acções para acabar com a VBG',
       unit: 'Número', frequency: 'Trimestral',
       responsible: 'ADIN, PPTs, DITs',
+      description: 'Número de pessoas alcançadas com mensagens de sensibilização sobre VBG, saúde sexual e reprodutiva, saúde mental, GALS e outros programas de apoio psicossocial, nas três províncias do norte.',
+      dataSource: 'Relatórios de progresso',
+      methodology: 'Revisão dos relatórios do prestador de serviços, visitas de campo.',
       disaggregation: ['Mulheres (%)'],
       baseline: 0,
       baselineDisagg: { 'Mulheres (%)': 0 },
@@ -254,6 +299,9 @@ const ME = (() => {
       name: 'Infraestrutura comunitária resiliente ao clima reabilitada/criada e operacional',
       unit: 'Número', frequency: 'Trimestral',
       responsible: 'DITs, PPTs, ANOP',
+      description: 'Conforme priorizado nos Planos de Desenvolvimento Local Distrital (DLDPs), nas 80 localidades seleccionadas.',
+      dataSource: 'Relatórios de progresso',
+      methodology: 'Revisão dos relatórios do empreiteiro, visitas de campo.',
       disaggregation: [],
       baseline: 0,
       targets: [
@@ -267,6 +315,9 @@ const ME = (() => {
       name: 'Infraestrutura pública reabilitada/construída',
       unit: 'Número', frequency: 'Trimestral',
       responsible: 'PPTs, ANOP',
+      description: 'Conforme acordado com o governo no âmbito do projecto NCRP, nos dez distritos de Cabo Delgado.',
+      dataSource: 'Relatórios de progresso',
+      methodology: 'Revisão dos relatórios do empreiteiro, visitas de campo.',
       disaggregation: [],
       baseline: 0,
       targets: [
@@ -283,6 +334,9 @@ const ME = (() => {
       name: 'Roteiro de financiamento climático desenvolvido para a Direcção Nacional de Financiamento Climático do MPD',
       unit: 'Sim/Não', frequency: 'Anual',
       responsible: 'MPD, Direcção Nacional de Financiamento Climático',
+      description: 'O roteiro especificará as acções necessárias para assegurar financiamento climático para a região norte, de modo a reforçar ainda mais a resiliência comunitária.',
+      dataSource: 'Relatórios de progresso',
+      methodology: 'Revisão do roteiro.',
       disaggregation: [],
       baseline: 'Não',
       isYesNoIndicator: true,
@@ -298,6 +352,9 @@ const ME = (() => {
       name: 'Beneficiários que reportam que as suas reclamações relacionadas com o projecto foram resolvidas',
       unit: 'Percentagem', frequency: 'Meio-termo e encerramento',
       responsible: 'ADIN, PPTs',
+      description: 'Com base num inquérito a realizar no meio-termo e no encerramento do projecto.',
+      dataSource: 'Questionário aos beneficiários',
+      methodology: 'Inquéritos de meio-termo e de encerramento, realizados por uma entidade terceira.',
       disaggregation: [],
       baseline: 0,
       targets: [
@@ -363,6 +420,20 @@ const ME = (() => {
     if (fields.mode === 'year+sub') return `${sub} ${year}`;
     if (fields.mode === 'year-only') return fields.biennial ? `${year}–${year + 1}` : String(year);
     return sub; // 'fixed' mode: o próprio valor já é o período completo
+  }
+
+  // Devolve uma chave numérica para ordenar cronologicamente rótulos de
+  // período em vários formatos ("Mai/2027", "T1 2026", "1º Semestre 2026",
+  // "2026", "2026–2027"). Usado para desenhar o gráfico de resultados.
+  function periodSortKey(period) {
+    const MONTHS = { Jan: 1, Fev: 2, Mar: 3, Abr: 4, Mai: 5, Jun: 6, Jul: 7, Ago: 8, Set: 9, Out: 10, Nov: 11, Dez: 12 };
+    let m;
+    if ((m = period.match(/^([A-Za-zçÇ]{3})\/(\d{4})$/))) return Number(m[2]) * 100 + (MONTHS[m[1]] || 1);
+    if ((m = period.match(/^T(\d) (\d{4})$/))) return Number(m[2]) * 100 + (Number(m[1]) * 3 - 2);
+    if ((m = period.match(/^(1|2)º Semestre (\d{4})$/))) return Number(m[2]) * 100 + (m[1] === '1' ? 1 : 7);
+    if ((m = period.match(/^(\d{4})–(\d{4})$/))) return Number(m[1]) * 100 + 1;
+    if ((m = period.match(/^(\d{4})$/))) return Number(m[1]) * 100 + 1;
+    return 999999;
   }
 
   // ---------- Utilitários ----------
@@ -550,7 +621,7 @@ const ME = (() => {
   }
 
   return {
-    getIndicators, getIndicator, getComponents, getLevels, getSubmissionPeriodFields, combinePeriod,
+    getIndicators, getIndicator, getComponents, getLevels, getSubmissionPeriodFields, combinePeriod, periodSortKey,
     submitValue, listValues, listApprovedValues, reviewValue, deleteValue, listPublicValues,
     adminLogin, adminLogout, onAuthChange, getCurrentAdminSync, changeAdminPassword,
     listAdminUsers, upsertAdminUser, removeAdminUser,

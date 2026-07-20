@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="pt-MZ">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Indicador — M&amp;E MozCommunity</title>
+<link rel="icon" href="img/logo-adin.jpg" type="image/jpeg">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.0/chart.umd.min.js"></script>
+<style>
+  .level-tag { font-size: 0.75rem; font-weight: 700; padding: 4px 11px; border-radius: 999px; background: var(--gold-tint); color: #8A5F13; }
+  .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px; margin: 20px 0 28px; }
+  .meta-item dt { font-family: var(--font-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-muted); margin-bottom: 4px; }
+  .meta-item dd { margin: 0; font-size: 0.92rem; }
+  .info-block { margin-bottom: 22px; }
+  .info-block h4 { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-muted); margin-bottom: 6px; }
+  .info-block p { margin: 0; }
+  .targets-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin: 10px 0; }
+  .targets-table th, .targets-table td { padding: 7px 10px; border-bottom: 1px solid var(--line); text-align: left; }
+  .two-col { display: grid; grid-template-columns: 1.3fr 1fr; gap: 32px; align-items: start; }
+  @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container">
+    <a href="index.html" class="brand">
+      <span class="brand-mark"><img src="img/logo-adin.jpg" alt="Logótipo ADIN"></span>
+      <span class="brand-name">M&amp;E MozCommunity<small>Monitoria de Indicadores — ADIN</small></span>
+    </a>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Abrir menu" aria-expanded="false">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <nav class="main-nav">
+      <a href="dashboard.html">Indicadores</a>
+      <a href="relatorios.html">Relatórios</a>
+      <a href="approvals.html" id="approvals-link" style="display:none;">Aprovações</a>
+      <a href="users.html" id="users-link" style="display:none;">Utilizadores</a>
+      <span class="small-note" id="admin-name-label" style="margin-right:8px;"></span>
+      <a href="#" id="logout-link">Sair</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section>
+    <div class="container" id="content" style="max-width:1080px;">
+      <div class="skeleton" style="height:300px;"></div>
+    </div>
+  </section>
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/store.js"></script>
+<script>
+let currentAdmin = null;
+let resultsChart = null;
+const indicatorId = new URLSearchParams(window.location.search).get('id');
+const contentEl = document.getElementById('content');
+
+ME.onAuthChange(admin => {
+  if (!admin) { window.location.href = 'index.html'; return; }
+  if (admin.noProfile) {
+    alert('A tua conta não tem permissões configuradas nesta plataforma.');
+    ME.adminLogout().then(() => window.location.href = 'index.html');
+    return;
+  }
+  currentAdmin = admin;
+  const roleLabels = { admin: 'Administrador geral', submitter: 'Equipa de reporte', readonly: 'Só leitura' };
+  document.getElementById('admin-name-label').textContent = `${admin.name} · ${roleLabels[admin.role] || admin.role}`;
+  document.getElementById('approvals-link').style.display = admin.role === 'admin' ? '' : 'none';
+  document.getElementById('users-link').style.display = admin.role === 'admin' ? '' : 'none';
+
+  if (!indicatorId) {
+    contentEl.innerHTML = '<div class="alert alert-error">Indicador não especificado.</div>';
+    return;
+  }
+  loadIndicator();
+});
+
+document.getElementById('logout-link').addEventListener('click', (e) => {
+  e.preventDefault();
+  ME.adminLogout().then(() => window.location.href = 'index.html');
+});
+
+async function loadIndicator() {
+  const ind = ME.getIndicator(indicatorId);
+  if (!ind) {
+    contentEl.innerHTML = '<div class="alert alert-error">Indicador não encontrado.</div>';
+    return;
+  }
+  try {
+    const values = await ME.listValues({ indicator_id: indicatorId });
+    render(ind, values);
+  } catch (err) {
+    console.error(err);
+    contentEl.innerHTML = '<div class="alert alert-error">Não foi possível carregar o indicador.</div>';
+  }
+}
+
+function render(ind, values) {
+  const approved = values.filter(v => v.status === 'aprovado').sort((a, b) => ME.periodSortKey(a.period) - ME.periodSortKey(b.period));
+  const isNumeric = !ind.isTextIndicator && !ind.isYesNoIndicator;
+  const finalTarget = ind.targets[ind.targets.length - 1];
+  const latest = approved[approved.length - 1] || null;
+  let pct = null;
+  if (isNumeric && latest && typeof finalTarget.value === 'number' && finalTarget.value > 0) {
+    pct = Math.min(100, Math.round((Number(latest.value) / finalTarget.value) * 100));
+  }
+
+  const targetsRows = ind.targets.map(t => `<tr><td>${t.period}</td><td>${escapeHtml(String(t.value))}${t.disagg ? ' · ' + Object.entries(t.disagg).map(([k, v]) => `${k}: ${v}`).join(', ') : ''}</td></tr>`).join('');
+
+  const statusBadge = { submetido: 'badge-em_analise', aprovado: 'badge-resolvida', rejeitado: 'badge-encerrada' };
+  const statusLabel = { submetido: 'Submetido', aprovado: 'Aprovado', rejeitado: 'Rejeitado' };
+
+  const historyHtml = values.length ? values.slice().sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at)).map(v => `
+    <li>
+      <span class="node"></span>
+      <div class="tl-status">
+        <span class="badge ${statusBadge[v.status]}">${statusLabel[v.status]}</span>
+        ${escapeHtml(v.period)}: <strong>${escapeHtml(String(v.value))}</strong>
+        ${v.disagg ? ' · ' + Object.entries(v.disagg).map(([k, val]) => `${k}: ${val}`).join(', ') : ''}
+      </div>
+      ${v.note ? `<div class="tl-note">${escapeHtml(v.note)}</div>` : ''}
+      ${(v.evidence || []).map(e => `<div class="tl-note"><a href="${e.dataUrl}" download="${escapeHtml(e.name)}" class="btn btn-secondary btn-sm">📎 ${escapeHtml(e.name)}</a></div>`).join('')}
+      <div class="tl-date">Submetido por ${escapeHtml(v.submitted_by)} · ${formatDate(v.submitted_at)}</div>
+      ${v.reviewed_by ? `<div class="tl-date">Revisto por ${escapeHtml(v.reviewed_by)} · ${formatDate(v.reviewed_at)}${v.review_note ? ' · ' + escapeHtml(v.review_note) : ''}</div>` : ''}
+      ${(currentAdmin.role === 'admin' && v.status === 'submetido') ? `
+        <div style="display:flex; gap:8px; margin-top:6px;">
+          <button type="button" class="btn btn-primary btn-sm review-btn" data-id="${v.id}" data-approve="true">Aprovar</button>
+          <button type="button" class="btn btn-secondary btn-sm review-btn" data-id="${v.id}" data-approve="false">Rejeitar</button>
+        </div>
+      ` : ''}
+    </li>
+  `).join('') : '<li class="small-note">Ainda não há submissões para este indicador.</li>';
+
+  const canSubmit = currentAdmin && currentAdmin.role !== 'readonly';
+  const periodFields = ME.getSubmissionPeriodFields(ind);
+  let periodFieldsHtml = '';
+  if (periodFields.mode === 'year+sub') {
+    periodFieldsHtml = `
+      <div class="form-row">
+        <div class="field"><label for="val-year">Ano</label><select id="val-year">${periodFields.years.map(y => `<option value="${y}">${y}</option>`).join('')}</select></div>
+        <div class="field"><label for="val-sub">${escapeHtml(periodFields.subLabel)}</label><select id="val-sub">${periodFields.subOptions.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('')}</select></div>
+      </div>`;
+  } else if (periodFields.mode === 'year-only') {
+    periodFieldsHtml = `<div class="field"><label for="val-year">${periodFields.biennial ? 'Ano de início do biénio' : 'Ano'}</label><select id="val-year">${periodFields.years.map(y => `<option value="${y}">${y}${periodFields.biennial ? '–' + (y + 1) : ''}</option>`).join('')}</select></div>`;
+  } else {
+    periodFieldsHtml = `<div class="field"><label for="val-sub">Período</label><select id="val-sub">${periodFields.options.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('')}</select></div>`;
+  }
+
+  const disaggFieldsHtml = (ind.disaggregation || []).map(d => `
+    <div class="field"><label>${escapeHtml(d)}</label><input type="number" class="disagg-input" data-key="${escapeHtml(d)}" placeholder="Opcional"></div>
+  `).join('');
+
+  const submitFormHtml = canSubmit ? `
+    <div class="form-card" style="padding:18px;">
+      <p class="small-note" style="margin:0 0 12px;">Periodicidade deste indicador: <strong>${escapeHtml(ind.frequency)}</strong></p>
+      ${periodFieldsHtml}
+      <div class="field">
+        <label for="val-value">Valor ${ind.isYesNoIndicator ? '(Sim/Não)' : ind.isTextIndicator ? '(descrição)' : `(${ind.unit})`}</label>
+        ${ind.isYesNoIndicator
+          ? `<select id="val-value"><option value="Sim">Sim</option><option value="Não">Não</option></select>`
+          : ind.isTextIndicator
+            ? `<textarea id="val-value" placeholder="Descreva o estado actual"></textarea>`
+            : `<input type="number" id="val-value" placeholder="Ex: 25">`
+        }
+      </div>
+      ${disaggFieldsHtml}
+      <div class="field"><label for="val-note">Nota / fonte de verificação</label><textarea id="val-note" placeholder="Ex: relatório trimestral do distrito X"></textarea></div>
+      <div class="field">
+        <label for="val-evidence">Anexar evidência (opcional)</label>
+        <input type="file" id="val-evidence" accept=".jpg,.jpeg,.png,.webp,.pdf" style="padding:8px;">
+        <div class="hint">Até 200KB, 2 ficheiros.</div>
+      </div>
+      <button type="button" class="btn btn-primary btn-block" id="submit-value-btn">Submeter para aprovação</button>
+    </div>
+  ` : '';
+
+  contentEl.innerHTML = `
+    <a href="dashboard.html" class="small-note" style="text-decoration:none;">&larr; Voltar aos indicadores</a>
+    <div style="margin-top:14px;">
+      <span class="level-tag">${ind.level}</span>
+      ${ind.component ? `<span class="small-note" style="margin-left:8px;">${escapeHtml(ind.component)}</span>` : ''}
+    </div>
+    <h1 style="font-size:clamp(1.5rem,2.6vw,2rem); margin:10px 0 0;">${escapeHtml(ind.name)}</h1>
+
+    <div class="meta-grid">
+      <div class="meta-item"><dt>Unidade</dt><dd>${escapeHtml(ind.unit)}</dd></div>
+      <div class="meta-item"><dt>Periodicidade</dt><dd>${escapeHtml(ind.frequency)}</dd></div>
+      <div class="meta-item"><dt>Fonte de dados</dt><dd>${escapeHtml(ind.dataSource || '—')}</dd></div>
+      <div class="meta-item"><dt>Responsável pela recolha</dt><dd>${escapeHtml(ind.responsible)}</dd></div>
+      <div class="meta-item"><dt>Base (Mai/2026)</dt><dd>${escapeHtml(String(ind.baseline))}</dd></div>
+      <div class="meta-item"><dt>Meta final</dt><dd>${escapeHtml(String(finalTarget.value))} <span class="small-note">(${finalTarget.period})</span></dd></div>
+      <div class="meta-item"><dt>Último valor aprovado</dt><dd>${latest ? `${escapeHtml(String(latest.value))} (${escapeHtml(latest.period)})` : '—'}</dd></div>
+      <div class="meta-item"><dt>Progresso</dt><dd>${pct !== null ? pct + '%' : '—'}</dd></div>
+    </div>
+
+    <div class="info-block">
+      <h4>Descrição / Definição</h4>
+      <p>${escapeHtml(ind.description || 'Sem descrição disponível.')}</p>
+    </div>
+    <div class="info-block">
+      <h4>Metodologia de recolha de dados</h4>
+      <p>${escapeHtml(ind.methodology || 'Sem metodologia disponível.')}</p>
+    </div>
+
+    <div class="two-col" style="margin-top:28px;">
+      <div>
+        <h3 style="font-size:1.1rem;">Gráfico de resultados</h3>
+        <div class="chart-card" style="margin-top:10px;">
+          ${isNumeric
+            ? '<canvas id="results-chart" height="220"></canvas>'
+            : `<p class="small-note">Este indicador é de tipo ${ind.isYesNoIndicator ? 'Sim/Não' : 'texto'} — não é apresentado em gráfico. Consulta a tabela de metas e o histórico abaixo.</p>`
+          }
+        </div>
+
+        <h3 style="font-size:1.1rem; margin-top:28px;">Metas por período</h3>
+        <table class="targets-table"><thead><tr><th>Período</th><th>Meta</th></tr></thead><tbody>${targetsRows}</tbody></table>
+
+        <h3 style="font-size:1.1rem; margin-top:28px;">Histórico de submissões</h3>
+        <ul class="thread-timeline">${historyHtml}</ul>
+      </div>
+
+      <div>
+        <h3 style="font-size:1.1rem;">Submeter novo valor</h3>
+        <div id="submit-alert"></div>
+        ${submitFormHtml || '<p class="small-note">A tua conta tem acesso apenas de leitura — não podes submeter valores.</p>'}
+      </div>
+    </div>
+  `;
+
+  if (isNumeric) renderChart(ind, approved);
+  wireEvents(ind);
+}
+
+function renderChart(ind, approved) {
+  const allPeriods = Array.from(new Set([...ind.targets.map(t => t.period), ...approved.map(a => a.period)]))
+    .sort((a, b) => ME.periodSortKey(a) - ME.periodSortKey(b));
+
+  const targetMap = Object.fromEntries(ind.targets.map(t => [t.period, t.value]));
+  const actualMap = Object.fromEntries(approved.map(a => [a.period, Number(a.value)]));
+
+  const ctx = document.getElementById('results-chart');
+  if (!ctx) return;
+  resultsChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: allPeriods,
+      datasets: [
+        { label: 'Meta', data: allPeriods.map(p => targetMap[p] ?? null), borderColor: '#D9773A', backgroundColor: 'rgba(217,119,58,0.1)', borderDash: [5, 4], spanGaps: true, tension: 0.2 },
+        { label: 'Realizado (aprovado)', data: allPeriods.map(p => actualMap[p] ?? null), borderColor: '#9D212B', backgroundColor: 'rgba(157,33,43,0.12)', fill: true, spanGaps: true, tension: 0.2 },
+      ],
+    },
+    options: {
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { family: 'Public Sans' } } } },
+      scales: { y: { beginAtZero: true } },
+    },
+  });
+}
+
+function wireEvents(ind) {
+  document.querySelectorAll('.review-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const approve = btn.dataset.approve === 'true';
+      const note = approve ? null : (prompt('Motivo da rejeição (opcional):') || null);
+      try {
+        await ME.reviewValue(btn.dataset.id, { approve, review_note: note });
+        loadIndicator();
+      } catch (err) {
+        console.error(err);
+        alert(err.message || 'Não foi possível actualizar.');
+      }
+    });
+  });
+
+  const submitBtn = document.getElementById('submit-value-btn');
+  if (submitBtn) {
+    submitBtn.addEventListener('click', async () => {
+      const alertEl = document.getElementById('submit-alert');
+      alertEl.innerHTML = '';
+      const disagg = {};
+      document.querySelectorAll('.disagg-input').forEach(inp => {
+        if (inp.value !== '') disagg[inp.dataset.key] = Number(inp.value);
+      });
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner"></span>';
+      try {
+        const periodFields = ME.getSubmissionPeriodFields(ind);
+        const yearEl = document.getElementById('val-year');
+        const subEl = document.getElementById('val-sub');
+        const period = ME.combinePeriod(periodFields, yearEl ? Number(yearEl.value) : null, subEl ? subEl.value : null);
+        const fileList = document.getElementById('val-evidence').files;
+        const result = await ME.submitValue({
+          indicator_id: ind.id,
+          period,
+          value: document.getElementById('val-value').value,
+          disagg: Object.keys(disagg).length ? disagg : null,
+          note: document.getElementById('val-note').value,
+        }, fileList);
+        if (result.skipped && result.skipped.length) {
+          alert(`O ficheiro "${result.skipped.join(', ')}" não foi anexado por exceder 200KB.`);
+        }
+        loadIndicator();
+      } catch (err) {
+        console.error(err);
+        alertEl.innerHTML = `<div class="alert alert-error">${err.message || 'Não foi possível submeter.'}</div>`;
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submeter para aprovação';
+      }
+    });
+  }
+}
+
+function formatDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str == null ? '' : str;
+  return div.innerHTML;
+}
+
+document.getElementById('nav-toggle')?.addEventListener('click', () => {
+  const nav = document.querySelector('.main-nav');
+  const open = nav.classList.toggle('is-open');
+  document.getElementById('nav-toggle').setAttribute('aria-expanded', String(open));
+});
+</script>
+</body>
+</html>

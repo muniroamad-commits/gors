@@ -122,3 +122,24 @@ uma colecção espelho (`indicator_values_public`) que:
 Há um link para este relatório na própria página de login (`index.html`),
 para ser fácil de partilhar com qualquer pessoa — parceiros, o Banco
 Mundial, ou o público em geral — sem lhes teres de criar conta nenhuma.
+
+## Página completa do indicador (com descrição, metodologia e gráfico)
+
+Ao clicares num indicador na lista, já não abre um painel a meio do ecrã —
+abre uma **página inteira e dedicada** (`indicador.html?id=...`), com:
+
+- **Descrição/definição** do indicador
+- **Periodicidade**, **fonte de dados** e **metodologia de recolha**
+  — todos extraídos verbatim do documento PAD do Banco Mundial (secção
+  "Monitoring & Evaluation Plan"), traduzidos para português
+- **Responsável pela recolha**
+- **Gráfico de resultados**: meta vs. valores aprovados, ao longo dos
+  períodos (para indicadores numéricos — indicadores de texto ou Sim/Não
+  mostram só a tabela de metas, por não se prestarem a gráfico)
+- Tabela de metas por período
+- Histórico completo de submissões, com aprovação/rejeição inline
+- Formulário de submissão de novo valor
+
+Estes dados (descrição, fonte, metodologia) vivem também em `js/store.js`,
+na mesma constante `INDICATORS` — podes editá-los se precisares de
+ajustar algum texto.
