@@ -124,6 +124,8 @@ function render(ind, values) {
         <span class="badge ${statusBadge[v.status]}">${statusLabel[v.status]}</span>
         ${escapeHtml(v.period)}: <strong>${escapeHtml(String(v.value))}</strong>
         ${v.disagg ? ' · ' + Object.entries(v.disagg).map(([k, val]) => `${k}: ${val}`).join(', ') : ''}
+        ${v.status_disagg ? ' · ' + Object.entries(v.status_disagg).map(([k, val]) => `${k}: ${val}`).join(', ') : ''}
+        ${(v.province || v.district) ? ` · <span class="small-note">${[v.province, v.district].filter(Boolean).join(', ')}</span>` : ''}
       </div>
       ${v.note ? `<div class="tl-note">${escapeHtml(v.note)}</div>` : ''}
       ${(v.evidence || []).map(e => `<div class="tl-note"><a href="${e.dataUrl}" download="${escapeHtml(e.name)}" class="btn btn-secondary btn-sm">📎 ${escapeHtml(e.name)}</a></div>`).join('')}
@@ -157,6 +159,10 @@ function render(ind, values) {
     <div class="field"><label>${escapeHtml(d)}</label><input type="number" class="disagg-input" data-key="${escapeHtml(d)}" placeholder="Opcional"></div>
   `).join('');
 
+  const statusFieldsHtml = ME.getBeneficiaryStatuses().map(s => `
+    <div class="field"><label>${escapeHtml(s)}</label><input type="number" class="status-input" data-key="${escapeHtml(s)}" placeholder="Opcional"></div>
+  `).join('');
+
   const submitFormHtml = canSubmit ? `
     <div class="form-card" style="padding:18px;">
       <p class="small-note" style="margin:0 0 12px;">Periodicidade deste indicador: <strong>${escapeHtml(ind.frequency)}</strong></p>
@@ -170,8 +176,20 @@ function render(ind, values) {
             : `<input type="number" id="val-value" placeholder="Ex: 25">`
         }
       </div>
+      <div class="form-row">
+        <div class="field">
+          <label for="val-province">Província <span class="small-note">(opcional)</span></label>
+          <select id="val-province"><option value="">—</option>${ME.getProvinces().map(p => `<option value="${p}">${p}</option>`).join('')}</select>
+        </div>
+        <div class="field">
+          <label for="val-district">Distrito <span class="small-note">(opcional)</span></label>
+          <select id="val-district" disabled><option value="">Seleccione primeiro a província...</option></select>
+        </div>
+      </div>
       ${disaggFieldsHtml}
-      <div class="field"><label for="val-note">Nota / fonte de verificação</label><textarea id="val-note" placeholder="Ex: relatório trimestral do distrito X"></textarea></div>
+      <p class="small-note" style="margin:14px 0 6px;">Desagregação por estatuto de beneficiário (opcional):</p>
+      ${statusFieldsHtml}
+      <div class="field"><label for="val-note">Descreva o resumo do processo <span class="required">*</span></label><textarea id="val-note" placeholder="Explica como este valor foi apurado: o que foi feito, onde, e como foi confirmado" required></textarea></div>
       <div class="field">
         <label for="val-evidence">Anexar evidência (opcional)</label>
         <input type="file" id="val-evidence" accept=".jpg,.jpeg,.png,.webp,.pdf" style="padding:8px;">
@@ -192,7 +210,7 @@ function render(ind, values) {
     <div class="meta-grid">
       <div class="meta-item"><dt>Unidade</dt><dd>${escapeHtml(ind.unit)}</dd></div>
       <div class="meta-item"><dt>Periodicidade</dt><dd>${escapeHtml(ind.frequency)}</dd></div>
-      <div class="meta-item"><dt>Fonte de dados</dt><dd>${escapeHtml(ind.dataSource || '—')}</dd></div>
+      <div class="meta-item"><dt>Meios de Verificação</dt><dd>${escapeHtml(ind.dataSource || '—')}</dd></div>
       <div class="meta-item"><dt>Responsável pela recolha</dt><dd>${escapeHtml(ind.responsible)}</dd></div>
       <div class="meta-item"><dt>Base (Mai/2026)</dt><dd>${escapeHtml(String(ind.baseline))}</dd></div>
       <div class="meta-item"><dt>Meta final</dt><dd>${escapeHtml(String(finalTarget.value))} <span class="small-note">(${finalTarget.period})</span></dd></div>
@@ -219,6 +237,9 @@ function render(ind, values) {
           }
         </div>
 
+        <h3 style="font-size:1.1rem; margin-top:28px;">Valores submetidos e aprovados, por ano e período</h3>
+        <div style="overflow-x:auto;">${buildYearPeriodTable(ind, values)}</div>
+
         <h3 style="font-size:1.1rem; margin-top:28px;">Metas por período</h3>
         <table class="targets-table"><thead><tr><th>Período</th><th>Meta</th></tr></thead><tbody>${targetsRows}</tbody></table>
 
@@ -236,6 +257,96 @@ function render(ind, values) {
 
   if (isNumeric) renderChart(ind, approved);
   wireEvents(ind);
+}
+
+// Constrói a tabela-matriz: Ano em linhas, sub-períodos (Trimestre/
+// Semestre, conforme a periodicidade) em colunas, seguido de Total e
+// Observações. Mostra o valor mais recente submetido em cada célula,
+// com uma indicação do estado (aprovado / submetido / rejeitado).
+function buildYearPeriodTable(ind, values) {
+  const periodFields = ME.getSubmissionPeriodFields(ind);
+  const statusTag = { aprovado: '', submetido: ' <span class="small-note">(submetido)</span>', rejeitado: ' <span class="small-note">(rejeitado)</span>' };
+
+  // Agrupa a submissão mais recente por período exacto.
+  const latestByPeriod = {};
+  values.forEach(v => {
+    const existing = latestByPeriod[v.period];
+    if (!existing || new Date(v.submitted_at) > new Date(existing.submitted_at)) {
+      latestByPeriod[v.period] = v;
+    }
+  });
+
+  let columns; // lista de sub-períodos (colunas), ou ['Valor'] se não houver sub-divisão
+  let rowsAreYears = true;
+  if (periodFields.mode === 'year+sub') {
+    columns = periodFields.subOptions;
+  } else if (periodFields.mode === 'year-only') {
+    columns = ['Valor'];
+  } else {
+    // Modo "fixed" (por marcos): não há ano/período regular — cada linha
+    // é o próprio período definido nas metas.
+    columns = ['Valor'];
+    rowsAreYears = false;
+  }
+
+  const rowKeys = new Set();
+  if (rowsAreYears) {
+    periodFields.years.forEach(y => rowKeys.add(y));
+    Object.keys(latestByPeriod).forEach(p => {
+      const key = periodSortKeyToYear(p);
+      if (key) rowKeys.add(key);
+    });
+  } else {
+    ind.targets.forEach(t => rowKeys.add(t.period));
+    Object.keys(latestByPeriod).forEach(p => rowKeys.add(p));
+  }
+  const sortedRowKeys = Array.from(rowKeys).sort((a, b) => rowsAreYears ? (a - b) : (ME.periodSortKey(a) - ME.periodSortKey(b)));
+
+  if (!sortedRowKeys.length) {
+    return '<p class="small-note">Ainda sem dados para apresentar.</p>';
+  }
+
+  const theadCols = rowsAreYears
+    ? `<th>Ano</th>${columns.map(c => `<th>${escapeHtml(c)}</th>`).join('')}<th>Total</th><th>Observações</th>`
+    : `<th>Período</th><th>Valor</th>`;
+
+  const bodyRows = sortedRowKeys.map(rowKey => {
+    if (!rowsAreYears) {
+      const v = latestByPeriod[rowKey];
+      return `<tr><td>${escapeHtml(rowKey)}</td><td>${v ? escapeHtml(String(v.value)) + (statusTag[v.status] || '') : '<span class="small-note">—</span>'}</td></tr>`;
+    }
+
+    let total = 0;
+    let hasNumericTotal = false;
+    const notes = [];
+    const cellsHtml = columns.map(col => {
+      const period = periodFields.mode === 'year-only'
+        ? ME.combinePeriod(periodFields, rowKey, null)
+        : ME.combinePeriod(periodFields, rowKey, col);
+      const v = latestByPeriod[period];
+      if (!v) return '<td><span class="small-note">—</span></td>';
+      if (v.status === 'aprovado' && typeof v.value !== 'undefined' && !isNaN(Number(v.value))) {
+        total += Number(v.value);
+        hasNumericTotal = true;
+      }
+      if (v.note) notes.push(`${col === 'Valor' ? rowKey : col}: ${v.note}`);
+      return `<td>${escapeHtml(String(v.value))}${statusTag[v.status] || ''}</td>`;
+    }).join('');
+
+    return `<tr><td>${rowKey}</td>${cellsHtml}<td>${hasNumericTotal ? escapeHtml(String(total)) : '<span class="small-note">—</span>'}</td><td class="small-note">${notes.length ? escapeHtml(notes.join('; ')) : '—'}</td></tr>`;
+  }).join('');
+
+  return `<table class="targets-table"><thead><tr>${theadCols}</tr></thead><tbody>${bodyRows}</tbody></table>`;
+}
+
+// Extrai o ano de um rótulo de período (para agrupar submissões em modo
+// "fixed" ou para casar com o ano correcto na tabela).
+function periodSortKeyToYear(period) {
+  let m;
+  if ((m = period.match(/\/(\d{4})$/))) return Number(m[1]);
+  if ((m = period.match(/ (\d{4})$/))) return Number(m[1]);
+  if ((m = period.match(/^(\d{4})/))) return Number(m[1]);
+  return null;
 }
 
 function renderChart(ind, approved) {
@@ -278,14 +389,39 @@ function wireEvents(ind) {
     });
   });
 
+  const provinceEl = document.getElementById('val-province');
+  const districtEl = document.getElementById('val-district');
+  if (provinceEl && districtEl) {
+    provinceEl.addEventListener('change', () => {
+      if (!provinceEl.value) {
+        districtEl.innerHTML = '<option value="">Seleccione primeiro a província...</option>';
+        districtEl.disabled = true;
+        return;
+      }
+      districtEl.innerHTML = '<option value="">—</option>' + ME.getDistricts(provinceEl.value).map(d => `<option value="${d}">${d}</option>`).join('');
+      districtEl.disabled = false;
+    });
+  }
+
   const submitBtn = document.getElementById('submit-value-btn');
   if (submitBtn) {
     submitBtn.addEventListener('click', async () => {
       const alertEl = document.getElementById('submit-alert');
       alertEl.innerHTML = '';
+
+      const noteValue = document.getElementById('val-note').value.trim();
+      if (!noteValue) {
+        alertEl.innerHTML = '<div class="alert alert-error">Descreve o resumo do processo — este campo é obrigatório.</div>';
+        return;
+      }
+
       const disagg = {};
       document.querySelectorAll('.disagg-input').forEach(inp => {
         if (inp.value !== '') disagg[inp.dataset.key] = Number(inp.value);
+      });
+      const statusDisagg = {};
+      document.querySelectorAll('.status-input').forEach(inp => {
+        if (inp.value !== '') statusDisagg[inp.dataset.key] = Number(inp.value);
       });
       submitBtn.disabled = true;
       submitBtn.innerHTML = '<span class="spinner"></span>';
@@ -300,7 +436,10 @@ function wireEvents(ind) {
           period,
           value: document.getElementById('val-value').value,
           disagg: Object.keys(disagg).length ? disagg : null,
-          note: document.getElementById('val-note').value,
+          status_disagg: Object.keys(statusDisagg).length ? statusDisagg : null,
+          province: provinceEl ? provinceEl.value : null,
+          district: districtEl ? districtEl.value : null,
+          note: noteValue,
         }, fileList);
         if (result.skipped && result.skipped.length) {
           alert(`O ficheiro "${result.skipped.join(', ')}" não foi anexado por exceder 200KB.`);

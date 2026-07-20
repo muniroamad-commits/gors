@@ -143,3 +143,64 @@ abre uma **página inteira e dedicada** (`indicador.html?id=...`), com:
 Estes dados (descrição, fonte, metodologia) vivem também em `js/store.js`,
 na mesma constante `INDICATORS` — podes editá-los se precisares de
 ajustar algum texto.
+
+## Nomes dos indicadores corrigidos (Quadro de Resultados oficial)
+
+Os nomes dos 18 indicadores foram revistos e corrigidos de acordo com o
+documento oficial "Quadro de Resultados" fornecido pelo cliente — que
+também serviu para corrigir dois pequenos erros de dados encontrados no
+documento PAD original do Banco Mundial:
+
+- **Periodicidade dos "Empregos melhores e mais bem remunerados" (Áreas-alvo)**:
+  corrigida de Trimestral para **Semestral**.
+- **Meta de "Jovens formados nos SICs" em Mai/2028**: corrigida de 5.000
+  para **500** (era um erro de digitação evidente no documento original —
+  a meta final de 2.000 só faz sentido com este valor corrigido).
+
+## Tabela Ano × Período, com totais e observações
+
+Depois do gráfico de resultados, cada indicador tem agora uma tabela com:
+
+- **Linhas**: um ano por linha
+- **Colunas**: os sub-períodos de acordo com a periodicidade do indicador
+  (T1–T4 para trimestral, 1º/2º Semestre para semestral, "Valor" para
+  anual/bienal), mostrando o valor mais recente submetido em cada célula,
+  com indicação se está aprovado, submetido (pendente) ou rejeitado
+- **Total**: soma dos valores aprovados desse ano (só para indicadores
+  numéricos)
+- **Observações**: notas associadas às submissões desse ano
+
+Indicadores com periodicidade por marcos (ex: "meio-termo e encerramento")
+mostram uma versão simplificada da tabela, com uma linha por período
+definido nas metas.
+
+## Campo "Descreva o resumo do processo" (obrigatório)
+
+O campo antes chamado "Nota / fonte de verificação" no formulário de
+submissão passou a **"Descreva o resumo do processo"**, e é agora
+**obrigatório** — não é possível submeter um valor sem preencher este
+campo. Isto é aplicado tanto na interface como no motor de dados
+(`js/store.js`), para garantir que não é possível contornar esta regra.
+
+## Filtros de género, província, distrito e estatuto de beneficiário
+
+Ao submeteres um valor (em `indicador.html`), podes agora indicar
+opcionalmente:
+
+- **Província** e **Distrito** (cascata, tal como na plataforma MDR)
+- **Desagregação por estatuto de beneficiário**: Deslocados, Retornados,
+  Anfitriões — tal como descrito no PAD ("IDPs, host communities,
+  returnees")
+
+Os relatórios (interno e público) têm agora seis filtros: Nível,
+Componente, **Género** (Mulheres/Jovens), **Província**, **Distrito**, e
+**Estatuto** (Deslocados/Retornados/Anfitriões). Quando filtras por
+Género ou Estatuto, o relatório mostra o valor **desagregado**
+correspondente (não o valor total) — e só inclui indicadores/submissões
+que tenham essa desagregação preenchida.
+
+**Nota importante**: os filtros de Género e Estatuto só funcionam para
+submissões que tenham essa desagregação indicada no momento em que foram
+submetidas. Submissões antigas, feitas antes desta actualização, não têm
+essa informação e não aparecem quando esses filtros estão activos —
+continuam a aparecer normalmente sem filtro nenhum.

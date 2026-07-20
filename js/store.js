@@ -22,7 +22,7 @@ const ME = (() => {
     {
       id: 'prdo-localities',
       level: 'PrDO', component: null,
-      name: 'Localidades a implementar processos de planeamento local participativo',
+      name: 'Localidades que implementam processos participativos de planificação local',
       unit: 'Número', frequency: 'Semestral',
       responsible: 'ADIN, DITs',
       description: 'A meta reflecte o número de localidades, nas Fases I e II, onde os conselhos consultivos de localidade (representantes eleitos de deslocados internos, comunidades de acolhimento, retornados, homens, mulheres, jovens e pessoas com deficiência) identificam projectos comunitários, em colaboração com o governo distrital, usando a ferramenta de planeamento e orçamentação participativa.',
@@ -40,7 +40,7 @@ const ME = (() => {
     {
       id: 'prdo-jobs',
       level: 'PrDO', component: null,
-      name: 'Mais e melhores empregos (CRI)',
+      name: 'Empregos melhores e mais bem remunerados criados/beneficiados (CRI)',
       unit: 'Número', frequency: 'Semestral',
       responsible: 'DITs, PPTs, ADIN',
       description: 'A meta reflecte o número de pessoas, nas Fases I e II, beneficiadas por empregos de curto e médio/longo prazo resultantes do programa. Os empregos de curto prazo resultam da construção/reabilitação de infraestrutura (10.450 empregos), enquanto os de médio e longo prazo resultam de transferências monetárias a agregados vulneráveis (25.000), subvenções a empresas socioeconómicas (10.000), acções de qualificação de jovens nos SICs (2.500), e da operação de longo prazo dos subprojectos comunitários (600 empregos).',
@@ -60,7 +60,7 @@ const ME = (() => {
     {
       id: 'pdo-localities',
       level: 'PDO', component: null,
-      name: 'Localidades a implementar processos de planeamento local participativo (Áreas-alvo)',
+      name: 'Localidades que implementam processos participativos de planificação local (Áreas-alvo)',
       unit: 'Número', frequency: 'Trimestral',
       responsible: 'ADIN, DITs',
       description: 'Esta meta reflecte o número de localidades onde os comités consultivos de localidade (representantes eleitos de deslocados internos, comunidades de acolhimento, retornados, homens, mulheres, jovens e pessoas com deficiência) identificam projectos comunitários, em colaboração com o governo distrital, usando a ferramenta de planeamento e orçamentação participativa. As localidades são 80 localidades seleccionadas nas províncias de Niassa, Cabo Delgado e Nampula, nos 56 distritos destas províncias, excluindo as respectivas capitais.',
@@ -77,8 +77,8 @@ const ME = (() => {
     {
       id: 'pdo-jobs',
       level: 'PDO', component: null,
-      name: 'Mais e melhores empregos — Áreas-alvo (CRI)',
-      unit: 'Número', frequency: 'Trimestral',
+      name: 'Empregos melhores e mais bem remunerados criados/beneficiados — Áreas-alvo (CRI)',
+      unit: 'Número', frequency: 'Semestral',
       responsible: 'DITs, PPTs, ADIN',
       description: 'A meta proposta reflecte o número de pessoas beneficiadas por empregos de curto e médio/longo prazo resultantes do projecto. Os empregos de curto prazo resultam da construção/reabilitação de infraestrutura (4.180 empregos), enquanto os de médio e longo prazo resultam de transferências monetárias (10.000), subvenções a empresas socioeconómicas (4.000), acções de qualificação de jovens nos SICs (1.000), e da operação de longo prazo dos subprojectos comunitários (240 empregos). Os empregos serão criados nas três províncias do norte de Moçambique, excluindo as respectivas capitais.',
       dataSource: 'Relatórios de progresso, visitas de campo',
@@ -94,7 +94,7 @@ const ME = (() => {
     {
       id: 'pdo-cri-infra',
       level: 'PDO', component: null,
-      name: 'Pessoas beneficiadas por infraestrutura resiliente ao clima (CRI)',
+      name: 'Pessoas beneficiadas por infra-estruturas resilientes ao clima (CRI)',
       unit: 'Número de pessoas', frequency: 'Trimestral',
       responsible: 'ANOP, ADIN, PPTs, DITs',
       description: 'A meta proposta reflecte pessoas beneficiadas por infraestrutura pública reabilitada ou nova (222.000) em dez distritos da província de Cabo Delgado, e por infraestrutura comunitária (560.000) em 80 localidades seleccionadas das províncias de Niassa, Cabo Delgado e Nampula. A meta para jovens (15-24 anos) reflecte 17% e a meta para mulheres reflecte 51% da população da Região Norte, segundo cálculos do Banco Mundial com dados de 2022 do Inquérito sobre Orçamento Familiar. O número de beneficiários de infraestrutura pública reflecte cerca de 15% da população dos dez distritos, e o número de beneficiários de infraestrutura comunitária reflecte 80 projectos beneficiando cerca de 7.000 pessoas por projecto, com base na população média das localidades na Região Norte.',
@@ -116,7 +116,7 @@ const ME = (() => {
     {
       id: 'c1-nrcf',
       level: 'Intermédio', component: 'Componente 1 — Colaboração Comunidades-Governo',
-      name: 'Fórum Regional Consultivo do Norte (NRCF) operacional',
+      name: 'Fórum Consultivo Regional do Norte (NRCF) operacional',
       unit: 'Texto (sim/estado)', frequency: 'Semestral',
       responsible: 'ADIN, MPD',
       description: 'Os membros do NRCF realizam pelo menos reuniões semestrais; publicam as actas e a lista de participantes; e monitoram a implementação das estratégias de desenvolvimento provincial.',
@@ -136,7 +136,7 @@ const ME = (() => {
     {
       id: 'c1-observatorios',
       level: 'Intermédio', component: 'Componente 1 — Colaboração Comunidades-Governo',
-      name: 'Observatórios provinciais operacionais',
+      name: 'Observatórios Provinciais operacionais',
       unit: 'Número', frequency: 'Trimestral (1ª metade) / Semestral (2ª metade)',
       responsible: 'ADIN, PPTs',
       description: 'Reúnem pelo menos trimestralmente na primeira metade do projecto e pelo menos semestralmente na segunda metade; publicam actas e lista de participantes; e monitoram a implementação das estratégias de desenvolvimento distrital.',
@@ -153,7 +153,7 @@ const ME = (() => {
     {
       id: 'c1-conselhos',
       level: 'Intermédio', component: 'Componente 1 — Colaboração Comunidades-Governo',
-      name: 'Conselhos Consultivos distritais operacionais',
+      name: 'Conselhos Consultivos Distritais operacionais',
       unit: 'Número', frequency: 'Trimestral',
       responsible: 'ADIN, PPTs, DITs',
       description: 'Os novos são legalizados pela administração distrital; os novos e existentes reúnem-se pelo menos trimestralmente, publicando actas e listas de participantes; e monitorizam a implementação das actividades de localidade, incluindo os projectos comunitários emblemáticos.',
@@ -170,7 +170,7 @@ const ME = (() => {
     {
       id: 'c1-comites-localidade',
       level: 'Intermédio', component: 'Componente 1 — Colaboração Comunidades-Governo',
-      name: 'Comités consultivos de localidade operacionais',
+      name: 'Comités/Conselhos Consultivos das Localidades operacionais',
       unit: 'Número', frequency: 'Trimestral',
       responsible: 'ADIN, PPTs, DITs',
       description: 'Os conselhos consultivos (um por cada uma das 80 localidades-alvo) são compostos por representantes eleitos de deslocados internos, comunidades de acolhimento, retornados, homens, mulheres, jovens e pessoas com deficiência, que identificam os projectos emblemáticos.',
@@ -187,7 +187,7 @@ const ME = (() => {
     {
       id: 'c1-confianca',
       level: 'Intermédio', component: 'Componente 1 — Colaboração Comunidades-Governo',
-      name: 'Beneficiários que reportam maior confiança entre a comunidade e com o Estado',
+      name: 'Beneficiários que reportam aumento de confiança entre membros da comunidade e entre comunidade e Estado',
       unit: 'Percentagem', frequency: 'Ano 1 do projecto, meio-termo e encerramento',
       responsible: 'ADIN',
       description: 'Este indicador mede o resultado de coesão social vertical (comunidades-Estado) e horizontal (dentro das comunidades). Inquéritos de base, de meio-termo e finais entre as comunidades das localidades participantes, nos 56 distritos, determinarão a confiança resultante das principais intervenções do projecto. Entre comunidades: acordo sobre os projectos comunitários a estabelecer. Entre comunidades e o Estado: subvenções a empresas de mulheres e jovens, apoio psicossocial e a vítimas de VBG, e qualificação de jovens.',
@@ -205,7 +205,7 @@ const ME = (() => {
     {
       id: 'c2-cash-transfers',
       level: 'Intermédio', component: 'Componente 2 — Oportunidades Económicas e Emprego',
-      name: 'Beneficiários de transferências monetárias (CRI)',
+      name: 'Beneficiários das intervenções de transferências monetárias (CRI)',
       unit: 'Número de pessoas', frequency: 'Trimestral',
       responsible: 'ADIN',
       description: 'Este indicador mede o número de pessoas que participam no programa de transferências monetárias. A meta reflecte 10.000 agregados familiares nas três províncias do norte, com uma dimensão média de 5 pessoas por agregado. A meta para jovens (15-24 anos) reflecte 17% e a meta para mulheres reflecte 51% da população da Região Norte, segundo cálculos do Banco Mundial com dados de 2022 do Inquérito sobre Orçamento Familiar.',
@@ -224,7 +224,7 @@ const ME = (() => {
     {
       id: 'c2-grants-mulheres',
       level: 'Intermédio', component: 'Componente 2 — Oportunidades Económicas e Emprego',
-      name: 'Subvenções a pequenas e médias empresas de mulheres',
+      name: 'Percentagem do valor total de subvenções atribuída a empresas de mulheres',
       unit: 'Percentagem', frequency: 'Trimestral',
       responsible: 'ADIN, PPTs, DITs',
       description: 'Percentagem do valor total das subvenções atribuídas a empresas de mulheres.',
@@ -241,7 +241,7 @@ const ME = (() => {
     {
       id: 'c2-grants-jovens',
       level: 'Intermédio', component: 'Componente 2 — Oportunidades Económicas e Emprego',
-      name: 'Subvenções a pequenas e médias empresas de jovens e pessoas com deficiência',
+      name: 'Percentagem do valor total de subvenções atribuída a empresas de jovens e pessoas com deficiência',
       unit: 'Percentagem', frequency: 'Trimestral',
       responsible: 'ADIN, PPTs, DITs',
       description: 'Percentagem do valor total das subvenções atribuídas a empresas de jovens e de pessoas com deficiência.',
@@ -267,14 +267,14 @@ const ME = (() => {
       disaggregation: [],
       baseline: 0,
       targets: [
-        { period: 'Mai/2028', value: 5000 }, { period: 'Mai/2029', value: 1000 },
+        { period: 'Mai/2028', value: 500 }, { period: 'Mai/2029', value: 1000 },
         { period: 'Mai/2030', value: 1500 }, { period: 'Mai/2031', value: 2000 },
       ],
     },
     {
       id: 'c2-gbv',
       level: 'Intermédio', component: 'Componente 2 — Oportunidades Económicas e Emprego',
-      name: 'Beneficiários de acções para acabar com a VBG',
+      name: 'Beneficiários de acções de prevenção e resposta à VBG',
       unit: 'Número', frequency: 'Trimestral',
       responsible: 'ADIN, PPTs, DITs',
       description: 'Número de pessoas alcançadas com mensagens de sensibilização sobre VBG, saúde sexual e reprodutiva, saúde mental, GALS e outros programas de apoio psicossocial, nas três províncias do norte.',
@@ -296,7 +296,7 @@ const ME = (() => {
     {
       id: 'c3-infra-comunitaria',
       level: 'Intermédio', component: 'Componente 3 — Infraestrutura Resiliente ao Clima',
-      name: 'Infraestrutura comunitária resiliente ao clima reabilitada/criada e operacional',
+      name: 'Infra-estruturas comunitárias resilientes ao clima reabilitadas/estabelecidas e operacionais',
       unit: 'Número', frequency: 'Trimestral',
       responsible: 'DITs, PPTs, ANOP',
       description: 'Conforme priorizado nos Planos de Desenvolvimento Local Distrital (DLDPs), nas 80 localidades seleccionadas.',
@@ -312,7 +312,7 @@ const ME = (() => {
     {
       id: 'c3-infra-publica',
       level: 'Intermédio', component: 'Componente 3 — Infraestrutura Resiliente ao Clima',
-      name: 'Infraestrutura pública reabilitada/construída',
+      name: 'Infra-estruturas públicas reabilitadas/construídas',
       unit: 'Número', frequency: 'Trimestral',
       responsible: 'PPTs, ANOP',
       description: 'Conforme acordado com o governo no âmbito do projecto NCRP, nos dez distritos de Cabo Delgado.',
@@ -331,7 +331,7 @@ const ME = (() => {
     {
       id: 'c4-roteiro-clima',
       level: 'Intermédio', component: 'Componente 4 — Gestão do Projecto e Aprendizagem',
-      name: 'Roteiro de financiamento climático desenvolvido para a Direcção Nacional de Financiamento Climático do MPD',
+      name: 'Roteiro de financiamento climático para a Direcção Nacional de Finanças Climáticas do MPD elaborado',
       unit: 'Sim/Não', frequency: 'Anual',
       responsible: 'MPD, Direcção Nacional de Financiamento Climático',
       description: 'O roteiro especificará as acções necessárias para assegurar financiamento climático para a região norte, de modo a reforçar ainda mais a resiliência comunitária.',
@@ -349,7 +349,7 @@ const ME = (() => {
     {
       id: 'c4-reclamacoes',
       level: 'Intermédio', component: 'Componente 4 — Gestão do Projecto e Aprendizagem',
-      name: 'Beneficiários que reportam que as suas reclamações relacionadas com o projecto foram resolvidas',
+      name: 'Beneficiários que reportam que as suas reclamações relacionadas ao projecto foram tratadas',
       unit: 'Percentagem', frequency: 'Meio-termo e encerramento',
       responsible: 'ADIN, PPTs',
       description: 'Com base num inquérito a realizar no meio-termo e no encerramento do projecto.',
@@ -376,6 +376,26 @@ const ME = (() => {
   }
   function getLevels() {
     return ['PrDO', 'PDO', 'Intermédio'];
+  }
+
+  // ---------- Localização (para etiquetar submissões e filtrar relatórios) ----------
+  const LOCATIONS = {
+    'Cabo Delgado': ['Ancuabe', 'Balama', 'Chiúre', 'Ibo', 'Macomia', 'Mecúfi', 'Meluco', 'Metuge', 'Mocímboa da Praia', 'Montepuez', 'Mueda', 'Muidumbe', 'Namuno', 'Nangade', 'Palma', 'Pemba (cidade)', 'Quissanga'],
+    'Nampula': ['Angoche', 'Eráti', 'Ilha de Moçambique', 'Lalaua', 'Larde', 'Liúpo', 'Malema', 'Meconta', 'Mecubúri', 'Memba', 'Mogincual', 'Mogovolas', 'Moma', 'Monapo', 'Mossuril', 'Muecate', 'Murrupula', 'Nacala-a-Velha', 'Nacala Porto', 'Nacarôa', 'Nampula (cidade)', 'Rapale', 'Ribaué'],
+    'Niassa': ['Chimbonila', 'Cuamba', 'Lago', 'Lichinga (cidade)', 'Majune', 'Mandimba', 'Marrupa', 'Maúa', 'Mavago', 'Mecanhelas', 'Mecula', 'Metarica', 'Muembe', 'Ngauma', 'Nipepe', 'Sanga'],
+  };
+  function getProvinces() {
+    return Object.keys(LOCATIONS).sort((a, b) => a.localeCompare(b, 'pt'));
+  }
+  function getDistricts(province) {
+    return (LOCATIONS[province] || []).slice().sort((a, b) => a.localeCompare(b, 'pt'));
+  }
+
+  // Categorias de estatuto do beneficiário, tal como descritas no PAD
+  // (deslocados internos, comunidades de acolhimento, retornados).
+  const BENEFICIARY_STATUSES = ['Deslocados', 'Retornados', 'Anfitriões'];
+  function getBeneficiaryStatuses() {
+    return BENEFICIARY_STATUSES.slice();
   }
 
   // ---------- Períodos de reporte, de acordo com a periodicidade real ----------
@@ -468,6 +488,9 @@ const ME = (() => {
     if (payload.value === '' || payload.value === undefined || payload.value === null) {
       throw new Error('Indique o valor do indicador.');
     }
+    if (!payload.note || !payload.note.trim()) {
+      throw new Error('Descreve o resumo do processo — este campo é obrigatório.');
+    }
 
     const { evidence, skipped } = await filesToEvidence(fileList);
     const timestamp = nowIso();
@@ -479,6 +502,9 @@ const ME = (() => {
       period: payload.period,
       value: payload.value,
       disagg: payload.disagg || null,
+      status_disagg: payload.status_disagg || null,
+      province: payload.province || null,
+      district: payload.district || null,
       note: payload.note || null,
       evidence,
       status: 'submetido', // submetido | aprovado | rejeitado
@@ -532,9 +558,11 @@ const ME = (() => {
     });
 
     if (approve) {
-      // Espelho público: uma entrada por indicador+período (a mais
-      // recente aprovação substitui a anterior, se voltar a ser revista).
-      const publicId = `${record.indicator_id}__${record.period}`.replace(/[\/\s]+/g, '_');
+      // Espelho público: uma entrada por indicador+período+localização (a
+      // mais recente aprovação substitui a anterior para a mesma
+      // combinação, se voltar a ser revista).
+      const geoKey = `${record.province || 'geral'}__${record.district || 'geral'}`;
+      const publicId = `${record.indicator_id}__${record.period}__${geoKey}`.replace(/[\/\s()]+/g, '_');
       await db.collection(VALUES_PUBLIC).doc(publicId).set({
         indicator_id: record.indicator_id,
         indicator_name: record.indicator_name,
@@ -542,6 +570,9 @@ const ME = (() => {
         period: record.period,
         value: record.value,
         disagg: record.disagg || null,
+        status_disagg: record.status_disagg || null,
+        province: record.province || null,
+        district: record.district || null,
         updated_at: timestamp,
       });
     }
@@ -622,6 +653,7 @@ const ME = (() => {
 
   return {
     getIndicators, getIndicator, getComponents, getLevels, getSubmissionPeriodFields, combinePeriod, periodSortKey,
+    getProvinces, getDistricts, getBeneficiaryStatuses,
     submitValue, listValues, listApprovedValues, reviewValue, deleteValue, listPublicValues,
     adminLogin, adminLogout, onAuthChange, getCurrentAdminSync, changeAdminPassword,
     listAdminUsers, upsertAdminUser, removeAdminUser,

@@ -71,6 +71,31 @@
             <label for="f-component">Componente</label>
             <select id="f-component"><option value="">Todas</option></select>
           </div>
+          <div class="field" style="margin:0;">
+            <label for="f-group">Género</label>
+            <select id="f-group">
+              <option value="">Todos</option>
+              <option value="Mulheres">Mulheres</option>
+              <option value="Jovens">Jovens</option>
+            </select>
+          </div>
+          <div class="field" style="margin:0;">
+            <label for="f-province">Província</label>
+            <select id="f-province"><option value="">Todas</option></select>
+          </div>
+          <div class="field" style="margin:0;">
+            <label for="f-district">Distrito</label>
+            <select id="f-district" disabled><option value="">Seleccione primeiro a província...</option></select>
+          </div>
+          <div class="field" style="margin:0;">
+            <label for="f-status">Estatuto</label>
+            <select id="f-status">
+              <option value="">Todos</option>
+              <option value="Deslocados">Deslocados</option>
+              <option value="Retornados">Retornados</option>
+              <option value="Anfitriões">Anfitriões</option>
+            </select>
+          </div>
         </div>
         <div class="filters-actions">
           <button type="button" class="btn btn-primary btn-sm" id="apply-filters-btn">Aplicar filtros</button>
@@ -146,7 +171,20 @@ ME.onAuthChange(admin => {
   document.getElementById('users-link').style.display = admin.role === 'admin' ? '' : 'none';
 
   ME.getComponents().forEach(c => document.getElementById('f-component').add(new Option(c, c)));
+  ME.getProvinces().forEach(p => document.getElementById('f-province').add(new Option(p, p)));
   loadReport();
+});
+
+document.getElementById('f-province').addEventListener('change', () => {
+  const districtEl = document.getElementById('f-district');
+  const province = document.getElementById('f-province').value;
+  if (!province) {
+    districtEl.innerHTML = '<option value="">Seleccione primeiro a província...</option>';
+    districtEl.disabled = true;
+    return;
+  }
+  districtEl.innerHTML = '<option value="">Todos</option>' + ME.getDistricts(province).map(d => `<option value="${d}">${d}</option>`).join('');
+  districtEl.disabled = false;
 });
 
 document.getElementById('logout-link').addEventListener('click', (e) => {
@@ -159,9 +197,40 @@ function destroyCharts() {
   charts = {};
 }
 
+// Aplica os filtros de Género, Província, Distrito e Estatuto a uma lista
+// de submissões aprovadas de UM indicador. Quando o filtro de Género ou
+// Estatuto está activo, usa o valor desagregado correspondente (não o
+// valor total) — e descarta submissões que não tenham essa desagregação.
+function applyValueFilters(approved, filters) {
+  return approved
+    .filter(v => !filters.province || v.province === filters.province)
+    .filter(v => !filters.district || v.district === filters.district)
+    .map(v => {
+      let effectiveValue = v.value;
+      if (filters.group) {
+        const key = Object.keys(v.disagg || {}).find(k => k.startsWith(filters.group));
+        if (!key) return null;
+        effectiveValue = v.disagg[key];
+      }
+      if (filters.status) {
+        const key = Object.keys(v.status_disagg || {}).find(k => k.startsWith(filters.status));
+        if (!key) return null;
+        effectiveValue = v.status_disagg[key];
+      }
+      return { ...v, value: effectiveValue };
+    })
+    .filter(Boolean);
+}
+
 async function loadReport() {
   const level = document.getElementById('f-level').value;
   const component = document.getElementById('f-component').value;
+  const valueFilters = {
+    group: document.getElementById('f-group').value,
+    province: document.getElementById('f-province').value,
+    district: document.getElementById('f-district').value,
+    status: document.getElementById('f-status').value,
+  };
 
   document.getElementById('report-tbody').innerHTML = `<tr><td colspan="6" class="skeleton" style="height:40px;"></td></tr>`;
 
@@ -171,7 +240,8 @@ async function loadReport() {
 
   try {
     const rows = await Promise.all(indicators.map(async (ind) => {
-      const approved = await ME.listApprovedValues(ind.id);
+      let approved = await ME.listApprovedValues(ind.id);
+      approved = applyValueFilters(approved, valueFilters);
       approved.sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
       const latest = approved[0] || null;
       const finalTarget = ind.targets[ind.targets.length - 1];
@@ -245,6 +315,11 @@ document.getElementById('apply-filters-btn').addEventListener('click', loadRepor
 document.getElementById('clear-filters-btn').addEventListener('click', () => {
   document.getElementById('f-level').value = '';
   document.getElementById('f-component').value = '';
+  document.getElementById('f-group').value = '';
+  document.getElementById('f-province').value = '';
+  document.getElementById('f-district').innerHTML = '<option value="">Seleccione primeiro a província...</option>';
+  document.getElementById('f-district').disabled = true;
+  document.getElementById('f-status').value = '';
   loadReport();
 });
 
@@ -275,10 +350,18 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
 
     const level = document.getElementById('f-level').value;
     const component = document.getElementById('f-component').value;
+    const group = document.getElementById('f-group').value;
+    const province = document.getElementById('f-province').value;
+    const district = document.getElementById('f-district').value;
+    const status = document.getElementById('f-status').value;
     doc.setFontSize(10);
     doc.setTextColor(0, 0, 0);
     doc.text(`Nível: ${level || 'Todos'}`, margin, y); y += 14;
     doc.text(`Componente: ${component || 'Todas'}`, margin, y); y += 14;
+    doc.text(`Género: ${group || 'Todos'}`, margin, y); y += 14;
+    doc.text(`Província: ${province || 'Todas'}`, margin, y); y += 14;
+    doc.text(`Distrito: ${district || 'Todos'}`, margin, y); y += 14;
+    doc.text(`Estatuto: ${status || 'Todos'}`, margin, y); y += 14;
     y += 10;
 
     doc.setDrawColor(221, 214, 210);
