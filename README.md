@@ -628,3 +628,40 @@ configuração) — o botão de IA só aparece como uma melhoria opcional.
 
 Como sempre, posso ajudar-te a passar por estes passos em tempo real se
 preferires.
+
+## Botão de tradução PT / EN — toda a plataforma
+
+Adicionei um botão **"EN" / "PT"** no canto do menu, em todas as páginas
+(incluindo os dois relatórios e o PDF). Ao clicar, a plataforma recarrega
+no idioma escolhido, e a preferência fica guardada no browser — não
+precisas de mudar de novo da próxima vez que abrires a plataforma nesse
+computador.
+
+**O que é traduzido:**
+- Toda a interface: menus, botões, cabeçalhos de tabelas, rótulos de
+  formulários, mensagens de erro/confirmação, gráficos
+- **O catálogo completo dos 19 indicadores do Quadro de Resultados**:
+  nome, descrição, metodologia, meios de verificação, unidade,
+  periodicidade — traduzidos por mim, com cuidado, directamente do
+  documento original do Banco Mundial (que foi originalmente escrito em
+  inglês)
+- Os dois relatórios em PDF, incluindo os gráficos, tabelas e o cabeçalho
+  institucional
+
+**O que continua em português, mesmo no modo inglês:**
+- As **notas de processo** que a equipa escreve ao submeter valores
+  ("resumo do processo"), e a narrativa do Relatório Descritivo compilada
+  a partir delas — porque este texto é escrito por vocês no momento, e
+  muda todos os dias. Traduzir isto automaticamente exigiria uma ligação
+  paga a um serviço de tradução (a mesma ligação que já preparámos para o
+  Claude, ver secção "Narrativa gerada por IA"). Se um dia activares essa
+  ligação, dá para estender a mesma função para também traduzir estas
+  notas — diz-me se quiseres isso.
+- Indicadores criados ou editados manualmente por ti (fora dos 19
+  originais) — ficam sempre no idioma em que os escreveste, porque não há
+  como eu adivinhar a tradução de conteúdo que ainda não existe.
+
+**Nota técnica**: como esta tradução ocorre no teu computador (não é
+guardada no Firestore), qualquer pessoa que abrir a plataforma pode
+escolher o idioma que preferir, independentemente do que outra pessoa
+tiver escolhido — a preferência é só local a cada dispositivo/browser.

@@ -16,21 +16,21 @@
   <div class="container">
     <a href="index.html" class="brand">
       <span class="brand-mark"><img src="img/logo-adin.jpg" alt="Logótipo ADIN"></span>
-      <span class="brand-name">M&amp;E MozCommunity<small>Monitoria de Indicadores — ADIN</small></span>
+      <span class="brand-name">M&amp;E MozCommunity<small data-i18n="brand_tagline">Monitoria de Indicadores — ADIN</small></span>
     </a>
     <button class="nav-toggle" id="nav-toggle" aria-label="Abrir menu" aria-expanded="false">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
     <nav class="main-nav">
-      <a href="dashboard.html">Indicadores</a>
-      <a href="relatorios.html">Relatórios</a>
-      <a href="approvals.html" id="approvals-link" style="display:none;">Aprovações</a>
-      <a href="users.html" id="users-link" style="display:none;">Utilizadores</a>
+      <a href="dashboard.html" data-i18n="nav_indicators">Indicadores</a>
+      <a href="relatorios.html" data-i18n="nav_reports">Relatórios</a>
+      <a href="approvals.html" id="approvals-link" style="display:none;" data-i18n="nav_approvals">Aprovações</a>
+      <a href="users.html" id="users-link" style="display:none;" data-i18n="nav_users">Utilizadores</a>
       <span class="small-note" id="admin-name-label" style="margin-right:8px;"></span>
             <a href="approvals.html" id="notif-bell" title="Aprovações pendentes" style="display:none; position:relative; text-decoration:none; color:var(--ink); margin-right:6px; font-size:1.1rem;">
         🔔<span id="notif-badge" style="display:none; position:absolute; top:-6px; right:-10px; background:var(--brick); color:#fff; font-size:0.62rem; font-weight:700; padding:1px 5px; border-radius:999px; line-height:1.3;">0</span>
       </a>
-      <a href="#" id="logout-link">Sair</a>
+      <a href="#" id="logout-link" data-i18n="nav_logout">Sair</a>
     </nav>
   </div>
 </header>
@@ -47,7 +47,7 @@
   <section>
     <div class="container" style="max-width:760px;">
       <a href="dashboard.html" class="small-note" style="text-decoration:none;">&larr; Voltar aos indicadores</a>
-      <h1 id="page-title" style="font-size:clamp(1.6rem,3vw,2.1rem); margin-top:10px;">Novo indicador</h1>
+      <h1 id="page-title" style="font-size:clamp(1.6rem,3vw,2.1rem); margin-top:10px;" data-i18n="new_indicator">Novo indicador</h1>
 
       <div id="alert-box"></div>
 
@@ -133,8 +133,8 @@
         </div>
 
         <div style="display:flex; gap:10px; margin-top:24px; flex-wrap:wrap;">
-          <button type="button" class="btn btn-primary" id="save-btn">Guardar indicador</button>
-          <button type="button" class="btn btn-secondary" id="delete-btn" style="display:none; border-color:var(--brick); color:var(--brick);">Apagar indicador</button>
+          <button type="button" class="btn btn-primary" id="save-btn" data-i18n="save_indicator">Guardar indicador</button>
+          <button type="button" class="btn btn-secondary" id="delete-btn" style="display:none; border-color:var(--brick); color:var(--brick);" data-i18n="delete_indicator">Apagar indicador</button>
         </div>
       </div>
     </div>
@@ -146,6 +146,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="js/firebase-config.js"></script>
 <script src="js/store.js"></script>
+<script src="js/i18n.js"></script>
 <script>
 const indicatorId = new URLSearchParams(window.location.search).get('id'); // null = novo indicador
 let existingIndicator = null;
@@ -155,6 +156,9 @@ ME.getComponents().forEach(c => document.getElementById('f-component').add(new O
 document.getElementById('f-frequency').addEventListener('change', () => {
   document.getElementById('f-frequency-custom').style.display = document.getElementById('f-frequency').value === 'custom' ? 'block' : 'none';
 });
+
+I18N.applyStaticTranslations();
+I18N.injectToggle('.main-nav');
 
 ME.onAuthChange(async admin => {
   if (!admin) { window.location.href = 'index.html'; return; }
@@ -174,7 +178,7 @@ ME.onAuthChange(async admin => {
   document.getElementById('users-link').style.display = '';
 
   if (indicatorId) {
-    document.getElementById('page-title').textContent = 'Editar indicador';
+    document.getElementById('page-title').textContent = I18N.t('edit_indicator');
     document.getElementById('delete-btn').style.display = '';
     existingIndicator = await ME.getIndicator(indicatorId);
     if (!existingIndicator) {
@@ -273,7 +277,7 @@ document.getElementById('save-btn').addEventListener('click', async () => {
     console.error(err);
     alertBox.innerHTML = `<div class="alert alert-error">${err.message || 'Não foi possível guardar o indicador.'}</div>`;
     btn.disabled = false;
-    btn.textContent = 'Guardar indicador';
+    btn.textContent = I18N.t('save_indicator');
   }
 });
 

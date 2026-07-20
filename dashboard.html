@@ -57,28 +57,28 @@
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
     <nav class="main-nav">
-      <a href="dashboard.html" class="is-active">Indicadores</a>
-      <a href="relatorios.html">Relatórios</a>
-      <a href="approvals.html" id="approvals-link" style="display:none;">Aprovações</a>
-      <a href="users.html" id="users-link" style="display:none;">Utilizadores</a>
+      <a href="dashboard.html" class="is-active" data-i18n="nav_indicators">Indicadores</a>
+      <a href="relatorios.html" data-i18n="nav_reports">Relatórios</a>
+      <a href="approvals.html" id="approvals-link" style="display:none;" data-i18n="nav_approvals">Aprovações</a>
+      <a href="users.html" id="users-link" style="display:none;" data-i18n="nav_users">Utilizadores</a>
       <span class="small-note" id="admin-name-label" style="margin-right:8px;"></span>
             <a href="approvals.html" id="notif-bell" title="Aprovações pendentes" style="display:none; position:relative; text-decoration:none; color:var(--ink); margin-right:6px; font-size:1.1rem;">
         🔔<span id="notif-badge" style="display:none; position:absolute; top:-6px; right:-10px; background:var(--brick); color:#fff; font-size:0.62rem; font-weight:700; padding:1px 5px; border-radius:999px; line-height:1.3;">0</span>
       </a>
-      <a href="#" id="logout-link">Sair</a>
+      <a href="#" id="logout-link" data-i18n="nav_logout">Sair</a>
     </nav>
   </div>
 </header>
 
 <div class="admin-shell">
   <aside class="admin-sidebar">
-    <h4>Nível</h4>
-    <button class="filter-option is-active" data-filter="level" data-value="">Todos</button>
-    <button class="filter-option" data-filter="level" data-value="PrDO">PrDO (Programa)</button>
-    <button class="filter-option" data-filter="level" data-value="PDO">PDO (Projecto)</button>
-    <button class="filter-option" data-filter="level" data-value="Intermédio">Intermédio</button>
+    <h4 data-i18n="col_level">Nível</h4>
+    <button class="filter-option is-active" data-filter="level" data-value="" data-i18n="filter_all">Todos</button>
+    <button class="filter-option" data-filter="level" data-value="PrDO" data-i18n="filter_prdo">PrDO (Programa)</button>
+    <button class="filter-option" data-filter="level" data-value="PDO" data-i18n="filter_pdo">PDO (Projecto)</button>
+    <button class="filter-option" data-filter="level" data-value="Intermédio" id="filter-intermediate" data-i18n="filter_intermediate">Intermédio</button>
 
-    <h4>Componente</h4>
+    <h4 data-i18n="col_component">Componente</h4>
     <div id="component-filters"></div>
   </aside>
 
@@ -87,17 +87,17 @@
 
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; gap:12px; flex-wrap:wrap;">
       <div>
-        <h2 style="margin:0;">Indicadores do Quadro de Resultados</h2>
+        <h2 style="margin:0;" data-i18n="catalog_title">Indicadores do Quadro de Resultados</h2>
         <p class="small-note" style="margin:2px 0 0;" id="results-count">A carregar...</p>
       </div>
       <div style="display:flex; gap:10px; flex-wrap:wrap;">
-        <button type="button" id="reset-values-btn" class="btn btn-secondary btn-sm" style="display:none; border-color:var(--brick); color:var(--brick);">Zerar todos os valores</button>
-        <a href="indicator-edit.html" id="add-indicator-link" class="btn btn-primary btn-sm" style="display:none;">+ Adicionar indicador</a>
+        <button type="button" id="reset-values-btn" class="btn btn-secondary btn-sm" style="display:none; border-color:var(--brick); color:var(--brick);" data-i18n="reset_values">Zerar todos os valores</button>
+        <a href="indicator-edit.html" id="add-indicator-link" class="btn btn-primary btn-sm" style="display:none;" data-i18n="add_indicator">+ Adicionar indicador</a>
       </div>
     </div>
 
     <table class="cases">
-      <thead><tr><th>Nível</th><th>Indicador</th><th>Base</th><th>Valor actual</th><th>Meta final</th><th>Progresso</th><th>Estágio</th></tr></thead>
+      <thead><tr><th data-i18n="col_level">Nível</th><th data-i18n="col_indicator">Indicador</th><th data-i18n="col_baseline">Base</th><th data-i18n="col_current_value">Valor actual</th><th data-i18n="col_final_target">Meta final</th><th data-i18n="col_progress">Progresso</th><th data-i18n="col_stage">Estágio</th></tr></thead>
       <tbody id="indicators-tbody">
         <tr><td colspan="7" class="skeleton" style="height:40px;"></td></tr>
       </tbody>
@@ -110,7 +110,11 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="js/firebase-config.js"></script>
 <script src="js/store.js"></script>
+<script src="js/i18n.js"></script>
 <script>
+I18N.applyStaticTranslations();
+I18N.injectToggle('.main-nav');
+
 let currentAdmin = null;
 let state = { level: '', component: '' };
 
@@ -122,7 +126,7 @@ ME.onAuthChange(admin => {
     return;
   }
   currentAdmin = admin;
-  const roleLabels = { admin: 'Administrador geral', submitter: 'Equipa de reporte', readonly: 'Só leitura' };
+  const roleLabels = { admin: I18N.t('role_admin'), submitter: I18N.t('role_submitter'), readonly: I18N.t('role_readonly') };
   document.getElementById('admin-name-label').textContent = `${admin.name} · ${roleLabels[admin.role] || admin.role}`;
   document.getElementById('approvals-link').style.display = admin.role === 'admin' ? '' : 'none';
   document.getElementById('users-link').style.display = admin.role === 'admin' ? '' : 'none';
@@ -140,25 +144,30 @@ document.getElementById('logout-link').addEventListener('click', (e) => {
 });
 
 document.getElementById('reset-values-btn').addEventListener('click', async () => {
-  const typed = prompt('Isto apaga PERMANENTEMENTE todos os valores submetidos, aprovados e rejeitados de TODOS os indicadores (o catálogo de indicadores em si não é apagado). Não há forma de recuperar depois. Para confirmar, escreve exactamente: ZERAR TUDO');
-  if (typed !== 'ZERAR TUDO') {
-    if (typed !== null) alert('Texto não corresponde — nada foi apagado.');
+  const en = I18N.getLang() === 'en';
+  const confirmWord = en ? 'RESET ALL' : 'ZERAR TUDO';
+  const promptMsg = en
+    ? `This PERMANENTLY deletes all submitted, approved, and rejected values for ALL indicators (the indicator catalog itself is not deleted). This cannot be undone. To confirm, type exactly: ${confirmWord}`
+    : `Isto apaga PERMANENTEMENTE todos os valores submetidos, aprovados e rejeitados de TODOS os indicadores (o catálogo de indicadores em si não é apagado). Não há forma de recuperar depois. Para confirmar, escreve exactamente: ${confirmWord}`;
+  const typed = prompt(promptMsg);
+  if (typed !== confirmWord) {
+    if (typed !== null) alert(en ? 'Text does not match — nothing was deleted.' : 'Texto não corresponde — nada foi apagado.');
     return;
   }
   try {
     const n = await ME.resetAllValues();
-    alert(`${n} registo(s) apagado(s).`);
+    alert(en ? `${n} record(s) deleted.` : `${n} registo(s) apagado(s).`);
     loadIndicators();
   } catch (err) {
     console.error(err);
-    alert(err.message || 'Não foi possível zerar os valores.');
+    alert(err.message || (en ? 'Could not reset the values.' : 'Não foi possível zerar os valores.'));
   }
 });
 
 function renderComponentFilters() {
   const el = document.getElementById('component-filters');
-  el.innerHTML = `<button class="filter-option is-active" data-filter="component" data-value="">Todas</button>` +
-    ME.getComponents().map(c => `<button class="filter-option" data-filter="component" data-value="${c}">${c.replace('Componente ', 'C.')}</button>`).join('');
+  el.innerHTML = `<button class="filter-option is-active" data-filter="component" data-value="">${I18N.t('filter_all_f')}</button>` +
+    ME.getComponents().map(c => `<button class="filter-option" data-filter="component" data-value="${c}">${escapeHtml(I18N.translateComponent(c).replace(/^(Componente|Component) /, 'C.'))}</button>`).join('');
 }
 
 document.querySelector('.admin-sidebar').addEventListener('click', (e) => {
@@ -192,8 +201,11 @@ async function checkOverdueAlerts() {
     }));
     const overdue = results.filter(r => r.stage === 'atraso');
     if (overdue.length) {
-      const names = overdue.slice(0, 5).map(r => escapeHtml(r.ind.name)).join('; ');
-      banner.innerHTML = `⚠️ <strong>${overdue.length} indicador${overdue.length > 1 ? 'es' : ''} em atraso</strong> — meta com prazo já vencido e ainda sem valor aprovado suficiente: ${names}${overdue.length > 5 ? '…' : ''}`;
+      const en = I18N.getLang() === 'en';
+      const names = overdue.slice(0, 5).map(r => escapeHtml(I18N.translateIndicator(r.ind).name)).join('; ');
+      const label = en ? `${overdue.length} indicator${overdue.length > 1 ? 's' : ''} overdue` : `${overdue.length} indicador${overdue.length > 1 ? 'es' : ''} em atraso`;
+      const rest = en ? '— target deadline already passed and still without a sufficient approved value:' : '— meta com prazo já vencido e ainda sem valor aprovado suficiente:';
+      banner.innerHTML = `⚠️ <strong>${label}</strong> ${rest} ${names}${overdue.length > 5 ? '…' : ''}`;
       banner.style.display = 'block';
     } else {
       banner.style.display = 'none';
@@ -211,11 +223,14 @@ async function loadIndicators() {
   if (state.level) indicators = indicators.filter(i => i.level === state.level);
   if (state.component) indicators = indicators.filter(i => i.component === state.component);
 
-  document.getElementById('results-count').textContent = `${indicators.length} indicador(es)`;
+  document.getElementById('results-count').textContent = I18N.getLang() === 'en'
+    ? `${indicators.length} indicator(s)`
+    : `${indicators.length} indicador(es)`;
 
   try {
-    const rowsHtml = await Promise.all(indicators.map(async (ind) => {
-      const approved = await ME.listApprovedValues(ind.id);
+    const rowsHtml = await Promise.all(indicators.map(async (ind0) => {
+      const ind = I18N.translateIndicator(ind0);
+      const approved = await ME.listApprovedValues(ind0.id);
       const finalTarget = ind.targets[ind.targets.length - 1];
       const isNumeric = !ind.isTextIndicator && !ind.isYesNoIndicator;
 
@@ -236,15 +251,15 @@ async function loadIndicators() {
         const pct = Math.min(100, Math.round((currentValue / finalTarget.value) * 100));
         progressHtml = `<div class="progress-bar"><div class="progress-bar-fill" style="width:${pct}%;"></div></div><span class="small-note">${pct}%</span>`;
       }
-      const stage = ME.classifyStage(ind, currentValue);
-      const stageLabels = { atraso: '🔴 Em atraso', alcancada: '🟢 Meta alcançada', prazo: '🟡 Dentro do prazo' };
+      const stage = ME.classifyStage(ind0, currentValue);
+      const stageLabels = { atraso: I18N.t('stage_atraso'), alcancada: I18N.t('stage_alcancada'), prazo: I18N.t('stage_prazo') };
       const stageHtml = stage ? `<span class="stage-flag ${stage}">${stageLabels[stage]}</span>` : '<span class="small-note">—</span>';
       return `
-        <tr data-id="${ind.id}">
+        <tr data-id="${ind0.id}">
           <td><span class="level-tag">${ind.level}</span></td>
           <td>${escapeHtml(ind.name)}</td>
           <td class="small-note">${escapeHtml(String(ind.baseline))}</td>
-          <td>${currentValue !== null ? escapeHtml(String(currentValue)) : '<span class="small-note">Sem valor aprovado</span>'}</td>
+          <td>${currentValue !== null ? escapeHtml(String(currentValue)) : `<span class="small-note">${I18N.t('no_approved_value')}</span>`}</td>
           <td class="small-note">${escapeHtml(String(finalTarget.value))}</td>
           <td>${progressHtml}</td>
           <td>${stageHtml}</td>
@@ -253,7 +268,7 @@ async function loadIndicators() {
     }));
 
     if (!rowsHtml.length) {
-      tbody.innerHTML = `<tr><td colspan="7" class="small-note" style="padding:24px;">Nenhum indicador encontrado com estes filtros.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" class="small-note" style="padding:24px;">${I18N.t('no_results')}</td></tr>`;
       return;
     }
     tbody.innerHTML = rowsHtml.join('');
@@ -262,7 +277,7 @@ async function loadIndicators() {
     });
   } catch (err) {
     console.error(err);
-    tbody.innerHTML = `<tr><td colspan="7"><div class="alert alert-error">Não foi possível carregar os indicadores.</div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7"><div class="alert alert-error">${I18N.getLang() === 'en' ? 'Could not load the indicators.' : 'Não foi possível carregar os indicadores.'}</div></td></tr>`;
   }
 }
 
