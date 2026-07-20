@@ -21,6 +21,10 @@
   table.cases tr:last-child td { border-bottom: none; }
   table.cases tr { cursor: pointer; }
   table.cases tr:hover td { background: var(--teal-tint); }
+  .stage-flag { display: inline-block; font-size: 0.72rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .stage-flag.atraso { background: #FCEAEA; color: #7A1921; }
+  .stage-flag.alcancada { background: #E3F1E9; color: #3F7D5C; }
+  .stage-flag.prazo { background: #E8F0F5; color: #2E5C7A; }
   .progress-bar { width: 100%; height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; }
   .progress-bar-fill { height: 100%; background: var(--teal); }
   .level-tag { font-size: 0.72rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: var(--gold-tint); color: #8A5F13; }
@@ -79,6 +83,8 @@
   </aside>
 
   <main class="admin-main">
+    <div id="overdue-alert" style="display:none; margin-bottom:18px; padding:14px 16px; border-radius:10px; background:#FCEAEA; border:1px solid #E4A4A9; color:#7A1921; font-size:0.88rem;"></div>
+
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; gap:12px; flex-wrap:wrap;">
       <div>
         <h2 style="margin:0;">Indicadores do Quadro de Resultados</h2>
@@ -91,9 +97,9 @@
     </div>
 
     <table class="cases">
-      <thead><tr><th>Nível</th><th>Indicador</th><th>Base</th><th>Valor actual</th><th>Meta final</th><th>Progresso</th></tr></thead>
+      <thead><tr><th>Nível</th><th>Indicador</th><th>Base</th><th>Valor actual</th><th>Meta final</th><th>Progresso</th><th>Estágio</th></tr></thead>
       <tbody id="indicators-tbody">
-        <tr><td colspan="6" class="skeleton" style="height:40px;"></td></tr>
+        <tr><td colspan="7" class="skeleton" style="height:40px;"></td></tr>
       </tbody>
     </table>
   </main>
@@ -125,6 +131,7 @@ ME.onAuthChange(admin => {
 
   renderComponentFilters();
   loadIndicators();
+  checkOverdueAlerts();
 });
 
 document.getElementById('logout-link').addEventListener('click', (e) => {
@@ -164,9 +171,41 @@ document.querySelector('.admin-sidebar').addEventListener('click', (e) => {
   loadIndicators();
 });
 
+// Verifica TODOS os indicadores (independentemente dos filtros da lista)
+// e mostra um alerta se algum estiver "em atraso" — meta com prazo
+// vencido (fim do mês + 15 dias) e ainda sem valor aprovado suficiente.
+async function checkOverdueAlerts() {
+  const banner = document.getElementById('overdue-alert');
+  try {
+    const indicators = await ME.getIndicators();
+    const results = await Promise.all(indicators.map(async (ind) => {
+      const approved = await ME.listApprovedValues(ind.id);
+      const isNumeric = !ind.isTextIndicator && !ind.isYesNoIndicator;
+      let currentValue = null;
+      if (isNumeric) {
+        if (approved.length) currentValue = approved.reduce((sum, v) => sum + (Number(v.value) || 0), 0);
+      } else if (approved.length) {
+        approved.sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
+        currentValue = approved[0].value;
+      }
+      return { ind, stage: ME.classifyStage(ind, currentValue) };
+    }));
+    const overdue = results.filter(r => r.stage === 'atraso');
+    if (overdue.length) {
+      const names = overdue.slice(0, 5).map(r => escapeHtml(r.ind.name)).join('; ');
+      banner.innerHTML = `⚠️ <strong>${overdue.length} indicador${overdue.length > 1 ? 'es' : ''} em atraso</strong> — meta com prazo já vencido e ainda sem valor aprovado suficiente: ${names}${overdue.length > 5 ? '…' : ''}`;
+      banner.style.display = 'block';
+    } else {
+      banner.style.display = 'none';
+    }
+  } catch (err) {
+    console.error('Não foi possível verificar indicadores em atraso:', err);
+  }
+}
+
 async function loadIndicators() {
   const tbody = document.getElementById('indicators-tbody');
-  tbody.innerHTML = `<tr><td colspan="6" class="skeleton" style="height:40px;"></td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="7" class="skeleton" style="height:40px;"></td></tr>`;
 
   let indicators = await ME.getIndicators();
   if (state.level) indicators = indicators.filter(i => i.level === state.level);
@@ -197,6 +236,9 @@ async function loadIndicators() {
         const pct = Math.min(100, Math.round((currentValue / finalTarget.value) * 100));
         progressHtml = `<div class="progress-bar"><div class="progress-bar-fill" style="width:${pct}%;"></div></div><span class="small-note">${pct}%</span>`;
       }
+      const stage = ME.classifyStage(ind, currentValue);
+      const stageLabels = { atraso: 'Em atraso', alcancada: 'Meta alcançada', prazo: 'Dentro do prazo' };
+      const stageHtml = stage ? `<span class="stage-flag ${stage}">${stageLabels[stage]}</span>` : '<span class="small-note">—</span>';
       return `
         <tr data-id="${ind.id}">
           <td><span class="level-tag">${ind.level}</span></td>
@@ -205,12 +247,13 @@ async function loadIndicators() {
           <td>${currentValue !== null ? escapeHtml(String(currentValue)) : '<span class="small-note">Sem valor aprovado</span>'}</td>
           <td class="small-note">${escapeHtml(String(finalTarget.value))}</td>
           <td>${progressHtml}</td>
+          <td>${stageHtml}</td>
         </tr>
       `;
     }));
 
     if (!rowsHtml.length) {
-      tbody.innerHTML = `<tr><td colspan="6" class="small-note" style="padding:24px;">Nenhum indicador encontrado com estes filtros.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" class="small-note" style="padding:24px;">Nenhum indicador encontrado com estes filtros.</td></tr>`;
       return;
     }
     tbody.innerHTML = rowsHtml.join('');
@@ -219,7 +262,7 @@ async function loadIndicators() {
     });
   } catch (err) {
     console.error(err);
-    tbody.innerHTML = `<tr><td colspan="6"><div class="alert alert-error">Não foi possível carregar os indicadores.</div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7"><div class="alert alert-error">Não foi possível carregar os indicadores.</div></td></tr>`;
   }
 }
 

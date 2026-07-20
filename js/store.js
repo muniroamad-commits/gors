@@ -719,32 +719,64 @@ const ME = (() => {
   //                  passada, ou já cumpriu a mais recente que passou)
   // - null         → não classificável (indicador de texto, ou sem metas
   //                  numéricas/Sim-Não definidas)
+  // Converte um rótulo de período (ex: "Mai/2027", "T1 2026", "1º
+  // Semestre 2026", "2026", "2026–2027") na data-limite real para esse
+  // período: o último dia do mês que o período representa, mais 15 dias
+  // de tolerância. Devolve null para períodos que não seguem um
+  // calendário reconhecível (ex: rótulos por marcos como "Ano 1 do
+  // projecto, meio-termo e encerramento").
+  function getPeriodDeadline(period) {
+    const MONTHS = { Jan: 1, Fev: 2, Mar: 3, Abr: 4, Mai: 5, Jun: 6, Jul: 7, Ago: 8, Set: 9, Out: 10, Nov: 11, Dez: 12 };
+    let year, month, m;
+    if ((m = period.match(/^([A-Za-zçÇ]{3})\/(\d{4})$/))) { month = MONTHS[m[1]]; year = Number(m[2]); }
+    else if ((m = period.match(/^T(\d) (\d{4})$/))) { month = Number(m[1]) * 3; year = Number(m[2]); }
+    else if ((m = period.match(/^(1|2)º Semestre (\d{4})$/))) { month = m[1] === '1' ? 6 : 12; year = Number(m[2]); }
+    else if ((m = period.match(/^(\d{4})–(\d{4})$/))) { month = 12; year = Number(m[2]); }
+    else if ((m = period.match(/^(\d{4})$/))) { month = 12; year = Number(m[1]); }
+    else return null;
+
+    const endOfMonth = new Date(year, month, 0); // dia 0 do mês seguinte = último dia do mês "month"
+    const deadline = new Date(endOfMonth);
+    deadline.setDate(deadline.getDate() + 15);
+    return deadline;
+  }
+
+  // Classifica o estágio de um indicador face às suas metas, usando datas
+  // reais (não apenas o mês/ano) — uma meta só conta como "em atraso" se
+  // já tiver passado 15 dias do fim do mês a que se refere, e o valor
+  // actual ainda não a tiver atingido.
+  // - 'alcancada'  → já atingiu ou ultrapassou a meta final
+  // - 'atraso'     → já passou o prazo (fim do mês + 15 dias) de pelo
+  //                  menos uma meta-marco, e o valor actual está abaixo dela
+  // - 'prazo'      → ainda dentro do previsto (nenhum prazo vencido, ou
+  //                  já cumpriu o mais recente que venceu)
+  // - null         → não classificável (indicador de texto, sem metas, ou
+  //                  períodos que não seguem um calendário reconhecível)
   function classifyStage(ind, currentValue) {
     const isNumeric = !ind.isTextIndicator && !ind.isYesNoIndicator;
     if (ind.isTextIndicator) return null;
     if (!ind.targets || !ind.targets.length) return null;
 
     const finalTarget = ind.targets[ind.targets.length - 1];
-    const nowKey = (() => {
-      const d = new Date();
-      return (d.getFullYear()) * 100 + (d.getMonth() + 1);
-    })();
+    const now = new Date();
+
+    const overdue = ind.targets
+      .map(t => ({ ...t, deadline: getPeriodDeadline(t.period) }))
+      .filter(t => t.deadline && now > t.deadline);
 
     if (isNumeric) {
       if (currentValue !== null && typeof finalTarget.value === 'number' && currentValue >= finalTarget.value) return 'alcancada';
-      const passed = ind.targets.filter(t => typeof t.value === 'number' && periodSortKey(t.period) <= nowKey);
-      if (!passed.length) return 'prazo';
-      const mostRecent = passed.reduce((a, b) => (periodSortKey(b.period) > periodSortKey(a.period) ? b : a));
+      if (!overdue.length) return 'prazo';
+      const mostRecent = overdue.reduce((a, b) => (b.deadline > a.deadline ? b : a));
       const value = currentValue || 0;
       return value >= mostRecent.value ? 'prazo' : 'atraso';
     }
 
     // Sim/Não: compara o valor mais recente com a meta do checkpoint mais
-    // recente já passado (ex: já devia ser "Sim" a partir de determinada data).
+    // recente já vencido (ex: já devia ser "Sim" a partir de determinada data).
     if (currentValue !== null && currentValue === finalTarget.value) return 'alcancada';
-    const passed = ind.targets.filter(t => periodSortKey(t.period) <= nowKey);
-    if (!passed.length) return 'prazo';
-    const mostRecent = passed.reduce((a, b) => (periodSortKey(b.period) > periodSortKey(a.period) ? b : a));
+    if (!overdue.length) return 'prazo';
+    const mostRecent = overdue.reduce((a, b) => (b.deadline > a.deadline ? b : a));
     if (currentValue === null) return 'atraso';
     return currentValue === mostRecent.value ? 'prazo' : 'atraso';
   }
@@ -895,7 +927,7 @@ const ME = (() => {
     getIndicators, getIndicator, getComponents, getLevels, getSubmissionPeriodFields, combinePeriod, periodSortKey,
     upsertIndicator, deleteIndicator,
     getProvinces, getDistricts, getBeneficiaryStatuses,
-    submitValue, listValues, listApprovedValues, computeCurrentValue, classifyStage, reviewValue, deleteValue, resetAllValues, listPublicValues, subscribePendingCount,
+    submitValue, listValues, listApprovedValues, computeCurrentValue, classifyStage, getPeriodDeadline, reviewValue, deleteValue, resetAllValues, listPublicValues, subscribePendingCount,
     adminLogin, adminLogout, onAuthChange, getCurrentAdminSync, changeAdminPassword,
     listAdminUsers, upsertAdminUser, removeAdminUser,
   };

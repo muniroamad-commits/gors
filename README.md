@@ -484,3 +484,33 @@ com detalhes sensíveis) — se quiseres que o relatório público também
 tenha esta secção, é preciso decidir conscientemente tornar essas notas
 públicas, o que implica alterar o que é guardado no espelho público. Diz-
 me se queres isso e eu faço a alteração.
+
+## Atraso baseado em datas reais (com 15 dias de tolerância) + alertas
+
+**Regra de atraso mais precisa**: em vez de comparar só o mês/ano, o
+sistema calcula agora a **data-limite real** de cada meta-marco — o
+último dia do mês a que se refere, mais 15 dias de tolerância. Por
+exemplo, a meta de "Mai/2027" só é considerada vencida a partir de
+**15 de Junho de 2027**. Se, a partir dessa data, o indicador ainda não
+tiver valor aprovado suficiente para essa meta, é classificado como
+**"Em atraso"**.
+
+**Alerta no painel de Indicadores**: se algum indicador estiver em
+atraso, aparece automaticamente um aviso vermelho no topo da página
+"Indicadores", com o número de indicadores afectados e os seus nomes.
+Este alerta verifica **todos** os indicadores, não só os que estão
+visíveis com os filtros activos no momento.
+
+**Bandeirinhas coloridas**: em todo o lado onde o progresso de um
+indicador aparece (painel de Indicadores, página de cada indicador,
+tabelas dos relatórios), há agora uma bandeirinha de estágio:
+- 🔴 **Em atraso** (vermelho)
+- 🟢 **Meta alcançada** (verde)
+- 🔵 **Dentro do prazo** (azul)
+
+## PDF: gráficos numa página, tabelas a começar sempre na seguinte
+
+Nos dois relatórios em PDF, os três gráficos (nível, componente, estágio)
+ficam sempre na(s) primeira(s) página(s), e as tabelas passam a começar
+sempre numa **página nova**, nunca a meio da página dos gráficos — mais
+fácil de imprimir e de navegar.

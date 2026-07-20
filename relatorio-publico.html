@@ -19,6 +19,10 @@
   .progress-bar { width: 100%; height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; }
   .progress-bar-fill { height: 100%; background: var(--teal); }
   .level-tag { font-size: 0.72rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: var(--gold-tint); color: #8A5F13; white-space: nowrap; }
+  .stage-flag { display: inline-block; font-size: 0.72rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .stage-flag.atraso { background: #FCEAEA; color: #7A1921; }
+  .stage-flag.alcancada { background: #E3F1E9; color: #3F7D5C; }
+  .stage-flag.prazo { background: #E8F0F5; color: #2E5C7A; }
 </style>
 </head>
 <body>
@@ -135,17 +139,17 @@
     <div class="container">
       <h3 style="margin-bottom:14px;">Indicadores de Programa (PrDO e PDO)</h3>
       <table class="report-table" id="table-program">
-        <thead><tr><th>Nível</th><th>Indicador</th><th>Base</th><th>Valor do indicador</th><th>Meta</th><th>Progresso</th></tr></thead>
+        <thead><tr><th>Nível</th><th>Indicador</th><th>Base</th><th>Valor do indicador</th><th>Meta</th><th>Progresso</th><th>Estágio</th></tr></thead>
         <tbody id="tbody-program">
-          <tr><td colspan="6" class="skeleton" style="height:40px;"></td></tr>
+          <tr><td colspan="7" class="skeleton" style="height:40px;"></td></tr>
         </tbody>
       </table>
 
       <h3 style="margin:32px 0 14px;">Indicadores Intermédios</h3>
       <table class="report-table" id="table-intermediate">
-        <thead><tr><th>Componente</th><th>Indicador</th><th>Base</th><th>Valor do indicador</th><th>Meta</th><th>Progresso</th></tr></thead>
+        <thead><tr><th>Componente</th><th>Indicador</th><th>Base</th><th>Valor do indicador</th><th>Meta</th><th>Progresso</th><th>Estágio</th></tr></thead>
         <tbody id="tbody-intermediate">
-          <tr><td colspan="6" class="skeleton" style="height:40px;"></td></tr>
+          <tr><td colspan="7" class="skeleton" style="height:40px;"></td></tr>
         </tbody>
       </table>
 
@@ -240,7 +244,7 @@ async function loadReport() {
   };
 
   ['tbody-program', 'tbody-intermediate', 'tbody-avg-level'].forEach(id => {
-    document.getElementById(id).innerHTML = `<tr><td colspan="6" class="skeleton" style="height:40px;"></td></tr>`;
+    document.getElementById(id).innerHTML = `<tr><td colspan="7" class="skeleton" style="height:40px;"></td></tr>`;
   });
 
   let indicators = await ME.getIndicators();
@@ -291,6 +295,7 @@ async function loadReport() {
     latestProgramRows = programRows;
     latestIntermediateRows = intermediateRows;
 
+    const stageLabels = { atraso: 'Em atraso', alcancada: 'Meta alcançada', prazo: 'Dentro do prazo' };
     const rowHtml = (r, firstColHtml) => `
       <tr>
         <td>${firstColHtml}</td>
@@ -299,15 +304,16 @@ async function loadReport() {
         <td>${r.currentValue !== null ? escapeHtml(String(r.currentValue)) : '<span class="small-note">—</span>'}</td>
         <td class="small-note">${escapeHtml(String(r.finalTarget.value))}</td>
         <td>${r.pct !== null ? `<div class="progress-bar"><div class="progress-bar-fill" style="width:${r.pct}%;"></div></div><span class="small-note">${r.pct}%</span>` : '<span class="small-note">—</span>'}</td>
+        <td>${r.stage ? `<span class="stage-flag ${r.stage}">${stageLabels[r.stage]}</span>` : '<span class="small-note">—</span>'}</td>
       </tr>`;
 
     document.getElementById('tbody-program').innerHTML = programRows
       .map(r => rowHtml(r, `<span class="level-tag">${r.ind.level}</span>`)).join('')
-      || `<tr><td colspan="6" class="small-note" style="padding:20px;">Nenhum indicador de programa encontrado com estes filtros.</td></tr>`;
+      || `<tr><td colspan="7" class="small-note" style="padding:20px;">Nenhum indicador de programa encontrado com estes filtros.</td></tr>`;
 
     document.getElementById('tbody-intermediate').innerHTML = intermediateRows
       .map(r => rowHtml(r, `<span class="small-note">${escapeHtml((r.ind.component || '').replace('Componente ', 'C'))}</span>`)).join('')
-      || `<tr><td colspan="6" class="small-note" style="padding:20px;">Nenhum indicador intermédio encontrado com estes filtros.</td></tr>`;
+      || `<tr><td colspan="7" class="small-note" style="padding:20px;">Nenhum indicador intermédio encontrado com estes filtros.</td></tr>`;
 
     const levels = ['PrDO', 'PDO', 'Intermédio'];
     const avgByLevel = levels.map(lv => {
@@ -364,7 +370,7 @@ async function loadReport() {
     });
   } catch (err) {
     console.error(err);
-    document.getElementById('tbody-program').innerHTML = `<tr><td colspan="6"><div class="alert alert-error">Não foi possível carregar o relatório.</div></td></tr>`;
+    document.getElementById('tbody-program').innerHTML = `<tr><td colspan="7"><div class="alert alert-error">Não foi possível carregar o relatório.</div></td></tr>`;
   }
 }
 
@@ -386,6 +392,7 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
   const original = btn.textContent;
   btn.disabled = true;
   btn.textContent = 'A preparar PDF...';
+  const stageAbbrev = { atraso: 'Atrasado', alcancada: 'Alcançada', prazo: 'No prazo' };
 
   try {
     const { jsPDF } = window.jspdf;
@@ -505,19 +512,20 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
     const stageImgWidth = pageWidth - margin * 2;
     const stageImgHeight = (320 / 900) * stageImgWidth;
     doc.addImage(stageChartImg, 'PNG', margin, y, stageImgWidth, stageImgHeight);
-    y += stageImgHeight + 24;
 
-    // ---- Tabelas ----
+    // ---- Tabelas: começam sempre numa página nova, a seguir aos gráficos ----
+    doc.addPage();
+    y = 50;
     const tableRight = pageWidth - margin;
 
     y = renderPdfTable(doc, y, {
       title: 'Indicadores de Programa (PrDO e PDO)',
-      headers: ['Nível', 'Indicador', 'Base', 'Valor', 'Meta', 'Progr.'],
-      colX: [margin + 4, margin + 62, margin + 250, margin + 320, margin + 420, margin + 480],
+      headers: ['Nível', 'Indicador', 'Base', 'Valor', 'Meta', 'Progr.', 'Estágio'],
+      colX: [margin + 4, margin + 58, margin + 235, margin + 300, margin + 375, margin + 430, margin + 475],
       nameColIndex: 1,
-      wrapWidth: 165,
+      wrapWidth: 172,
       rows: latestProgramRows,
-      cellFn: r => [r.ind.level, r.ind.name, String(r.ind.baseline), r.currentValue !== null ? `${r.currentValue}` : '—', `${r.finalTarget.value}`, r.pct !== null ? `${r.pct}%` : '—'],
+      cellFn: r => [r.ind.level, r.ind.name, String(r.ind.baseline), r.currentValue !== null ? `${r.currentValue}` : '—', `${r.finalTarget.value}`, r.pct !== null ? `${r.pct}%` : '—', stageAbbrev[r.stage] || '—'],
       margin, tableRight, pageWidth, pageHeight,
     });
     y += 24;
@@ -525,12 +533,12 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
     if (y > pageHeight - margin - 60) { doc.addPage(); y = 50; }
     y = renderPdfTable(doc, y, {
       title: 'Indicadores Intermédios',
-      headers: ['Comp.', 'Indicador', 'Base', 'Valor', 'Meta', 'Progr.'],
-      colX: [margin + 4, margin + 62, margin + 250, margin + 320, margin + 420, margin + 480],
+      headers: ['Comp.', 'Indicador', 'Base', 'Valor', 'Meta', 'Progr.', 'Estágio'],
+      colX: [margin + 4, margin + 58, margin + 235, margin + 300, margin + 375, margin + 430, margin + 475],
       nameColIndex: 1,
-      wrapWidth: 165,
+      wrapWidth: 172,
       rows: latestIntermediateRows,
-      cellFn: r => [(r.ind.component || '').replace('Componente ', 'C').match(/C\d/)?.[0] || '—', r.ind.name, String(r.ind.baseline), r.currentValue !== null ? `${r.currentValue}` : '—', `${r.finalTarget.value}`, r.pct !== null ? `${r.pct}%` : '—'],
+      cellFn: r => [(r.ind.component || '').replace('Componente ', 'C').match(/C\d/)?.[0] || '—', r.ind.name, String(r.ind.baseline), r.currentValue !== null ? `${r.currentValue}` : '—', `${r.finalTarget.value}`, r.pct !== null ? `${r.pct}%` : '—', stageAbbrev[r.stage] || '—'],
       margin, tableRight, pageWidth, pageHeight,
     });
     y += 24;
