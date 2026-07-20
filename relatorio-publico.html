@@ -438,13 +438,17 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
     const status = document.getElementById('f-status').value;
     doc.setFontSize(10);
     doc.setTextColor(0, 0, 0);
-    doc.text(`Nível: ${level || 'Todos'}`, margin, y); y += 14;
-    doc.text(`Componente: ${component || 'Todas'}`, margin, y); y += 14;
-    doc.text(`Género: ${group || 'Todos'}`, margin, y); y += 14;
-    doc.text(`Província: ${province || 'Todas'}`, margin, y); y += 14;
-    doc.text(`Distrito: ${district || 'Todos'}`, margin, y); y += 14;
-    doc.text(`Estatuto: ${status || 'Todos'}`, margin, y); y += 14;
-    y += 10;
+    const filterPairs = [
+      ['Nível', level || 'Todos'], ['Componente', component || 'Todas'], ['Género', group || 'Todos'],
+      ['Província', province || 'Todas'], ['Distrito', district || 'Todos'], ['Estatuto', status || 'Todos'],
+    ];
+    const filterColWidth = (pageWidth - margin * 2) / 3;
+    filterPairs.forEach(([label, value], i) => {
+      const col = i % 3;
+      const row = Math.floor(i / 3);
+      doc.text(`${label}: ${value}`, margin + col * filterColWidth, y + row * 15);
+    });
+    y += Math.ceil(filterPairs.length / 3) * 15 + 8;
 
     doc.setDrawColor(221, 214, 210);
     doc.line(margin, y, pageWidth - margin, y);

@@ -514,3 +514,28 @@ Nos dois relatórios em PDF, os três gráficos (nível, componente, estágio)
 ficam sempre na(s) primeira(s) página(s), e as tabelas passam a começar
 sempre numa **página nova**, nunca a meio da página dos gráficos — mais
 fácil de imprimir e de navegar.
+
+## Filtros na horizontal + Relatório Descritivo em narrativa contínua
+
+**Filtros do PDF na horizontal**: a lista de filtros (Nível, Componente,
+Género, Província, Distrito, Estatuto) passou de uma coluna vertical para
+uma grelha horizontal (2 linhas × 3 colunas), ocupando muito menos espaço.
+
+**Relatório Descritivo reescrito como narrativa**: em vez de uma lista de
+entradas separadas (com nome de quem submeteu e data), o relatório
+compõe agora um **texto corrido** por indicador, encadeando os resumos de
+processo por ordem cronológica, usando a periodicidade do próprio
+indicador ("No primeiro trimestre reportado...", "Em seguida, no
+2º Semestre 2026...", "Mais recentemente, em..."), e terminando com um
+resumo dos **números reais** introduzidos (desagregação por género/
+estatuto e distribuição por província), tal como pediste no exemplo.
+
+**Limitação honesta a ter em conta**: esta é uma página estática, sem
+ligação a um modelo de IA em tempo real — por isso a narrativa é
+construída por um sistema de modelos/regras que encadeia o texto que TU
+escreveste em cada submissão com ligações naturais ("Em seguida...",
+"Mais recentemente..."), e acrescenta os números reais calculados a
+partir dos dados estruturados. Não reescreve nem interpreta o
+significado do texto livre — por isso, escrever resumos de processo
+claros e completos no momento da submissão continua a ser importante,
+para a narrativa final ficar bem composta.

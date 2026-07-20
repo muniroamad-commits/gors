@@ -319,7 +319,11 @@ async function loadReport() {
       // compilar o relatório descritivo mais abaixo.
       const notes = approved
         .filter(v => v.note && v.note.trim())
-        .map(v => ({ period: v.period, note: v.note.trim(), submitted_by: v.submitted_by, submitted_at: v.submitted_at }))
+        .map(v => ({
+          period: v.period, note: v.note.trim(), submitted_at: v.submitted_at,
+          value: v.value, disagg: v.disagg || null, status_disagg: v.status_disagg || null,
+          province: v.province || null, district: v.district || null,
+        }))
         .sort((a, b) => ME.periodSortKey(a.period) - ME.periodSortKey(b.period));
 
       return { ind, currentValue, hasApproved: approved.length > 0, finalTarget, isNumeric, pct, stage, notes };
@@ -382,20 +386,15 @@ async function loadReport() {
       </tr>
     `).join('') || `<tr><td colspan="3" class="small-note" style="padding:20px;">Sem dados.</td></tr>`;
 
-    // ---- Relatório Descritivo (compilação das notas por indicador) ----
+    // ---- Relatório Descritivo (narrativa compilada por indicador) ----
     const withNotes = rows.filter(r => r.notes.length);
-    latestDescriptiveRows = withNotes;
-    document.getElementById('descriptive-report').innerHTML = withNotes.length
-      ? withNotes.map(r => `
+    latestDescriptiveRows = withNotes.map(r => ({ ...r, narrative: buildDescriptiveNarrative(r.ind, r.notes) }));
+    document.getElementById('descriptive-report').innerHTML = latestDescriptiveRows.length
+      ? latestDescriptiveRows.map(r => `
         <div class="desc-card">
           <span class="level-tag">${r.ind.level}</span>
           <h4>${escapeHtml(r.ind.name)}</h4>
-          ${r.notes.map(n => `
-            <div class="desc-entry">
-              <div class="desc-meta">${escapeHtml(n.period)} · ${escapeHtml(n.submitted_by)} · ${formatDate(n.submitted_at)}</div>
-              <div>${escapeHtml(n.note)}</div>
-            </div>
-          `).join('')}
+          <p style="margin:8px 0 0;">${escapeHtml(r.narrative)}</p>
         </div>
       `).join('')
       : `<p class="small-note">Ainda não há resumos de processo registados para os indicadores nestes filtros.</p>`;
@@ -510,13 +509,17 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
     const status = document.getElementById('f-status').value;
     doc.setFontSize(10);
     doc.setTextColor(0, 0, 0);
-    doc.text(`Nível: ${level || 'Todos'}`, margin, y); y += 14;
-    doc.text(`Componente: ${component || 'Todas'}`, margin, y); y += 14;
-    doc.text(`Género: ${group || 'Todos'}`, margin, y); y += 14;
-    doc.text(`Província: ${province || 'Todas'}`, margin, y); y += 14;
-    doc.text(`Distrito: ${district || 'Todos'}`, margin, y); y += 14;
-    doc.text(`Estatuto: ${status || 'Todos'}`, margin, y); y += 14;
-    y += 10;
+    const filterPairs = [
+      ['Nível', level || 'Todos'], ['Componente', component || 'Todas'], ['Género', group || 'Todos'],
+      ['Província', province || 'Todas'], ['Distrito', district || 'Todos'], ['Estatuto', status || 'Todos'],
+    ];
+    const filterColWidth = (pageWidth - margin * 2) / 3;
+    filterPairs.forEach(([label, value], i) => {
+      const col = i % 3;
+      const row = Math.floor(i / 3);
+      doc.text(`${label}: ${value}`, margin + col * filterColWidth, y + row * 15);
+    });
+    y += Math.ceil(filterPairs.length / 3) * 15 + 8;
 
     doc.setDrawColor(221, 214, 210);
     doc.line(margin, y, pageWidth - margin, y);
@@ -630,7 +633,7 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
     });
     y += 28;
 
-    // ---- Relatório Descritivo (compilação das notas por indicador) ----
+    // ---- Relatório Descritivo (narrativa compilada por indicador) ----
     if (latestDescriptiveRows.length) {
       doc.addPage();
       y = 50;
@@ -642,42 +645,37 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
       doc.setTextColor(90, 67, 68);
-      const introLines = doc.splitTextToSize('Compilação dos resumos de processo escritos ao registar cada valor aprovado — explica, indicador a indicador, como o progresso foi apurado.', pageWidth - margin * 2);
+      const introLines = doc.splitTextToSize('Narrativa compilada a partir dos resumos de processo escritos ao registar cada valor aprovado — explica, indicador a indicador, a evolução do progresso ao longo do tempo.', pageWidth - margin * 2);
       doc.text(introLines, margin, y);
       y += introLines.length * 11 + 16;
 
       latestDescriptiveRows.forEach(r => {
-        // Cabeçalho do indicador — garante que não fica sozinho no fundo da página
-        if (y > pageHeight - margin - 60) { doc.addPage(); y = 50; }
+        const narrativeLines = doc.splitTextToSize(r.narrative, pageWidth - margin * 2);
+        const titleLines = doc.splitTextToSize(`${r.ind.level} — ${r.ind.name}`, pageWidth - margin * 2);
+        const blockHeight = titleLines.length * 12 + 16 + narrativeLines.length * 11 + 18;
+
+        if (y + Math.min(blockHeight, 100) > pageHeight - margin - 10) { doc.addPage(); y = 50; }
+
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(10.5);
         doc.setTextColor(157, 33, 43);
-        const titleLines = doc.splitTextToSize(`${r.ind.level} — ${r.ind.name}`, pageWidth - margin * 2);
         doc.text(titleLines, margin, y);
         y += titleLines.length * 12 + 4;
         doc.setDrawColor(221, 214, 210);
         doc.setLineWidth(0.6);
         doc.line(margin, y, pageWidth - margin, y);
-        y += 12;
+        y += 14;
 
-        r.notes.forEach(n => {
-          const noteLines = doc.splitTextToSize(n.note, pageWidth - margin * 2);
-          const blockHeight = 12 + noteLines.length * 11 + 10;
-          if (y + blockHeight > pageHeight - margin - 10) { doc.addPage(); y = 50; }
-
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(8.5);
-          doc.setTextColor(90, 67, 68);
-          doc.text(`${n.period} · ${n.submitted_by} · ${formatDate(n.submitted_at)}`, margin, y);
-          y += 12;
-
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(9);
-          doc.setTextColor(0, 0, 0);
-          doc.text(noteLines, margin, y);
-          y += noteLines.length * 11 + 10;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9.5);
+        doc.setTextColor(0, 0, 0);
+        // Escreve linha a linha para permitir quebra de página a meio do texto
+        narrativeLines.forEach(line => {
+          if (y > pageHeight - margin - 10) { doc.addPage(); y = 50; }
+          doc.text(line, margin, y);
+          y += 12.5;
         });
-        y += 8;
+        y += 16;
       });
     }
 
@@ -694,6 +692,88 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
 // "Período em análise" do relatório: desde o arranque do projecto
 // (Maio/2026) até ao mês/ano actual — este relatório é cumulativo, não
 // tem um filtro de datas próprio.
+const ORDINALS = ['primeiro', 'segundo', 'terceiro', 'quarto', 'quinto', 'sexto', 'sétimo', 'oitavo', 'nono', 'décimo'];
+const FREQ_WORD = { 'Trimestral': 'trimestre', 'Semestral': 'semestre', 'Anual': 'ano', 'Bienal': 'biénio' };
+
+function lowerFirst(s) {
+  return s.charAt(0).toLowerCase() + s.slice(1);
+}
+
+// Soma os totais de desagregação (género e estatuto de beneficiário) de
+// todas as submissões com nota, para o resumo de dados no fim da narrativa.
+function sumDisaggTotals(notes) {
+  const totals = {};
+  notes.forEach(n => {
+    [n.disagg, n.status_disagg].forEach(d => {
+      if (!d) return;
+      Object.entries(d).forEach(([k, v]) => {
+        const num = Number(v);
+        if (!isNaN(num)) totals[k] = (totals[k] || 0) + num;
+      });
+    });
+  });
+  return Object.entries(totals).filter(([, v]) => v > 0);
+}
+
+// Soma o valor reportado por província, para o resumo geográfico.
+function sumByProvince(notes) {
+  const totals = {};
+  notes.forEach(n => {
+    if (!n.province) return;
+    const num = Number(n.value);
+    if (!isNaN(num)) totals[n.province] = (totals[n.province] || 0) + num;
+  });
+  return Object.entries(totals).filter(([, v]) => v > 0);
+}
+
+function formatDemoList(pairs) {
+  const parts = pairs.map(([label, val]) => `${val} ${label.toLowerCase()}`);
+  if (parts.length <= 1) return parts.join('');
+  return parts.slice(0, -1).join(', ') + ' e ' + parts[parts.length - 1];
+}
+function formatGeoList(pairs) {
+  const parts = pairs.map(([prov, val]) => `${val} na província de ${prov}`);
+  if (parts.length <= 1) return parts.join('');
+  return parts.slice(0, -1).join(', ') + ' e ' + parts[parts.length - 1];
+}
+
+// Compila as notas de várias submissões aprovadas de UM indicador numa
+// narrativa contínua (não uma lista) — encadeia os resumos de processo
+// escritos pelos utilizadores por ordem cronológica, usando a
+// periodicidade do próprio indicador (trimestre/semestre/ano) para
+// enquadrar cada etapa, e termina com um resumo dos números reais
+// introduzidos (desagregação e distribuição geográfica).
+function buildDescriptiveNarrative(ind, notes) {
+  if (!notes.length) return '';
+  const freqWord = FREQ_WORD[ind.frequency] || 'período';
+
+  const sentences = notes.map((n, i) => {
+    let lead;
+    if (notes.length === 1) {
+      lead = `No período de ${n.period}`;
+    } else if (i === 0) {
+      lead = `No ${ORDINALS[0]} ${freqWord} reportado (${n.period})`;
+    } else if (i === notes.length - 1) {
+      lead = `Mais recentemente, em ${n.period}`;
+    } else {
+      lead = `Em seguida, em ${n.period}`;
+    }
+    const noteText = n.note.endsWith('.') ? n.note.slice(0, -1) : n.note;
+    return `${lead}, ${lowerFirst(noteText)}.`;
+  });
+
+  let narrative = sentences.join(' ');
+
+  const demoPairs = sumDisaggTotals(notes);
+  const geoPairs = sumByProvince(notes);
+  const extras = [];
+  if (demoPairs.length) extras.push(`contou com a participação de ${formatDemoList(demoPairs)}`);
+  if (geoPairs.length) extras.push(`sendo ${formatGeoList(geoPairs)}`);
+  if (extras.length) narrative += ` No total, o indicador ${extras.join(', ')}, de acordo com os dados introduzidos.`;
+
+  return narrative;
+}
+
 function periodInAnalysisLabel() {
   const MONTHS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
   const now = new Date();
