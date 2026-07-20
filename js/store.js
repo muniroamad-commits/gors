@@ -596,9 +596,15 @@ const ME = (() => {
       const missingDisagg = indicator.disaggregation.filter(d => !payload.disagg || payload.disagg[d] === undefined || payload.disagg[d] === null || payload.disagg[d] === '');
       if (missingDisagg.length) throw new Error(`Preenche a desagregação: ${missingDisagg.join(', ')}.`);
     }
-    const requiredStatuses = getBeneficiaryStatuses();
-    const missingStatus = requiredStatuses.filter(s => !payload.status_disagg || payload.status_disagg[s] === undefined || payload.status_disagg[s] === null || payload.status_disagg[s] === '');
-    if (missingStatus.length) throw new Error(`Preenche a desagregação por estatuto: ${missingStatus.join(', ')}.`);
+    // Desagregação por estatuto de beneficiário só se aplica a
+    // indicadores que contam pessoas (os que já têm desagregação por
+    // género/idade definida no catálogo) — não faz sentido, por exemplo,
+    // num indicador que conta localidades ou infra-estruturas.
+    if ((indicator.disaggregation || []).length) {
+      const requiredStatuses = getBeneficiaryStatuses();
+      const missingStatus = requiredStatuses.filter(s => !payload.status_disagg || payload.status_disagg[s] === undefined || payload.status_disagg[s] === null || payload.status_disagg[s] === '');
+      if (missingStatus.length) throw new Error(`Preenche a desagregação por estatuto: ${missingStatus.join(', ')}.`);
+    }
 
     const { evidence, skipped } = await filesToEvidence(fileList);
     const timestamp = nowIso();

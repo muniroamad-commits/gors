@@ -154,13 +154,19 @@ function render(ind, values) {
     periodFieldsHtml = `<div class="field"><label for="val-sub">Período</label><select id="val-sub">${periodFields.options.map(p => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('')}</select></div>`;
   }
 
+  // A desagregação (género e estatuto de beneficiário) só faz sentido em
+  // indicadores que contam PESSOAS — o próprio Quadro de Resultados só
+  // define desagregação (Mulheres/Jovens) para esses. Um indicador de
+  // localidades, infra-estruturas, comités, etc. não deve ter estes campos.
+  const isAboutPeople = (ind.disaggregation || []).length > 0;
+
   const disaggFieldsHtml = (ind.disaggregation || []).map(d => `
     <div class="field"><label>${escapeHtml(d)} <span class="required">*</span></label><input type="number" class="disagg-input" data-key="${escapeHtml(d)}" required></div>
   `).join('');
 
-  const statusFieldsHtml = ME.getBeneficiaryStatuses().map(s => `
+  const statusFieldsHtml = isAboutPeople ? ME.getBeneficiaryStatuses().map(s => `
     <div class="field"><label>${escapeHtml(s)} <span class="required">*</span></label><input type="number" class="status-input" data-key="${escapeHtml(s)}" required></div>
-  `).join('');
+  `).join('') : '';
 
   const submitFormHtml = canSubmit ? `
     <div class="form-card" style="padding:18px;">
@@ -186,8 +192,7 @@ function render(ind, values) {
         </div>
       </div>
       ${disaggFieldsHtml}
-      <p class="small-note" style="margin:14px 0 6px;">Desagregação por estatuto de beneficiário:</p>
-      ${statusFieldsHtml}
+      ${isAboutPeople ? `<p class="small-note" style="margin:14px 0 6px;">Desagregação por estatuto de beneficiário:</p>${statusFieldsHtml}` : ''}
       <div class="field"><label for="val-note">Descreva o resumo do processo <span class="required">*</span></label><textarea id="val-note" placeholder="Explica como este valor foi apurado: o que foi feito, onde, e como foi confirmado" required></textarea></div>
       <div class="field">
         <label for="val-evidence">Anexar evidência <span class="required">*</span></label>
@@ -274,9 +279,6 @@ function buildYearPeriodTable(ind, values) {
       latestByPeriod[v.period] = v;
     }
   });
-  // Metas por período exacto, para cruzar com os valores na mesma célula.
-  const targetByPeriod = {};
-  ind.targets.forEach(t => { targetByPeriod[t.period] = t.value; });
 
   let columns; // lista de sub-períodos (colunas), ou ['Valor'] se não houver sub-divisão
   let rowsAreYears = true;
@@ -286,20 +288,33 @@ function buildYearPeriodTable(ind, values) {
     columns = ['Valor'];
   } else {
     // Modo "fixed" (por marcos): não há ano/período regular — cada linha
-    // é o próprio período definido nas metas.
+    // é o próprio período definido nas metas, e a meta casa exactamente
+    // com o período (ex: "Mai/2027"), sem precisar de passar pelo ano.
     columns = ['Valor'];
     rowsAreYears = false;
   }
+
+  // Metas: no modo "fixed", casam pelo período exacto. Nos modos
+  // "year+sub" e "year-only", as metas do Quadro de Resultados usam
+  // rótulos de mês/ano (ex: "Mai/2027", "Jun/2031") que NUNCA coincidem
+  // caracter-a-caracter com os períodos de submissão (ex: "T1 2027") —
+  // por isso casam-se pelo ANO, numa coluna própria "Meta do ano", em vez
+  // de tentar encaixar a meta numa célula de trimestre/semestre que o
+  // Quadro de Resultados não especifica.
+  const targetByPeriod = {};
+  const targetByYear = {};
+  ind.targets.forEach(t => {
+    targetByPeriod[t.period] = t.value;
+    const y = periodSortKeyToYear(t.period);
+    if (y) targetByYear[y] = t.value;
+  });
 
   // Só mostra os anos que têm meta definida ou algum valor submetido —
   // para a tabela corresponder exactamente às metas do Quadro de
   // Resultados, sem linhas vazias sem meta nem dados.
   const rowKeys = new Set();
   if (rowsAreYears) {
-    ind.targets.forEach(t => {
-      const y = periodSortKeyToYear(t.period);
-      if (y) rowKeys.add(y);
-    });
+    Object.keys(targetByYear).forEach(y => rowKeys.add(Number(y)));
     Object.keys(latestByPeriod).forEach(p => {
       const y = periodSortKeyToYear(p);
       if (y) rowKeys.add(y);
@@ -315,7 +330,7 @@ function buildYearPeriodTable(ind, values) {
   }
 
   const theadCols = rowsAreYears
-    ? `<th>Ano</th>${columns.map(c => `<th>${escapeHtml(c)}</th>`).join('')}<th>Total realizado</th><th>Observações</th>`
+    ? `<th>Ano</th><th>Meta do ano</th>${columns.map(c => `<th>${escapeHtml(c)}</th>`).join('')}<th>Total realizado</th><th>Observações</th>`
     : `<th>Período</th><th>Meta</th><th>Realizado</th>`;
 
   const bodyRows = sortedRowKeys.map(rowKey => {
@@ -329,6 +344,7 @@ function buildYearPeriodTable(ind, values) {
       </tr>`;
     }
 
+    const yearTarget = targetByYear[rowKey];
     let total = 0;
     let hasNumericTotal = false;
     const notes = [];
@@ -336,7 +352,6 @@ function buildYearPeriodTable(ind, values) {
       const period = periodFields.mode === 'year-only'
         ? ME.combinePeriod(periodFields, rowKey, null)
         : ME.combinePeriod(periodFields, rowKey, col);
-      const target = targetByPeriod[period];
       const v = latestByPeriod[period];
 
       if (v && v.status === 'aprovado' && typeof v.value !== 'undefined' && !isNaN(Number(v.value))) {
@@ -345,16 +360,16 @@ function buildYearPeriodTable(ind, values) {
       }
       if (v && v.note) notes.push(`${col === 'Valor' ? rowKey : col}: ${v.note}`);
 
-      const metaLine = target !== undefined ? `<div class="small-note">Meta: ${escapeHtml(String(target))}</div>` : '';
-      const valorLine = v
-        ? `<div>Realizado: ${escapeHtml(String(v.value))}${statusTag[v.status] || ''}</div>`
-        : (target !== undefined ? '<div class="small-note">Realizado: —</div>' : '');
-
-      if (!metaLine && !valorLine) return '<td><span class="small-note">—</span></td>';
-      return `<td>${metaLine}${valorLine}</td>`;
+      return v ? `<td>${escapeHtml(String(v.value))}${statusTag[v.status] || ''}</td>` : '<td><span class="small-note">—</span></td>';
     }).join('');
 
-    return `<tr><td>${rowKey}</td>${cellsHtml}<td>${hasNumericTotal ? escapeHtml(String(total)) : '<span class="small-note">—</span>'}</td><td class="small-note">${notes.length ? escapeHtml(notes.join('; ')) : '—'}</td></tr>`;
+    return `<tr>
+      <td>${rowKey}</td>
+      <td class="small-note">${yearTarget !== undefined ? escapeHtml(String(yearTarget)) : '—'}</td>
+      ${cellsHtml}
+      <td>${hasNumericTotal ? escapeHtml(String(total)) : '<span class="small-note">—</span>'}</td>
+      <td class="small-note">${notes.length ? escapeHtml(notes.join('; ')) : '—'}</td>
+    </tr>`;
   }).join('');
 
   return `<table class="targets-table"><thead><tr>${theadCols}</tr></thead><tbody>${bodyRows}</tbody></table>`;

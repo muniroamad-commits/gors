@@ -269,3 +269,27 @@ que não é possível contornar a regra.
   projecto), para comparares directamente o que foi alcançado com o que
   era esperado nesse período em concreto. Aplicado ao relatório interno,
   ao relatório público, e ao PDF descarregável de ambos.
+
+## Duas correcções de coerência
+
+**1. Desagregação só em indicadores sobre pessoas**
+
+Os campos de desagregação por género (Mulheres/Jovens) e por estatuto de
+beneficiário (Deslocados/Retornados/Anfitriões) deixaram de aparecer em
+TODOS os indicadores — agora só aparecem nos que já têm desagregação
+definida no catálogo (ex: "Pessoas beneficiadas por infra-estruturas
+resilientes", "Beneficiários de transferências monetárias"). Um
+indicador sobre número de localidades, infra-estruturas, comités ou
+reuniões já não pede estes campos, porque não faz sentido.
+
+**2. A meta não aparecia na tabela — corrigido**
+
+Havia um problema real: para indicadores trimestrais/semestrais, as metas
+do Quadro de Resultados usam rótulos de mês/ano (ex: "Mai/2027",
+"Jun/2031") que nunca coincidem exactamente com os períodos de submissão
+(ex: "T1 2027", "2º Semestre 2027") — por isso a coluna de meta ficava
+sempre vazia nesses casos. Corrigido: a tabela "Metas e valores
+realizados, por ano e período" agora tem uma coluna própria **"Meta do
+ano"**, que casa a meta pelo ANO (não pelo período exacto), garantindo
+que a meta aparece sempre que estiver definida para esse ano no Quadro de
+Resultados.
