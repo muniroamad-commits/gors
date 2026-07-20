@@ -347,3 +347,22 @@ passo como fizemos com o resto da configuração do Firebase.
 **email válido e real** no seu perfil (o mesmo que usaste para criar a
 conta em Authentication → Users, e que já está guardado ao adicionares o
 utilizador em "Utilizadores").
+
+## Correcção: valores pendentes já não apareciam antes de aprovados
+
+Havia um bug real: a tabela "Metas e valores realizados, por ano e
+período" (dentro da página de cada indicador) estava a mostrar valores
+**submetidos mas ainda não aprovados**. Corrigido — agora, tanto a
+tabela como o gráfico só reflectem valores **aprovados**, tal como já
+acontecia no painel de Indicadores e nos relatórios. Um valor pendente
+só passa a contar depois de o Administrador geral o aprovar.
+
+## Aprovações com detalhe completo, incluindo evidência
+
+A página "Aprovações" agora tem um botão **"Ver detalhes"** em cada
+submissão pendente (ou basta clicar na linha), que abre uma janela com
+tudo: componente, localização, desagregações, o resumo do processo
+completo, e a **evidência anexada** (com link para ver/descarregar) —
+tudo antes de decidires aprovar ou rejeitar. Os botões "Aprovar" e
+"Rejeitar" aparecem tanto na lista (para decisão rápida) como dentro
+dessa janela de detalhe.

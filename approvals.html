@@ -67,6 +67,11 @@
   </section>
 </main>
 
+<div id="detail-overlay" style="display:none; position:fixed; inset:0; background:rgba(24,36,48,0.5); z-index:90;"></div>
+<div id="detail-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:91; width:min(640px, 92vw); max-height:88vh; overflow-y:auto; background:var(--paper); border-radius:14px; box-shadow:var(--shadow-raised); padding:28px;">
+  <div id="detail-content"></div>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -96,23 +101,27 @@ document.getElementById('logout-link').addEventListener('click', (e) => {
   ME.adminLogout().then(() => window.location.href = 'index.html');
 });
 
+let pendingCache = [];
+
 async function loadPending() {
   const tbody = document.getElementById('pending-tbody');
   tbody.innerHTML = `<tr><td colspan="6" class="skeleton" style="height:40px;"></td></tr>`;
   try {
     const rows = await ME.listValues({ status: 'submetido' });
+    pendingCache = rows;
     if (!rows.length) {
       tbody.innerHTML = `<tr><td colspan="6" class="small-note" style="padding:24px;">Não há valores pendentes de aprovação neste momento.</td></tr>`;
       return;
     }
     tbody.innerHTML = rows.map(v => `
-      <tr>
+      <tr style="cursor:pointer;" onclick="openDetail('${v.id}')">
         <td>${escapeHtml(v.indicator_name)}</td>
         <td>${escapeHtml(v.period)}</td>
         <td>${escapeHtml(String(v.value))}${v.disagg ? ' <span class="small-note">(' + Object.entries(v.disagg).map(([k,val]) => `${k}: ${val}`).join(', ') + ')</span>' : ''}</td>
         <td class="small-note">${escapeHtml(v.submitted_by)}</td>
         <td class="small-note">${formatDate(v.submitted_at)}</td>
-        <td style="text-align:right; white-space:nowrap;">
+        <td style="text-align:right; white-space:nowrap;" onclick="event.stopPropagation()">
+          <button class="btn btn-secondary btn-sm" onclick="openDetail('${v.id}')">Ver detalhes</button>
           <button class="btn btn-primary btn-sm" onclick="review('${v.id}', true)">Aprovar</button>
           <button class="btn btn-secondary btn-sm" onclick="review('${v.id}', false)">Rejeitar</button>
         </td>
@@ -123,6 +132,54 @@ async function loadPending() {
     tbody.innerHTML = `<tr><td colspan="6"><div class="alert alert-error">Não foi possível carregar a fila.</div></td></tr>`;
   }
 }
+
+function openDetail(id) {
+  const v = pendingCache.find(x => x.id === id);
+  if (!v) return;
+
+  const evidenceHtml = (v.evidence || []).length
+    ? v.evidence.map(e => `<div class="attach-item" style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; border:1px solid var(--line); border-radius:7px; margin-bottom:8px; font-size:0.85rem;">
+        <span>${escapeHtml(e.name)}</span>
+        <a href="${e.dataUrl}" download="${escapeHtml(e.name)}" class="btn btn-secondary btn-sm">Ver / descarregar</a>
+      </div>`).join('')
+    : '<p class="small-note">Sem evidência anexada.</p>';
+
+  document.getElementById('detail-content').innerHTML = `
+    <button onclick="closeDetail()" style="position:absolute; top:20px; right:24px; background:none; border:none; font-size:1.4rem; cursor:pointer; color:var(--ink-muted);">&times;</button>
+    <h2 style="font-size:1.2rem; margin:0 0 4px;">${escapeHtml(v.indicator_name)}</h2>
+    <p class="small-note" style="margin:0 0 16px;">${escapeHtml(v.component || '')}</p>
+
+    <dl class="kv">
+      <dt>Período</dt><dd>${escapeHtml(v.period)}</dd>
+      <dt>Valor</dt><dd>${escapeHtml(String(v.value))}</dd>
+      ${v.disagg ? `<dt>Desagregação</dt><dd>${Object.entries(v.disagg).map(([k,val]) => `${k}: ${val}`).join(', ')}</dd>` : ''}
+      ${v.status_disagg ? `<dt>Estatuto</dt><dd>${Object.entries(v.status_disagg).map(([k,val]) => `${k}: ${val}`).join(', ')}</dd>` : ''}
+      <dt>Localização</dt><dd>${[v.province, v.district].filter(Boolean).join(', ') || '—'}</dd>
+      <dt>Submetido por</dt><dd>${escapeHtml(v.submitted_by)}</dd>
+      <dt>Data</dt><dd>${formatDate(v.submitted_at)}</dd>
+    </dl>
+
+    <h4 style="font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-muted); margin:18px 0 6px;">Resumo do processo</h4>
+    <p>${escapeHtml(v.note || '—')}</p>
+
+    <h4 style="font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-muted); margin:18px 0 6px;">Evidência</h4>
+    ${evidenceHtml}
+
+    <div style="display:flex; gap:10px; margin-top:24px;">
+      <button class="btn btn-primary" onclick="review('${v.id}', true); closeDetail();">Aprovar</button>
+      <button class="btn btn-secondary" onclick="review('${v.id}', false); closeDetail();">Rejeitar</button>
+      <a href="indicador.html?id=${encodeURIComponent(v.indicator_id)}" class="btn btn-secondary" style="margin-left:auto;">Ver indicador completo</a>
+    </div>
+  `;
+  document.getElementById('detail-overlay').style.display = 'block';
+  document.getElementById('detail-modal').style.display = 'block';
+}
+
+function closeDetail() {
+  document.getElementById('detail-overlay').style.display = 'none';
+  document.getElementById('detail-modal').style.display = 'none';
+}
+document.getElementById('detail-overlay').addEventListener('click', closeDetail);
 
 async function review(id, approve) {
   const note = approve ? null : (prompt('Motivo da rejeição (opcional):') || null);
