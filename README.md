@@ -539,3 +539,92 @@ partir dos dados estruturados. Não reescreve nem interpreta o
 significado do texto livre — por isso, escrever resumos de processo
 claros e completos no momento da submissão continua a ser importante,
 para a narrativa final ficar bem composta.
+
+## Ajustes ao Relatório Descritivo, gráficos com números, e semáforos
+
+**Relatório Descritivo**:
+- Já não termina com "de acordo com os dados introduzidos" — em vez
+  disso, a narrativa termina com a **percentagem de execução face à
+  meta** do indicador (ex: "Actualmente, o indicador atingiu 42% da meta
+  definida.").
+- Conectores mais variados entre os períodos ("Em seguida", "Posteriormente",
+  "Na fase seguinte", "Mais recentemente", "Actualmente"...), para não
+  soar repetitivo quando há muitas submissões.
+- Removida a frase de introdução da secção (tanto no ecrã como no PDF).
+
+**Números exactos nos gráficos**: os três gráficos (nível, componente,
+estágio) mostram agora o valor exacto em cima de cada barra/coluna — não
+é preciso adivinhar pela escala.
+
+**Sistema de semáforos no Estágio**: em vez de cores neutras, as
+bandeirinhas de estágio usam agora cores de semáforo a sério — 🔴
+vermelho para "Em atraso", 🟡 amarelo para "Dentro do prazo", 🟢 verde
+para "Meta alcançada" — tanto no ecrã (painel de Indicadores, página do
+indicador, tabelas dos relatórios) como no PDF, onde é desenhado um
+círculo colorido antes do texto (porque o PDF não consegue desenhar
+emoji coloridos como texto normal).
+
+## Narrativa gerada por IA (Claude) — configuração (opcional, um pouco mais técnica)
+
+Adicionei a opção de melhorar o Relatório Descritivo usando mesmo um
+modelo de IA (Claude, da Anthropic) — de forma **segura**: a chave da API
+nunca fica no código do site, fica guardada em segredo no Firebase, e só
+uma Cloud Function (que corre no servidor da Google) é que a usa.
+
+Isto é um passo mais técnico do que tudo o que fizemos até agora só pela
+consola do Firebase — precisa do **Firebase CLI**, instalado no teu
+computador. Passo a passo:
+
+### 1. Instalar o Node.js (se ainda não tiveres)
+Vai a [nodejs.org](https://nodejs.org) → descarrega a versão **LTS** →
+instala normalmente (Seguinte, Seguinte...).
+
+### 2. Instalar o Firebase CLI
+Abre o Prompt de Comando e escreve:
+```
+npm install -g firebase-tools
+```
+
+### 3. Iniciar sessão
+```
+firebase login
+```
+Isto abre o browser para autorizares com a tua conta Google (a mesma do
+Firebase).
+
+### 4. Obter uma chave da API da Anthropic
+1. Vai a [console.anthropic.com](https://console.anthropic.com)
+2. Cria uma conta (se ainda não tiveres) → activa a facturação
+3. **API Keys** → **Create Key** → copia a chave (começa por `sk-ant-...`)
+
+### 5. Guardar a chave em segredo no Firebase
+Dentro da pasta do projecto (onde está o ficheiro `firebase.json` que te
+enviei), no Prompt de Comando:
+```
+firebase functions:secrets:set ANTHROPIC_API_KEY
+```
+Cola a chave quando pedir, e prime Enter.
+
+### 6. Publicar a função
+```
+firebase deploy --only functions
+```
+Pode pedir para activares mais algumas APIs do Google Cloud (Cloud
+Build, Artifact Registry, Cloud Run) — aceita, fazem parte do processo
+normal, sem custo extra para o teu volume de uso. Demora 1-3 minutos.
+
+### 7. Testar
+1. Envia os ficheiros actualizados para o GitHub (como habitual)
+2. Abre "Relatórios" na plataforma
+3. Se houver indicadores com resumos de processo, clica em **"🤖
+   Melhorar com IA (Claude)"** por baixo do título "Relatório
+   Descritivo"
+4. As narrativas devem ficar reescritas pelo Claude — mais fluidas e
+   menos "mecânicas" que a versão automática por defeito
+
+**Se não fizeres este passo**: a plataforma continua a funcionar
+perfeitamente com o compilador local (gratuito, instantâneo, sem
+configuração) — o botão de IA só aparece como uma melhoria opcional.
+
+Como sempre, posso ajudar-te a passar por estes passos em tempo real se
+preferires.

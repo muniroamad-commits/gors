@@ -19,10 +19,10 @@
   .progress-bar { width: 100%; height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; }
   .progress-bar-fill { height: 100%; background: var(--teal); }
   .level-tag { font-size: 0.72rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: var(--gold-tint); color: #8A5F13; white-space: nowrap; }
-  .stage-flag { display: inline-block; font-size: 0.72rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
-  .stage-flag.atraso { background: #FCEAEA; color: #7A1921; }
-  .stage-flag.alcancada { background: #E3F1E9; color: #3F7D5C; }
-  .stage-flag.prazo { background: #E8F0F5; color: #2E5C7A; }
+  .stage-flag { display: inline-flex; align-items: center; gap: 5px; font-size: 0.72rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .stage-flag.atraso { background: #FCEAEA; color: #C81E2D; }
+  .stage-flag.alcancada { background: #E6F4EA; color: #1F8A4C; }
+  .stage-flag.prazo { background: #FFF6DC; color: #A8760C; }
 </style>
 </head>
 <body>
@@ -295,7 +295,7 @@ async function loadReport() {
     latestProgramRows = programRows;
     latestIntermediateRows = intermediateRows;
 
-    const stageLabels = { atraso: 'Em atraso', alcancada: 'Meta alcançada', prazo: 'Dentro do prazo' };
+    const stageLabels = { atraso: '🔴 Em atraso', alcancada: '🟢 Meta alcançada', prazo: '🟡 Dentro do prazo' };
     const rowHtml = (r, firstColHtml) => `
       <tr>
         <td>${firstColHtml}</td>
@@ -341,7 +341,8 @@ async function loadReport() {
     charts.level = new Chart(document.getElementById('chart-level'), {
       type: 'bar',
       data: { labels: Object.keys(byLevelProgram), datasets: [{ data: Object.values(byLevelProgram), backgroundColor: ['#9D212B', '#FAA842'], borderRadius: 4 }] },
-      options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+      options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } },
+      plugins: [makeValueLabelsPlugin(12, '')],
     });
 
     const byComponent = {};
@@ -357,16 +358,18 @@ async function loadReport() {
     charts.component = new Chart(document.getElementById('chart-component'), {
       type: 'bar',
       data: { labels: compLabels, datasets: [{ data: compValues, backgroundColor: '#9D212B', borderRadius: 4 }] },
-      options: { plugins: { legend: { display: false } }, scales: { y: { max: 100, beginAtZero: true, ticks: { callback: v => v + '%' } } } }
+      options: { plugins: { legend: { display: false } }, scales: { y: { max: 100, beginAtZero: true, ticks: { callback: v => v + '%' } } } },
+      plugins: [makeValueLabelsPlugin(12, '%')],
     });
 
     charts.stage = new Chart(document.getElementById('chart-stage'), {
       type: 'bar',
       data: {
         labels: ['Em atraso', 'Metas alcançadas', 'Dentro do prazo'],
-        datasets: [{ data: [stageCounts.atraso, stageCounts.alcancada, stageCounts.prazo], backgroundColor: ['#9D212B', '#3F7D5C', '#FAA842'], borderRadius: 4 }],
+        datasets: [{ data: [stageCounts.atraso, stageCounts.alcancada, stageCounts.prazo], backgroundColor: ['#D32F2F', '#2E7D32', '#F9A825'], borderRadius: 4 }],
       },
-      options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+      options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } } },
+      plugins: [makeValueLabelsPlugin(12, '')],
     });
   } catch (err) {
     console.error(err);
@@ -470,6 +473,7 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
         plugins: { legend: { display: false } },
         scales: { y: { beginAtZero: true, ticks: { font: { size: 15 }, stepSize: 1 } }, x: { ticks: { font: { size: 16 } } } },
       },
+      plugins: [makeValueLabelsPlugin(20, '')],
     }, 640, 520);
     const componentChartImg = await renderOffscreenChart({
       type: 'bar',
@@ -481,6 +485,7 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
           x: { ticks: { font: { size: 17 } } },
         },
       },
+      plugins: [makeValueLabelsPlugin(20, '%')],
     }, 640, 520);
 
     const h1 = (520 / 640) * halfWidth;
@@ -512,6 +517,7 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
         plugins: { legend: { display: false } },
         scales: { x: { beginAtZero: true, ticks: { font: { size: 15 }, stepSize: 1 } }, y: { ticks: { font: { size: 16 } } } },
       },
+      plugins: [makeValueLabelsPlugin(20, '')],
     }, 900, 320);
     const stageImgWidth = pageWidth - margin * 2;
     const stageImgHeight = (320 / 900) * stageImgWidth;
@@ -530,6 +536,7 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
       wrapWidth: 172,
       rows: latestProgramRows,
       cellFn: r => [r.ind.level, r.ind.name, String(r.ind.baseline), r.currentValue !== null ? `${r.currentValue}` : '—', `${r.finalTarget.value}`, r.pct !== null ? `${r.pct}%` : '—', stageAbbrev[r.stage] || '—'],
+      stageColIndex: 6, rowStage: r => r.stage,
       margin, tableRight, pageWidth, pageHeight,
     });
     y += 24;
@@ -543,6 +550,7 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
       wrapWidth: 172,
       rows: latestIntermediateRows,
       cellFn: r => [(r.ind.component || '').replace('Componente ', 'C').match(/C\d/)?.[0] || '—', r.ind.name, String(r.ind.baseline), r.currentValue !== null ? `${r.currentValue}` : '—', `${r.finalTarget.value}`, r.pct !== null ? `${r.pct}%` : '—', stageAbbrev[r.stage] || '—'],
+      stageColIndex: 6, rowStage: r => r.stage,
       margin, tableRight, pageWidth, pageHeight,
     });
     y += 24;
@@ -578,6 +586,38 @@ function periodInAnalysisLabel() {
   return `Maio/2026 a ${MONTHS[now.getMonth()]}/${now.getFullYear()}`;
 }
 
+function makeValueLabelsPlugin(fontSize, suffix) {
+  return {
+    id: 'valueLabels',
+    afterDatasetsDraw(chart) {
+      const { ctx } = chart;
+      const isHorizontal = chart.options.indexAxis === 'y';
+      chart.data.datasets.forEach((dataset, di) => {
+        const meta = chart.getDatasetMeta(di);
+        if (meta.hidden) return;
+        meta.data.forEach((el, i) => {
+          const value = dataset.data[i];
+          if (value === null || value === undefined) return;
+          const pos = el.getProps(['x', 'y'], true);
+          ctx.save();
+          ctx.fillStyle = '#3A2A2A';
+          ctx.font = `bold ${fontSize}px 'Public Sans', Helvetica, sans-serif`;
+          if (isHorizontal) {
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(`${value}${suffix}`, pos.x + 6, pos.y);
+          } else {
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(`${value}${suffix}`, pos.x, pos.y - 4);
+          }
+          ctx.restore();
+        });
+      });
+    },
+  };
+}
+
 async function renderOffscreenChart(config, width, height) {
   const canvas = document.createElement('canvas');
   canvas.width = width;
@@ -589,7 +629,8 @@ async function renderOffscreenChart(config, width, height) {
 }
 
 function renderPdfTable(doc, startY, opts) {
-  const { title, headers, colX, rows, cellFn, nameColIndex, wrapWidth, margin, tableRight, pageHeight } = opts;
+  const { title, headers, colX, rows, cellFn, nameColIndex, wrapWidth, margin, tableRight, pageHeight, stageColIndex, rowStage } = opts;
+  const STAGE_COLORS = { atraso: [211, 47, 47], alcancada: [46, 125, 50], prazo: [249, 168, 37] };
   let y = startY;
 
   doc.setFont('helvetica', 'bold');
@@ -651,8 +692,20 @@ function renderPdfTable(doc, startY, opts) {
     doc.setFontSize(8.5);
     doc.setTextColor(0, 0, 0);
     cells.forEach((c, i) => {
-      if (i === nameColIndex) doc.text(nameLines, colX[i], y);
-      else doc.text(c, colX[i], y);
+      if (i === nameColIndex) { doc.text(nameLines, colX[i], y); return; }
+      if (i === stageColIndex && rowStage) {
+        const color = STAGE_COLORS[rowStage(r)];
+        if (color) {
+          doc.setFillColor(color[0], color[1], color[2]);
+          doc.circle(colX[i] + 3, y - 2.5, 3, 'F');
+          doc.setTextColor(0, 0, 0);
+          doc.text(c, colX[i] + 10, y);
+        } else {
+          doc.text(c, colX[i], y);
+        }
+        return;
+      }
+      doc.text(c, colX[i], y);
     });
 
     y += rowHeight;
