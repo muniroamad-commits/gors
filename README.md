@@ -366,3 +366,59 @@ completo, e a **evidência anexada** (com link para ver/descarregar) —
 tudo antes de decidires aprovar ou rejeitar. Os botões "Aprovar" e
 "Rejeitar" aparecem tanto na lista (para decisão rápida) como dentro
 dessa janela de detalhe.
+
+## Valor do indicador = soma dos aprovados (não só o mais recente)
+
+Em toda a plataforma (painel de Indicadores, ficha de cada indicador,
+relatório interno e relatório público), o "valor actual" de um indicador
+passou a ser a **soma de todos os valores aprovados**, não só o mais
+recente — cada submissão representa um incremento (ex: 20 localidades
+aprovadas num trimestre + 15 no seguinte = 35 no total). Isto aplica-se a
+indicadores numéricos; indicadores de texto ou Sim/Não continuam a
+mostrar o valor aprovado mais recente, porque não fazem sentido somados.
+
+A coluna "Meta no período" foi removida dos relatórios — ficam só:
+Nível, Indicador, Base, Valor do indicador, Meta (final), Progresso.
+
+## Email de notificação — falta um campo no teu perfil
+
+Se não estiveres a receber o email de notificação (mas o sino 🔔 já
+funciona), a causa mais provável é que o teu perfil de administrador,
+criado manualmente no "arranque inicial", não tinha um campo `email`
+— só tinha `role` e `name`. Adiciona esse campo directamente no
+Firestore (colecção `admins` → o teu documento → "+ Adicionar campo" →
+`email`, tipo `string`, o teu endereço real). A partir daí, os emails
+devem começar a chegar.
+
+## Email de notificação corrigido (auto-correcção)
+
+Encontrei a causa: quando criámos a tua conta de Administrador geral
+manualmente no Firestore (arranque inicial), só guardámos os campos
+`role` e `name` — nunca o `email`. A notificação por email procura o
+email de todos os administradores nessa mesma colecção; sem esse campo,
+não tinha para onde enviar (por isso o sino funcionava, mas o email não —
+são mecanismos independentes).
+
+**Corrigido automaticamente**: da próxima vez que entrares na plataforma,
+o teu perfil de administrador é actualizado sozinho com o email da tua
+conta de login — não precisas de editar nada no Firestore à mão. A
+partir desse login, as notificações por email devem começar a chegar.
+
+## Relatórios: valor actual (soma) em vez de último valor
+
+Esta alteração já tinha sido feita numa resposta anterior — os
+relatórios (interno e público), o painel de indicadores, e a página de
+cada indicador já mostram:
+
+- **"Valor actual"** = soma de todos os valores **aprovados** desse
+  indicador (cada submissão representa um incremento reportado), em vez
+  do último valor aprovado isoladamente. Aplica-se a indicadores
+  numéricos; indicadores de texto ou Sim/Não continuam a mostrar o valor
+  aprovado mais recente, porque não faz sentido somar texto.
+- A coluna **"Meta no período"** foi removida — os relatórios mostram
+  apenas: Nível, Indicador, Base, Valor do indicador, Meta, Progresso.
+
+Se ainda vires a versão antiga (com "Último valor aprovado" e "Meta no
+período"), é sinal de que o teu site publicado ainda não tem os ficheiros
+mais recentes — basta repetir o Passo 2 (enviar para o GitHub) com este
+pacote.

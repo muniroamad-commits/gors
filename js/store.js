@@ -695,6 +695,22 @@ const ME = (() => {
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
   }
 
+  // Valor actual de um indicador = soma de TODOS os valores aprovados,
+  // para indicadores numéricos (cada submissão representa um incremento
+  // reportado, ex: mais X pessoas beneficiadas nesse período). Para
+  // indicadores de texto ou Sim/Não, não faz sentido somar — usa-se o
+  // valor aprovado mais recente.
+  function computeCurrentValue(ind, approvedRows) {
+    const isNumeric = !ind.isTextIndicator && !ind.isYesNoIndicator;
+    if (!approvedRows.length) return { value: null, isSum: isNumeric, period: null };
+    if (isNumeric) {
+      const sum = approvedRows.reduce((acc, v) => acc + (isNaN(Number(v.value)) ? 0 : Number(v.value)), 0);
+      return { value: sum, isSum: true, period: null };
+    }
+    const sorted = approvedRows.slice().sort((a, b) => new Date(b.submitted_at || b.updated_at) - new Date(a.submitted_at || a.updated_at));
+    return { value: sorted[0].value, isSum: false, period: sorted[0].period };
+  }
+
   async function reviewValue(valueId, { approve, review_note }) {
     const admin = getCurrentAdminSync();
     if (!admin || admin.noProfile) throw new Error('A tua conta não tem permissões configuradas.');
@@ -781,6 +797,15 @@ const ME = (() => {
       return cachedProfile;
     }
     const data = snap.data();
+    // Auto-correcção: se o perfil no Firestore não tiver o campo "email"
+    // (ex: o primeiro administrador, criado manualmente no arranque
+    // inicial, só com "role" e "name"), grava-o agora a partir da conta
+    // de autenticação — necessário para as notificações por email
+    // encontrarem para onde enviar.
+    if (!data.email && user.email) {
+      db.collection(ADMINS).doc(user.uid).set({ email: user.email }, { merge: true }).catch(() => {});
+      data.email = user.email;
+    }
     cachedProfile = {
       uid: user.uid,
       email: user.email,
@@ -832,7 +857,7 @@ const ME = (() => {
     getIndicators, getIndicator, getComponents, getLevels, getSubmissionPeriodFields, combinePeriod, periodSortKey,
     upsertIndicator, deleteIndicator,
     getProvinces, getDistricts, getBeneficiaryStatuses,
-    submitValue, listValues, listApprovedValues, reviewValue, deleteValue, resetAllValues, listPublicValues, subscribePendingCount,
+    submitValue, listValues, listApprovedValues, computeCurrentValue, reviewValue, deleteValue, resetAllValues, listPublicValues, subscribePendingCount,
     adminLogin, adminLogout, onAuthChange, getCurrentAdminSync, changeAdminPassword,
     listAdminUsers, upsertAdminUser, removeAdminUser,
   };

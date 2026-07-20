@@ -91,7 +91,7 @@
     </div>
 
     <table class="cases">
-      <thead><tr><th>Nível</th><th>Indicador</th><th>Base</th><th>Último valor aprovado</th><th>Meta final</th><th>Progresso</th></tr></thead>
+      <thead><tr><th>Nível</th><th>Indicador</th><th>Base</th><th>Valor actual</th><th>Meta final</th><th>Progresso</th></tr></thead>
       <tbody id="indicators-tbody">
         <tr><td colspan="6" class="skeleton" style="height:40px;"></td></tr>
       </tbody>
@@ -177,13 +177,24 @@ async function loadIndicators() {
   try {
     const rowsHtml = await Promise.all(indicators.map(async (ind) => {
       const approved = await ME.listApprovedValues(ind.id);
-      approved.sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
-      const latest = approved[0];
       const finalTarget = ind.targets[ind.targets.length - 1];
       const isNumeric = !ind.isTextIndicator && !ind.isYesNoIndicator;
+
+      // Valor actual do indicador = SOMA de todos os valores aprovados
+      // (cada submissão é um incremento), não só o mais recente. Para
+      // indicadores de texto/Sim-Não, que não se somam, usa-se o
+      // aprovado mais recente.
+      let currentValue = null;
+      if (isNumeric) {
+        if (approved.length) currentValue = approved.reduce((sum, v) => sum + (Number(v.value) || 0), 0);
+      } else if (approved.length) {
+        approved.sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
+        currentValue = approved[0].value;
+      }
+
       let progressHtml = '<span class="small-note">—</span>';
-      if (isNumeric && latest && typeof finalTarget.value === 'number' && finalTarget.value > 0) {
-        const pct = Math.min(100, Math.round((Number(latest.value) / finalTarget.value) * 100));
+      if (isNumeric && currentValue !== null && typeof finalTarget.value === 'number' && finalTarget.value > 0) {
+        const pct = Math.min(100, Math.round((currentValue / finalTarget.value) * 100));
         progressHtml = `<div class="progress-bar"><div class="progress-bar-fill" style="width:${pct}%;"></div></div><span class="small-note">${pct}%</span>`;
       }
       return `
@@ -191,7 +202,7 @@ async function loadIndicators() {
           <td><span class="level-tag">${ind.level}</span></td>
           <td>${escapeHtml(ind.name)}</td>
           <td class="small-note">${escapeHtml(String(ind.baseline))}</td>
-          <td>${latest ? `${escapeHtml(String(latest.value))} <span class="small-note">(${escapeHtml(latest.period)})</span>` : '<span class="small-note">Sem valor aprovado</span>'}</td>
+          <td>${currentValue !== null ? escapeHtml(String(currentValue)) : '<span class="small-note">Sem valor aprovado</span>'}</td>
           <td class="small-note">${escapeHtml(String(finalTarget.value))}</td>
           <td>${progressHtml}</td>
         </tr>

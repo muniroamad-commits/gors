@@ -109,10 +109,18 @@ function render(ind, values) {
   const approved = values.filter(v => v.status === 'aprovado').sort((a, b) => ME.periodSortKey(a.period) - ME.periodSortKey(b.period));
   const isNumeric = !ind.isTextIndicator && !ind.isYesNoIndicator;
   const finalTarget = ind.targets[ind.targets.length - 1];
+
+  // Valor actual do indicador = SOMA de todos os valores aprovados (cada
+  // submissão é um incremento), não só o mais recente. Para indicadores
+  // de texto/Sim-Não, que não se somam, usa-se o aprovado mais recente.
   const latest = approved[approved.length - 1] || null;
+  const currentValue = isNumeric
+    ? (approved.length ? approved.reduce((sum, v) => sum + (Number(v.value) || 0), 0) : null)
+    : (latest ? latest.value : null);
+
   let pct = null;
-  if (isNumeric && latest && typeof finalTarget.value === 'number' && finalTarget.value > 0) {
-    pct = Math.min(100, Math.round((Number(latest.value) / finalTarget.value) * 100));
+  if (isNumeric && currentValue !== null && typeof finalTarget.value === 'number' && finalTarget.value > 0) {
+    pct = Math.min(100, Math.round((currentValue / finalTarget.value) * 100));
   }
 
 
@@ -224,7 +232,7 @@ function render(ind, values) {
       <div class="meta-item"><dt>Responsável pela recolha</dt><dd>${escapeHtml(ind.responsible)}</dd></div>
       <div class="meta-item"><dt>Base (Mai/2026)</dt><dd>${escapeHtml(String(ind.baseline))}</dd></div>
       <div class="meta-item"><dt>Meta final</dt><dd>${escapeHtml(String(finalTarget.value))}</dd></div>
-      <div class="meta-item"><dt>Último valor aprovado</dt><dd>${latest ? `${escapeHtml(String(latest.value))} (${escapeHtml(latest.period)})` : '—'}</dd></div>
+      <div class="meta-item"><dt>Valor actual</dt><dd>${currentValue !== null ? escapeHtml(String(currentValue)) : '—'}</dd></div>
       <div class="meta-item"><dt>Progresso</dt><dd>${pct !== null ? pct + '%' : '—'}</dd></div>
     </div>
 
