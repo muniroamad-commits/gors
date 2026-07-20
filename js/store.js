@@ -631,7 +631,49 @@ const ME = (() => {
     };
 
     const ref = await db.collection(VALUES).add(doc);
+
+    // Notificação por email aos Administradores geral — usa a extensão
+    // oficial do Firebase "Trigger Email" (ver README, secção
+    // "Notificações"). Se a extensão ainda não estiver instalada, este
+    // documento fica só à espera; não impede a submissão de funcionar.
+    try {
+      const adminsSnap = await db.collection(ADMINS).where('role', '==', 'admin').get();
+      const adminEmails = adminsSnap.docs.map(d => d.data().email).filter(Boolean);
+      if (adminEmails.length) {
+        const link = `${window.location.origin}${window.location.pathname.replace(/[^/]*$/, '')}indicador.html?id=${encodeURIComponent(payload.indicator_id)}`;
+        await db.collection('mail').add({
+          to: adminEmails,
+          message: {
+            subject: `Novo valor a aguardar aprovação — ${indicator.name}`,
+            html: `
+              <p>Foi submetido um novo valor que aguarda a tua aprovação.</p>
+              <p><strong>Indicador:</strong> ${indicator.name}</p>
+              <p><strong>Período:</strong> ${payload.period}</p>
+              <p><strong>Valor submetido:</strong> ${payload.value}</p>
+              <p><strong>Submetido por:</strong> ${admin.name} (${admin.email})</p>
+              <p><strong>Resumo do processo:</strong> ${payload.note}</p>
+              <p><a href="${link}">Ver detalhes, histórico e evidência na plataforma</a></p>
+            `,
+          },
+        });
+      }
+    } catch (err) {
+      console.warn('Não foi possível preparar a notificação por email:', err.message);
+    }
+
     return { id: ref.id, skipped };
+  }
+
+  // Subscreve, em tempo real, o número de valores à espera de aprovação —
+  // usado pelo sino de notificações no topo de cada página. Devolve uma
+  // função para cancelar a subscrição (chamar ao sair da página, se
+  // relevante).
+  function subscribePendingCount(callback) {
+    return db.collection(VALUES).where('status', '==', 'submetido')
+      .onSnapshot(
+        snap => callback(snap.size),
+        err => console.warn('Notificações em tempo real indisponíveis:', err.message)
+      );
   }
 
   async function listValues(filters = {}) {
@@ -707,6 +749,27 @@ const ME = (() => {
     await db.collection(VALUES).doc(valueId).delete();
   }
 
+  // Apaga TODOS os valores submetidos/aprovados/rejeitados de TODOS os
+  // indicadores, e o respectivo espelho público — exclusivo do
+  // Administrador geral. Não apaga o catálogo de indicadores em si, só os
+  // valores já reportados. Acção irreversível.
+  async function resetAllValues() {
+    const admin = getCurrentAdminSync();
+    if (!admin || admin.role !== 'admin') throw new Error('Só o Administrador geral pode zerar todos os valores.');
+
+    const [valuesSnap, publicSnap] = await Promise.all([
+      db.collection(VALUES).get(),
+      db.collection(VALUES_PUBLIC).get(),
+    ]);
+    const allDocs = [...valuesSnap.docs, ...publicSnap.docs];
+    for (let i = 0; i < allDocs.length; i += 450) {
+      const batch = db.batch();
+      allDocs.slice(i, i + 450).forEach(d => batch.delete(d.ref));
+      await batch.commit();
+    }
+    return valuesSnap.size;
+  }
+
   // ---------- Autenticação administrativa (Firebase Auth + perfis/roles) ----------
   let cachedProfile = null;
 
@@ -769,7 +832,7 @@ const ME = (() => {
     getIndicators, getIndicator, getComponents, getLevels, getSubmissionPeriodFields, combinePeriod, periodSortKey,
     upsertIndicator, deleteIndicator,
     getProvinces, getDistricts, getBeneficiaryStatuses,
-    submitValue, listValues, listApprovedValues, reviewValue, deleteValue, listPublicValues,
+    submitValue, listValues, listApprovedValues, reviewValue, deleteValue, resetAllValues, listPublicValues, subscribePendingCount,
     adminLogin, adminLogout, onAuthChange, getCurrentAdminSync, changeAdminPassword,
     listAdminUsers, upsertAdminUser, removeAdminUser,
   };

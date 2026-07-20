@@ -293,3 +293,57 @@ realizados, por ano e período" agora tem uma coluna própria **"Meta do
 ano"**, que casa a meta pelo ANO (não pelo período exacto), garantindo
 que a meta aparece sempre que estiver definida para esse ano no Quadro de
 Resultados.
+
+## Meta sem parênteses em toda a plataforma
+
+A coluna/campo "Meta final" já não mostra o mês/ano entre parêntesis em
+lado nenhum — nem na lista de indicadores, nem na página de detalhe do
+indicador, nem nos relatórios. Só o número da meta.
+
+## Botão "Zerar todos os valores" (só Administrador geral)
+
+No topo da lista de Indicadores, há agora um botão **"Zerar todos os
+valores"** — apaga permanentemente todos os valores submetidos, aprovados
+e rejeitados de TODOS os indicadores (o catálogo de indicadores em si não
+é apagado, só os dados reportados). Pede confirmação explícita
+("ZERAR TUDO") antes de agir, e é irreversível.
+
+## Notificações de aprovação: sino em tempo real + email
+
+### Sino (funciona já, sem configuração extra)
+
+No canto superior do menu, o Administrador geral vê agora um sino 🔔 com
+um número — quantos valores estão à espera de aprovação, actualizado **em
+tempo real** (sem precisar de recarregar a página). Clicar no sino leva
+directamente a "Aprovações". Aparece em todas as páginas internas.
+
+### Email (precisa de um passo de configuração único)
+
+Sempre que alguém submete um valor, a plataforma prepara automaticamente
+um email para todos os Administradores geral, com: o indicador, o
+período, o valor, quem submeteu, o resumo do processo, e um link directo
+para a página do indicador (onde está a evidência anexada).
+
+**Para os emails serem mesmo enviados**, precisas de instalar, uma única
+vez, a extensão oficial e gratuita do Firebase chamada **"Trigger
+Email"**:
+
+1. Firebase Console → menu lateral → **Extensions** (ou "Extensões")
+2. Procura por **"Trigger Email"** (da Firebase, oficial) → Instalar
+3. Durante a instalação, escolhe a colecção `mail` (é o nome que a
+   plataforma já está a usar) quando perguntar "Mail collection"
+4. Configura um fornecedor de email SMTP — as opções mais simples são:
+   - Uma conta Gmail com uma ["palavra-passe de aplicação"](https://support.google.com/accounts/answer/185833)
+   - Um serviço gratuito como o [SendGrid](https://sendgrid.com) ou
+     [Mailgun](https://www.mailgun.com), que têm planos gratuitos
+     suficientes para este volume de emails
+5. Termina a instalação (demora 1-2 minutos a ficar activa)
+
+Depois disso, os emails começam a ser enviados automaticamente — não
+precisas de tocar em mais nada. Se preferires, posso guiar-te por este
+passo como fizemos com o resto da configuração do Firebase.
+
+**Importante**: cada Administrador geral só recebe emails se tiver um
+**email válido e real** no seu perfil (o mesmo que usaste para criar a
+conta em Authentication → Users, e que já está guardado ao adicionares o
+utilizador em "Utilizadores").

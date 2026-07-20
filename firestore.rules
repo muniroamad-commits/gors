@@ -75,8 +75,20 @@ service cloud.firestore {
 
     match /admins/{adminId} {
       allow get: if isSignedIn() && request.auth.uid == adminId;
-      allow list: if isAdminGeral();
+      // Listar todos os perfis: qualquer pessoa com perfil configurado —
+      // necessário para o sistema encontrar os emails dos administradores
+      // geral ao enviar a notificação de uma nova submissão.
+      allow list: if hasProfile();
       allow create, update, delete: if isAdminGeral();
+    }
+
+    // Colecção usada pela extensão "Trigger Email" do Firebase — quando um
+    // documento é criado aqui, a extensão envia o email correspondente.
+    // Só é possível CRIAR (para pedir o envio); ninguém pode ler o
+    // conteúdo depois (pode conter detalhes sensíveis do email enviado).
+    match /mail/{docId} {
+      allow create: if hasProfile();
+      allow get, list, update, delete: if false;
     }
   }
 }
