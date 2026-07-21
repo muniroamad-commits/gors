@@ -150,6 +150,21 @@
     </div>
   </section>
 
+  <section style="padding-top:0;">
+    <div class="container" style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+      <div class="chart-card">
+        <h3>Desagregação por género e idade</h3>
+        <div class="chart-sub">Soma de: transferências monetárias, jovens formados nos SICs, e beneficiários de VBG</div>
+        <canvas id="chart-demo" height="220"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Desagregação por estatuto de beneficiário</h3>
+        <div class="chart-sub">Soma de: transferências monetárias e beneficiários de VBG</div>
+        <canvas id="chart-status" height="220"></canvas>
+      </div>
+    </div>
+  </section>
+
   <section>
     <div class="container">
       <h3 style="margin-bottom:14px;">Indicadores de Programa (PrDO e PDO)</h3>
@@ -213,6 +228,8 @@ let latestProgramRows = [];
 let latestIntermediateRows = [];
 let latestAvgByLevel = [];
 let latestStageCounts = { atraso: 0, alcancada: 0, prazo: 0 };
+let latestDemoTotals = { Mulheres: 0, Jovens: 0 };
+let latestStatusTotals = { 'Deslocados': 0, 'Retornados': 0, 'Anfitriões': 0 };
 let latestDescriptiveRows = [];
 let latestComponentLegend = []; // [{short: 'C.1', full: 'Componente 1 — ...'}]
 let currentAdmin = null;
@@ -302,11 +319,49 @@ async function loadReport() {
   if (component) indicators = indicators.filter(i => i.component === component);
 
   try {
+    // Acumuladores para os gráficos de desagregação (Jovens/Mulheres) e de
+    // estatuto (Deslocados/Retornados/Anfitriões), somando só estes três
+    // indicadores: transferências monetárias (geral), jovens formados nos
+    // SICs, e beneficiários de acções de VBG.
+    const DEMO_CHART_IDS = ['c2-cash-transfers', 'c2-sics', 'c2-gbv'];
+    const demoTotals = { Mulheres: 0, Jovens: 0 };
+    const statusTotals = { 'Deslocados': 0, 'Retornados': 0, 'Anfitriões': 0 };
+
     const rows = await Promise.all(indicators.map(async (ind) => {
       let approved = await ME.listApprovedValues(ind.id);
       approved = applyValueFilters(approved, valueFilters);
       const finalTarget = ind.targets[ind.targets.length - 1];
       const isNumeric = !ind.isTextIndicator && !ind.isYesNoIndicator;
+
+      // Soma para os dois gráficos de desagregação (só estes 3 indicadores).
+      if (DEMO_CHART_IDS.includes(ind.id)) {
+        approved.forEach(v => {
+          // "Jovens formados nos SICs": o indicador inteiro é sobre jovens,
+          // não tem campo de desagregação próprio — o valor todo conta.
+          if (ind.id === 'c2-sics') {
+            demoTotals.Jovens += Number(v.value) || 0;
+          }
+          if (v.disagg) {
+            if (v.disagg['Mulheres'] !== undefined) {
+              demoTotals.Mulheres += Number(v.disagg['Mulheres']) || 0;
+            }
+            if (v.disagg['Jovens'] !== undefined) {
+              demoTotals.Jovens += Number(v.disagg['Jovens']) || 0;
+            }
+            // VBG guarda a desagregação como percentagem de mulheres, não
+            // como número absoluto — converte para número antes de somar.
+            if (v.disagg['Mulheres (%)'] !== undefined) {
+              const pctMulheres = Number(v.disagg['Mulheres (%)']) || 0;
+              demoTotals.Mulheres += (Number(v.value) || 0) * pctMulheres / 100;
+            }
+          }
+          if (v.status_disagg) {
+            Object.keys(statusTotals).forEach(k => {
+              if (v.status_disagg[k] !== undefined) statusTotals[k] += Number(v.status_disagg[k]) || 0;
+            });
+          }
+        });
+      }
 
       // O valor do indicador é a SOMA de todos os valores aprovados (não
       // só o mais recente) — cada submissão representa um incremento.
@@ -477,6 +532,33 @@ async function loadReport() {
         datasets: [{ data: [stageCounts.atraso, stageCounts.alcancada, stageCounts.prazo], backgroundColor: ['#D32F2F', '#2E7D32', '#F9A825'], borderRadius: 4 }],
       },
       options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } } },
+    });
+
+    // Arredonda no fim (a percentagem de mulheres do VBG pode gerar
+    // fracções ao converter para número absoluto).
+    latestDemoTotals = { Mulheres: Math.round(demoTotals.Mulheres), Jovens: Math.round(demoTotals.Jovens) };
+    latestStatusTotals = {
+      'Deslocados': Math.round(statusTotals['Deslocados']),
+      'Retornados': Math.round(statusTotals['Retornados']),
+      'Anfitriões': Math.round(statusTotals['Anfitriões']),
+    };
+
+    charts.demo = new Chart(document.getElementById('chart-demo'), {
+      type: 'bar',
+      data: {
+        labels: ['Mulheres', 'Jovens'],
+        datasets: [{ data: [latestDemoTotals.Mulheres, latestDemoTotals.Jovens], backgroundColor: ['#9D212B', '#FAA842'], borderRadius: 4 }],
+      },
+      options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } },
+    });
+
+    charts.status = new Chart(document.getElementById('chart-status'), {
+      type: 'bar',
+      data: {
+        labels: ['Deslocados', 'Retornados', 'Anfitriões'],
+        datasets: [{ data: [latestStatusTotals['Deslocados'], latestStatusTotals['Retornados'], latestStatusTotals['Anfitriões']], backgroundColor: ['#9D212B', '#FAA842', '#5A4344'], borderRadius: 4 }],
+      },
+      options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } },
     });
   } catch (err) {
     console.error(err);
@@ -697,6 +779,36 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
     const stageImgWidth = pageWidth - margin * 2;
     const stageImgHeight = (320 / 900) * stageImgWidth;
     doc.addImage(stageChartImg, 'PNG', margin, y, stageImgWidth, stageImgHeight);
+    y += stageImgHeight + 24;
+
+    // ---- Desagregação por género/idade e por estatuto de beneficiário ----
+    if (y > pageHeight - margin - 220) { doc.addPage(); y = 50; }
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Desagregação por género e idade', margin, y);
+    doc.text('Desagregação por estatuto de beneficiário', margin + (pageWidth - margin * 2) / 2 + 14, y);
+    y += 10;
+    const demoChartImg = await renderOffscreenChart({
+      type: 'bar',
+      data: charts.demo.data,
+      options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { font: { size: 15 } } }, x: { ticks: { font: { size: 16 } } } } },
+    }, 640, 520);
+    const statusChartImg = await renderOffscreenChart({
+      type: 'bar',
+      data: charts.status.data,
+      options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { font: { size: 15 } } }, x: { ticks: { font: { size: 14 } } } } },
+    }, 640, 520);
+    const demoStatusHalfWidth = (pageWidth - margin * 2 - 20) / 2;
+    const demoStatusHeight = (520 / 640) * demoStatusHalfWidth;
+    doc.addImage(demoChartImg, 'PNG', margin, y, demoStatusHalfWidth, demoStatusHeight);
+    doc.addImage(statusChartImg, 'PNG', margin + demoStatusHalfWidth + 20, y, demoStatusHalfWidth, demoStatusHeight);
+    y += demoStatusHeight + 16;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(90, 67, 68);
+    doc.text('Soma de: transferências monetárias, jovens formados nos SICs, e beneficiários de VBG.', margin, y);
+    y += 24;
 
     // ---- Tabelas: começam sempre numa página nova, a seguir aos gráficos ----
     doc.addPage();

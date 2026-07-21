@@ -244,8 +244,12 @@ document.getElementById('save-btn').addEventListener('click', async () => {
     const baselineRaw = document.getElementById('f-baseline').value.trim();
     const baseline = isNumeric && !isNaN(Number(baselineRaw)) ? Number(baselineRaw) : baselineRaw;
 
-    const disaggregation = document.getElementById('f-disaggregation').value
-      .split(',').map(s => s.trim()).filter(Boolean);
+    // Remove duplicados (ex: se o campo ficou com "Mulheres, Jovens,
+    // Mulheres" por engano ao editar) — evita campos repetidos no
+    // formulário de submissão de valores.
+    const disaggregation = [...new Set(
+      document.getElementById('f-disaggregation').value.split(',').map(s => s.trim()).filter(Boolean)
+    )];
 
     const data = {
       id: existingIndicator ? existingIndicator.id : undefined,

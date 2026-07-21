@@ -792,3 +792,18 @@ do Banco Mundial:
 automaticamente numa instalação nova — na tua, que já está semeada,
 precisas de os criar tu mesmo pelo botão "+ Adicionar indicador" (só
 demora 2 minutos com os valores já calculados abaixo, prontos a colar).
+
+## Correcção: campos de desagregação duplicados ao editar
+
+Corrigi o formulário de editar indicador para nunca mais gravar
+desagregações repetidas (ex: "Mulheres, Jovens, Mulheres, Jovens") — a
+causa mais provável é o campo já vir preenchido com o que lá estava
+quando abriste para editar, e o texto novo ter ficado a seguir ao
+antigo, em vez de o substituir.
+
+**Importante**: esta correcção só impede duplicados a partir de agora —
+o indicador que já ficou com a desagregação duplicada precisa de ser
+corrigido manualmente uma vez: abre-o em "Editar indicador", no campo
+"Desagregações" apaga tudo e escreve só `Mulheres, Jovens` (sem repetir),
+e grava. A partir daí, mesmo que voltes a editar sem reparar, já não
+duplica mais.
