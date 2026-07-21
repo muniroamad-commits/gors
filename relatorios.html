@@ -345,7 +345,12 @@ async function loadReport() {
     const total = rows.length;
     const withValue = rows.filter(r => r.hasApproved).length;
     const withoutValue = total - withValue;
-    const pctValues = rows.filter(r => r.pct !== null).map(r => r.pct);
+    // O progresso médio conta TODOS os indicadores numéricos, mesmo os
+    // que ainda não têm nenhum valor reportado (contam como 0%) — assim
+    // reflecte o progresso real do conjunto, em vez de só a média entre
+    // os poucos que já reportaram (o que infla artificialmente a média
+    // quando só 1 ou 2 indicadores têm dados).
+    const pctValues = rows.filter(r => r.isNumeric).map(r => r.pct ?? 0);
     const avgPct = pctValues.length ? Math.round(pctValues.reduce((a, b) => a + b, 0) / pctValues.length) : null;
 
     document.getElementById('stat-tiles').innerHTML = `
@@ -389,8 +394,8 @@ async function loadReport() {
     // ---- Progresso médio por nível ----
     const levels = ['PrDO', 'PDO', 'Intermédio'];
     const avgByLevel = levels.map(lv => {
-      const lvRows = rows.filter(r => r.ind.level === lv && r.pct !== null);
-      const avg = lvRows.length ? Math.round(lvRows.reduce((a, b) => a + b.pct, 0) / lvRows.length) : null;
+      const lvRows = rows.filter(r => r.ind.level === lv && r.isNumeric);
+      const avg = lvRows.length ? Math.round(lvRows.reduce((a, b) => a + (b.pct ?? 0), 0) / lvRows.length) : null;
       return { level: lv, count: rows.filter(r => r.ind.level === lv).length, avg };
     });
     latestAvgByLevel = avgByLevel;
@@ -435,11 +440,13 @@ async function loadReport() {
     });
 
     const byComponent = {};
-    rows.filter(r => r.ind.component && r.pct !== null).forEach(r => {
+    // Conta TODOS os indicadores numéricos do componente (mesmo sem
+    // dados ainda, contando como 0%) — não só os que já têm valores.
+    rows.filter(r => r.ind.component && r.isNumeric).forEach(r => {
       const m = r.ind.component.match(/Componente (\d)/);
       const key = m ? `C${m[1]}` : r.ind.component;
       if (!byComponent[key]) byComponent[key] = { values: [], fullName: r.ind.component };
-      byComponent[key].values.push(r.pct);
+      byComponent[key].values.push(r.pct ?? 0);
     });
     const compLabels = Object.keys(byComponent).sort();
     const compValues = compLabels.map(k => Math.round(byComponent[k].values.reduce((a, b) => a + b, 0) / byComponent[k].values.length));
