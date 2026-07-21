@@ -159,7 +159,7 @@
       </div>
       <div class="chart-card">
         <h3>Desagregação por estatuto de beneficiário</h3>
-        <div class="chart-sub">Soma de: transferências monetárias e beneficiários de VBG</div>
+        <div class="chart-sub">Soma de: transferências monetárias, jovens formados nos SICs, e beneficiários de VBG</div>
         <canvas id="chart-status" height="220"></canvas>
       </div>
     </div>
@@ -664,31 +664,31 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
 
     // ---- Cabeçalho institucional (logótipo centrado + títulos) ----
     try {
-      const logoSize = 46;
+      const logoSize = 30;
       doc.addImage(ADIN_LOGO_BASE64, 'JPEG', (pageWidth - logoSize) / 2, y, logoSize, logoSize);
-      y += logoSize + 10;
+      y += logoSize + 6;
     } catch (e) {
       console.warn('Não foi possível desenhar o logótipo no PDF:', e.message);
     }
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setTextColor(90, 67, 68);
     doc.text('UNIDADE DE COORDENAÇÃO DE PROJECTOS', pageWidth / 2, y, { align: 'center' });
-    y += 20;
-    doc.setFontSize(16);
+    y += 15;
+    doc.setFontSize(13);
     doc.setTextColor(0, 0, 0);
     doc.text('Relatório de Progresso de Indicadores', pageWidth / 2, y, { align: 'center' });
-    y += 18;
+    y += 13;
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
+    doc.setFontSize(8.5);
     doc.setTextColor(90, 67, 68);
     doc.text(`${'Período em análise'}: ${periodInAnalysisLabel()}`, pageWidth / 2, y, { align: 'center' });
-    y += 14;
+    y += 11;
     doc.text(`${'Gerado em'} ${new Date().toLocaleString('pt-MZ')}`, pageWidth / 2, y, { align: 'center' });
-    y += 24;
+    y += 12;
     doc.setDrawColor(221, 214, 210);
     doc.line(margin, y, pageWidth - margin, y);
-    y += 20;
+    y += 12;
 
     const level = document.getElementById('f-level').value;
     const component = document.getElementById('f-component').value;
@@ -696,7 +696,7 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
     const province = document.getElementById('f-province').value;
     const district = document.getElementById('f-district').value;
     const status = document.getElementById('f-status').value;
-    doc.setFontSize(10);
+    doc.setFontSize(8.5);
     doc.setTextColor(0, 0, 0);
     const enF = false;
     const filterPairs = [
@@ -707,21 +707,21 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
     filterPairs.forEach(([label, value], i) => {
       const col = i % 3;
       const row = Math.floor(i / 3);
-      doc.text(`${label}: ${value}`, margin + col * filterColWidth, y + row * 15);
+      doc.text(`${label}: ${value}`, margin + col * filterColWidth, y + row * 13);
     });
-    y += Math.ceil(filterPairs.length / 3) * 15 + 8;
+    y += Math.ceil(filterPairs.length / 3) * 13 + 6;
 
     doc.setDrawColor(221, 214, 210);
     doc.line(margin, y, pageWidth - margin, y);
-    y += 24;
+    y += 14;
 
-    // ---- Gráficos (todos de coluna, versões maiores e com letra maior,
-    // próprias para o PDF — não são só uma captura do ecrã) ----
+    // ---- Gráficos (todos de coluna; achatados e compactos de propósito,
+    // para os cinco caberem numa única página, tal como pedido) ----
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
+    doc.setFontSize(10.5);
     doc.text('Indicadores por nível (PrDO/PDO)', margin, y);
     doc.text('Progresso médio por componente', margin + (pageWidth - margin * 2) / 2 + 14, y);
-    y += 10;
+    y += 8;
 
     const halfWidth = (pageWidth - margin * 2 - 20) / 2;
     const levelChartImg = await renderOffscreenChart({
@@ -731,7 +731,7 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
         plugins: { legend: { display: false } },
         scales: { y: { beginAtZero: true, ticks: { font: { size: 15 }, stepSize: 1 } }, x: { ticks: { font: { size: 16 } } } },
       },
-    }, 640, 520);
+    }, 640, 320);
     const componentChartImg = await renderOffscreenChart({
       type: 'bar',
       data: charts.component.data,
@@ -742,31 +742,30 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
           x: { ticks: { font: { size: 17 } } },
         },
       },
-    }, 640, 520);
+    }, 640, 320);
 
-    const h1 = (520 / 640) * halfWidth;
-    const h2 = (520 / 640) * halfWidth;
+    const h1 = (320 / 640) * halfWidth;
+    const h2 = (320 / 640) * halfWidth;
     doc.addImage(levelChartImg, 'PNG', margin, y, halfWidth, h1);
     doc.addImage(componentChartImg, 'PNG', margin + halfWidth + 20, y, halfWidth, h2);
-    y += Math.max(h1, h2) + 14;
+    y += Math.max(h1, h2) + 8;
 
     // Legenda dos códigos de componente usados no gráfico (C1, C2...)
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8.5);
+    doc.setFontSize(7);
     doc.setTextColor(90, 67, 68);
     latestComponentLegend.forEach(c => {
       doc.text(`${c.short} = ${c.full}`, margin, y);
-      y += 11;
+      y += 8.5;
     });
-    y += 18;
+    y += 10;
 
     // Gráfico de estágio dos indicadores (largura total)
-    if (y > pageHeight - margin - 160) { doc.addPage(); y = 50; }
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
+    doc.setFontSize(10.5);
     doc.setTextColor(0, 0, 0);
     doc.text('Estágio dos indicadores face às metas', margin, y);
-    y += 10;
+    y += 8;
     const stageChartImg = await renderOffscreenChart({
       type: 'bar',
       data: charts.stage.data,
@@ -775,40 +774,39 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
         plugins: { legend: { display: false } },
         scales: { x: { beginAtZero: true, ticks: { font: { size: 15 }, stepSize: 1 } }, y: { ticks: { font: { size: 16 } } } },
       },
-    }, 900, 320);
+    }, 900, 190);
     const stageImgWidth = pageWidth - margin * 2;
-    const stageImgHeight = (320 / 900) * stageImgWidth;
+    const stageImgHeight = (190 / 900) * stageImgWidth;
     doc.addImage(stageChartImg, 'PNG', margin, y, stageImgWidth, stageImgHeight);
-    y += stageImgHeight + 24;
+    y += stageImgHeight + 10;
 
     // ---- Desagregação por género/idade e por estatuto de beneficiário ----
-    if (y > pageHeight - margin - 220) { doc.addPage(); y = 50; }
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
+    doc.setFontSize(10.5);
     doc.setTextColor(0, 0, 0);
     doc.text('Desagregação por género e idade', margin, y);
     doc.text('Desagregação por estatuto de beneficiário', margin + (pageWidth - margin * 2) / 2 + 14, y);
-    y += 10;
+    y += 8;
     const demoChartImg = await renderOffscreenChart({
       type: 'bar',
       data: charts.demo.data,
       options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { font: { size: 15 } } }, x: { ticks: { font: { size: 16 } } } } },
-    }, 640, 520);
+    }, 640, 320);
     const statusChartImg = await renderOffscreenChart({
       type: 'bar',
       data: charts.status.data,
       options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { font: { size: 15 } } }, x: { ticks: { font: { size: 14 } } } } },
-    }, 640, 520);
+    }, 640, 320);
     const demoStatusHalfWidth = (pageWidth - margin * 2 - 20) / 2;
-    const demoStatusHeight = (520 / 640) * demoStatusHalfWidth;
+    const demoStatusHeight = (320 / 640) * demoStatusHalfWidth;
     doc.addImage(demoChartImg, 'PNG', margin, y, demoStatusHalfWidth, demoStatusHeight);
     doc.addImage(statusChartImg, 'PNG', margin + demoStatusHalfWidth + 20, y, demoStatusHalfWidth, demoStatusHeight);
-    y += demoStatusHeight + 16;
+    y += demoStatusHeight + 8;
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
+    doc.setFontSize(7);
     doc.setTextColor(90, 67, 68);
     doc.text('Soma de: transferências monetárias, jovens formados nos SICs, e beneficiários de VBG.', margin, y);
-    y += 24;
+    y += 14;
 
     // ---- Tabelas: começam sempre numa página nova, a seguir aos gráficos ----
     doc.addPage();

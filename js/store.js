@@ -306,7 +306,7 @@ const ME = (() => {
       description: 'Número de jovens que recebem formação, mentoria, colocação profissional e/ou apoio ao desenvolvimento de negócios nos Centros de Incubação de Competências (SICs) apoiados pelo projecto.',
       dataSource: 'Relatórios de progresso, visitas de campo',
       methodology: 'Revisão dos relatórios dos SICs.',
-      disaggregation: [],
+      disaggregation: ['Mulheres'],
       baseline: 0,
       targets: [
         { period: 'Mai/2028', value: 500 }, { period: 'Mai/2029', value: 1000 },

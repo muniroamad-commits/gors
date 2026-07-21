@@ -119,6 +119,7 @@
         <div class="field">
           <label for="f-disaggregation">Desagregações <span class="small-note">(separadas por vírgula, ex: Mulheres, Jovens)</span></label>
           <input type="text" id="f-disaggregation" placeholder="Mulheres, Jovens">
+          <div class="hint">Não escrevas aqui "Deslocados", "Retornados" ou "Anfitriões" — esses três aparecem automaticamente sempre que houver qualquer desagregação preenchida.</div>
         </div>
 
         <div class="form-section-title" style="margin-top:24px;">Base e metas</div>
@@ -246,10 +247,15 @@ document.getElementById('save-btn').addEventListener('click', async () => {
 
     // Remove duplicados (ex: se o campo ficou com "Mulheres, Jovens,
     // Mulheres" por engano ao editar) — evita campos repetidos no
-    // formulário de submissão de valores.
+    // formulário de submissão de valores. Também remove "Deslocados",
+    // "Retornados" e "Anfitriões" se tiverem sido escritos aqui por
+    // engano — esses três já aparecem automaticamente sempre que há
+    // qualquer desagregação, não devem ser escritos neste campo (senão
+    // aparecem duplicados: uma vez aqui, outra vez como estatuto).
+    const RESERVED_STATUS_WORDS = ['Deslocados', 'Retornados', 'Anfitriões'];
     const disaggregation = [...new Set(
       document.getElementById('f-disaggregation').value.split(',').map(s => s.trim()).filter(Boolean)
-    )];
+    )].filter(d => !RESERVED_STATUS_WORDS.includes(d));
 
     const data = {
       id: existingIndicator ? existingIndicator.id : undefined,

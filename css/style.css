@@ -86,6 +86,12 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
   gap: 16px;
   min-height: 76px;
 }
+/* Logótipo + nome ficam encostados ao canto direito; o menu de
+   navegação (e o botão de hambúrguer, em ecrãs pequenos) ficam à
+   esquerda. Aplica-se a todas as páginas que usam este cabeçalho. */
+.brand { order: 3; }
+.nav-toggle { order: 1; }
+.site-header .main-nav { order: 2; }
 .brand {
   display: flex;
   align-items: center;

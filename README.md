@@ -807,3 +807,35 @@ corrigido manualmente uma vez: abre-o em "Editar indicador", no campo
 "Desagregações" apaga tudo e escreve só `Mulheres, Jovens` (sem repetir),
 e grava. A partir daí, mesmo que voltes a editar sem reparar, já não
 duplica mais.
+
+## Correcção: "Deslocados/Retornados/Anfitriões" duplicados no SIC
+
+Confirmei a causa: "Deslocados", "Retornados" e "Anfitriões" **nunca
+devem ser escritos** no campo "Desagregações" — esses três aparecem
+sempre automaticamente, para qualquer indicador que tenha pelo menos uma
+desagregação preenchida (ex: "Mulheres"). Se forem escritos também no
+campo de texto, aparecem duplicados — uma vez como desagregação normal,
+outra vez como estatuto automático.
+
+Corrigi o formulário para **nunca gravar** essas três palavras no campo
+Desagregações, mesmo que sejam escritas lá por engano — e acrescentei
+uma nota junto ao campo a explicar isto, para não voltar a confundir.
+
+**Passo que precisas de fazer tu**: abre "Jovens formados nos SICs" em
+"Editar indicador", e no campo "Desagregações" deixa **só**
+`Mulheres` (sem os outros três) — e grava.
+
+## Logótipo movido para o canto direito + gráficos numa só página
+
+**Logótipo**: o logótipo + "GORS - MOZCOMMUNITY" passam do canto
+esquerdo do cabeçalho para o canto **direito**, em todas as páginas
+(painel de Indicadores, página de cada indicador, Aprovações,
+Utilizadores, Editar Indicador, e os dois relatórios) — o menu de
+navegação passa para a esquerda. Fiz isto de forma central no CSS
+partilhado, por isso aplica-se a todas de uma vez.
+
+**Gráficos do PDF numa só página**: reduzi o logótipo, apertei os
+espaços entre secções, e achatei a proporção de todos os cinco gráficos
+(nível, componente, estágio, género/idade, estatuto) — agora cabem
+todos na primeira página do PDF, com as tabelas a começarem sempre na
+página seguinte, nos dois relatórios (interno e público).

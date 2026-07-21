@@ -157,7 +157,7 @@ const I18N = (() => {
     chart_demo: { pt: 'Desagregação por género e idade', en: 'Disaggregation by gender and age' },
     chart_demo_sub: { pt: 'Soma de: transferências monetárias, jovens formados nos SICs, e beneficiários de VBG', en: 'Sum of: cash transfers, youth trained at SICs, and GBV beneficiaries' },
     chart_status: { pt: 'Desagregação por estatuto de beneficiário', en: 'Disaggregation by beneficiary status' },
-    chart_status_sub: { pt: 'Soma de: transferências monetárias e beneficiários de VBG', en: 'Sum of: cash transfers and GBV beneficiaries' },
+    chart_status_sub: { pt: 'Soma de: transferências monetárias, jovens formados nos SICs, e beneficiários de VBG', en: 'Sum of: cash transfers, youth trained at SICs, and GBV beneficiaries' },
     program_indicators_title: { pt: 'Indicadores de Programa (PrDO e PDO)', en: 'Program Indicators (PrDO and PDO)' },
     intermediate_indicators_title: { pt: 'Indicadores Intermédios', en: 'Intermediate Indicators' },
     avg_by_level_title: { pt: 'Progresso médio por nível', en: 'Average progress by level' },
@@ -309,6 +309,7 @@ const I18N = (() => {
       description: 'Number of youth receiving training, mentoring, job placement and/or business development support at the project-supported Skills Incubation Centers (SICs).',
       dataSource: 'Progress reports, field visits',
       methodology: "Review of SICs' reports.",
+      disaggregation: ['Women'],
     },
     'c2-gbv': {
       name: 'Beneficiaries of GBV prevention and response actions',
