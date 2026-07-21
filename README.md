@@ -839,3 +839,15 @@ espaços entre secções, e achatei a proporção de todos os cinco gráficos
 (nível, componente, estágio, género/idade, estatuto) — agora cabem
 todos na primeira página do PDF, com as tabelas a começarem sempre na
 página seguinte, nos dois relatórios (interno e público).
+
+## Correcção: logótipo de volta à esquerda, mais compacto
+
+Revertida a alteração anterior — o logótipo + "GORS - MOZCOMMUNITY"
+voltam ao canto **esquerdo**, mas agora mais compactos e bem encostados
+ao canto: logótipo mais pequeno (36px em vez de 46px), menos espaço à
+volta, e o menu de navegação também ficou mais compacto (letra e
+espaçamento reduzidos) — tudo para garantir que os botões do menu cabem
+numa só linha à direita, sem quebrar para uma segunda linha. Aplica-se a
+todas as páginas: painel de Indicadores, página de cada indicador,
+Relatórios, Aprovações, Utilizadores, Editar Indicador, e o relatório
+público.
