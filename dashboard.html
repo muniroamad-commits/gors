@@ -7,6 +7,11 @@
 <link rel="icon" href="img/logo-adin.jpg" type="image/jpeg">
 <link rel="stylesheet" href="css/style.css">
 <style>
+  /* Nesta página o corpo usa uma barra lateral a toda a largura (sem o
+     limite de largura do .container padrão) — por isso o cabeçalho
+     também precisa de ocupar a largura toda, para o logótipo ficar
+     mesmo encostado ao canto, alinhado com a barra lateral por baixo. */
+  .site-header .container { max-width: none; width: 100%; }
   .admin-shell { display: grid; grid-template-columns: 220px 1fr; min-height: calc(100vh - 76px); }
   .admin-sidebar { border-right: 1px solid var(--line); padding: 24px 18px; background: var(--paper-raised); }
   .admin-sidebar h4 { font-family: var(--font-mono); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted); margin: 20px 0 8px; }

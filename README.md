@@ -767,3 +767,13 @@ O logótipo estava a ser mostrado como um quadrado pequeno com
 DESENVOLVIMENTO INTEGRADO DO NORTE" por baixo do "ADIN" (a imagem não é
 quadrada). Corrigi para mostrar a imagem completa, sem cortar nada, e
 bem maior (190px de largura) — agora o nome fica totalmente legível.
+
+## Correcção: logótipo desalinhado no painel de Indicadores
+
+No painel de Indicadores (`dashboard.html`), a barra lateral ocupa a
+largura toda do ecrã, mas o cabeçalho estava limitado a uma largura
+máxima e centrado — por isso o logótipo parecia deslocado para o centro
+em vez de estar mesmo no canto, alinhado com a barra lateral por baixo.
+Corrigi para o cabeçalho desta página também ocupar a largura toda,
+alinhando o logótipo ao canto esquerdo verdadeiro, e dando mais espaço
+para todos os botões do menu à direita.
