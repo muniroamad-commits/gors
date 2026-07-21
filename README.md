@@ -736,3 +736,13 @@ plataforma — títulos das páginas (separador do browser), cabeçalho
 No relatório público, o rodapé "GORS - MOZCOMMUNITY — Monitoria de
 Indicadores, ADIN." também traduz correctamente para inglês ("GORS -
 MOZCOMMUNITY — Indicator Monitoring, ADIN.") ao mudar o idioma.
+
+## Login: logótipo e nome centralizados
+
+Reestruturei a página de login: o logótipo da ADIN, "GORS -
+MOZCOMMUNITY", e "Global Output and Outcome Reporting System" já não
+estão no canto superior esquerdo do cabeçalho — ficam agora
+**centralizados**, por cima da secção "Área reservada", tanto em
+português como na versão inglesa (o nome "Global Output and Outcome
+Reporting System" é o mesmo nos dois idiomas, por ser já em inglês). O
+cabeçalho ficou mais simples, só com o botão EN/PT no canto direito.

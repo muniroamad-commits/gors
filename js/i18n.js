@@ -27,6 +27,7 @@ const I18N = (() => {
     nav_login: { pt: 'Entrar', en: 'Log in' },
     public_access_label: { pt: 'Acesso público', en: 'Public access' },
     brand_tagline: { pt: 'Monitoria de Indicadores — ADIN', en: 'Indicator Monitoring — ADIN' },
+    gors_full_name: { pt: 'Global Output and Outcome Reporting System', en: 'Global Output and Outcome Reporting System' },
 
     // Login
     login_area: { pt: 'Área reservada', en: 'Restricted area' },
