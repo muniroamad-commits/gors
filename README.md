@@ -710,3 +710,19 @@ indicador (deve estar no fundo da lista, onde os indicadores novos
 aparecem por defeito), e clica na seta **↑** repetidamente até ele ficar
 logo a seguir a "Beneficiários de acções de prevenção e resposta à
 VBG". Cada clique troca de posição com o indicador imediatamente acima.
+
+## Tradução na página de login + nova frase
+
+Adicionei o botão EN/PT também à página de login (`index.html`) — faz
+sentido, já que é a primeira página que qualquer pessoa de fora vê,
+incluindo quem procura o link para o relatório público.
+
+Também troquei a frase técnica "Os utilizadores são criados em Firebase
+Console → Authentication → Users..." (que só fazia sentido para ti, não
+para quem visita a página) por uma frase mais apropriada:
+
+> "Para aceder ao painel interno, contacta o administrador da plataforma
+> para obteres as tuas credenciais de acesso."
+
+(em inglês: "To access the internal dashboard, contact the platform
+administrator to obtain your access credentials.")

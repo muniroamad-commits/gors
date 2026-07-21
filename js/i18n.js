@@ -35,7 +35,7 @@ const I18N = (() => {
     email: { pt: 'Email', en: 'Email' },
     password: { pt: 'Password', en: 'Password' },
     login_btn: { pt: 'Entrar', en: 'Log in' },
-    login_note: { pt: 'Os utilizadores são criados em Firebase Console → Authentication → Users, e o nível de acesso é atribuído em "Utilizadores" dentro da plataforma.', en: 'Users are created in Firebase Console → Authentication → Users, and access level is assigned under "Users" inside the platform.' },
+    login_note: { pt: 'Para aceder ao painel interno, contacta o administrador da plataforma para obteres as tuas credenciais de acesso.', en: 'To access the internal dashboard, contact the platform administrator to obtain your access credentials.' },
     view_public_report: { pt: 'Ver relatório público de progresso', en: 'View public progress report' },
     public_access_note: { pt: 'Acesso livre, sem precisar de login.', en: 'Open access, no login required.' },
 
