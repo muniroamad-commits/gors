@@ -271,6 +271,20 @@ const I18N = (() => {
       methodology: 'Review of transactions made.',
       disaggregation: ['Women', 'Youth'],
     },
+    'c2-cash-transfers-mulheres': {
+      name: 'Beneficiaries of cash-based interventions — Female (CRI)',
+      unit: 'Number of people', frequency: 'Quarterly',
+      description: "This indicator measures the number of people participating in the cash transfer program. The target reflects 10,000 households across the three northern provinces, with an average household size of 5 people. The target for youth (15-24 years) reflects 17% and the target for women reflects 51% of the Northern Region's population, according to World Bank calculations using 2022 data from the Household Budget Survey.",
+      dataSource: 'Progress reports',
+      methodology: 'Review of transactions made.',
+    },
+    'c2-cash-transfers-jovens': {
+      name: 'Beneficiaries of cash-based interventions — Youth (CRI)',
+      unit: 'Number of people', frequency: 'Quarterly',
+      description: "This indicator measures the number of people participating in the cash transfer program. The target reflects 10,000 households across the three northern provinces, with an average household size of 5 people. The target for youth (15-24 years) reflects 17% and the target for women reflects 51% of the Northern Region's population, according to World Bank calculations using 2022 data from the Household Budget Survey.",
+      dataSource: 'Progress reports',
+      methodology: 'Review of transactions made.',
+    },
     'c2-grants-mulheres': {
       name: 'Percentage of total grant value awarded to women-owned enterprises',
       unit: 'Percentage', frequency: 'Quarterly',

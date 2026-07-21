@@ -777,3 +777,18 @@ em vez de estar mesmo no canto, alinhado com a barra lateral por baixo.
 Corrigi para o cabeçalho desta página também ocupar a largura toda,
 alinhando o logótipo ao canto esquerdo verdadeiro, e dando mais espaço
 para todos os botões do menu à direita.
+
+## Dois novos sub-indicadores: Transferências Monetárias por Mulheres e Jovens
+
+Adicionei ao catálogo de referência (para novas instalações) dois
+sub-indicadores da Componente 2, tal como aparecem no documento oficial
+do Banco Mundial:
+- **Beneficiários das intervenções de transferências monetárias —
+  Mulheres (CRI)**
+- **Beneficiários das intervenções de transferências monetárias —
+  Jovens (CRI)**
+
+**Importante**: como a tua plataforma já tem dados, isto só entra
+automaticamente numa instalação nova — na tua, que já está semeada,
+precisas de os criar tu mesmo pelo botão "+ Adicionar indicador" (só
+demora 2 minutos com os valores já calculados abaixo, prontos a colar).
