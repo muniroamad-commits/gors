@@ -759,3 +759,11 @@ GORS, e os campos de login — como pediste.
 português para **"Sistema Global de Relatório de Produtos e
 Resultados"** (usando "Produto"/"Resultado" como é costume nos termos de
 M&A do Banco Mundial). Em inglês mantém-se o nome original.
+
+## Correcção: logótipo cortado
+
+O logótipo estava a ser mostrado como um quadrado pequeno com
+`object-fit: cover`, o que **cortava** o nome "AGÊNCIA DE
+DESENVOLVIMENTO INTEGRADO DO NORTE" por baixo do "ADIN" (a imagem não é
+quadrada). Corrigi para mostrar a imagem completa, sem cortar nada, e
+bem maior (190px de largura) — agora o nome fica totalmente legível.
