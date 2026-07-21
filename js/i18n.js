@@ -399,6 +399,27 @@ const I18N = (() => {
       dataSource: 'Progress reports',
       methodology: 'Review of transactions made.',
     },
+    'Beneficiários das intervenções de transferências monetárias — Mulheres': {
+      name: 'Beneficiaries of cash-based interventions — Female',
+      unit: 'Number of people', frequency: 'Quarterly',
+      description: "This indicator measures the number of people participating in the cash transfer program. The target reflects 10,000 households across the three northern provinces, with an average household size of 5 people. The target for youth (15-24 years) reflects 17% and the target for women reflects 51% of the Northern Region's population, according to World Bank calculations using 2022 data from the Household Budget Survey.",
+      dataSource: 'Progress reports',
+      methodology: 'Review of transactions made.',
+    },
+    'Beneficiários das intervenções de transferências monetárias — Jovens': {
+      name: 'Beneficiaries of cash-based interventions — Youth',
+      unit: 'Number of people', frequency: 'Quarterly',
+      description: "This indicator measures the number of people participating in the cash transfer program. The target reflects 10,000 households across the three northern provinces, with an average household size of 5 people. The target for youth (15-24 years) reflects 17% and the target for women reflects 51% of the Northern Region's population, according to World Bank calculations using 2022 data from the Household Budget Survey.",
+      dataSource: 'Progress reports',
+      methodology: 'Review of transactions made.',
+    },
+    'Beneficiários VBG — % Mulheres': {
+      name: 'GBV Beneficiaries — % Female',
+      unit: 'Percentage', frequency: 'Quarterly',
+      description: 'Percentage of women among the people reached with awareness-raising messages on GBV, sexual and reproductive health, mental health, GALS, and other psychosocial support programs, in the three northern provinces.',
+      dataSource: 'Progress reports',
+      methodology: "Review of service provider's reports, field visits.",
+    },
   };
 
   function translateIndicator(ind) {

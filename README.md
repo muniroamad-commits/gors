@@ -876,3 +876,14 @@ que ficou gravado na tua base de dados.
 guardaste for exactamente igual ao que te dei para copiar (incluindo o
 travessão "—" e os parêntesis). Se por acaso o nome ficou ligeiramente
 diferente ao colar, avisa-me o nome exacto que está guardado e ajusto.
+
+## Correcção: os três indicadores com os nomes exactos que confirmaste
+
+Ajustei a tradução com os nomes exactos que me deste (sem o "(CRI)" que
+eu tinha assumido por engano, e incluindo o indicador de VBG que faltava):
+- Beneficiários das intervenções de transferências monetárias — Mulheres
+- Beneficiários das intervenções de transferências monetárias — Jovens
+- Beneficiários VBG — % Mulheres
+
+Testei os três nomes exactos e confirmei que traduzem correctamente
+agora.
