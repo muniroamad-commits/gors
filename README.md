@@ -746,3 +746,16 @@ estão no canto superior esquerdo do cabeçalho — ficam agora
 português como na versão inglesa (o nome "Global Output and Outcome
 Reporting System" é o mesmo nos dois idiomas, por ser já em inglês). O
 cabeçalho ficou mais simples, só com o botão EN/PT no canto direito.
+
+## Login mais compacto + nome traduzido
+
+Tornei a página de login mais compacta, para caber tudo num só ecrã sem
+precisar de scroll: cabeçalho mais fino, logótipo mais pequeno, menos
+espaço entre secções, e removi a frase descritiva do projecto (redundante
+com o nome completo do GORS já mostrado acima). Fica só: logótipo + nome
+GORS, e os campos de login — como pediste.
+
+"Global Output and Outcome Reporting System" passa a traduzir-se em
+português para **"Sistema Global de Relatório de Produtos e
+Resultados"** (usando "Produto"/"Resultado" como é costume nos termos de
+M&A do Banco Mundial). Em inglês mantém-se o nome original.
