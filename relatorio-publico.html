@@ -277,8 +277,16 @@ async function loadReport() {
       if (isNumeric && currentValue !== null && typeof finalTarget.value === 'number' && finalTarget.value > 0) {
         pct = Math.min(100, Math.round((currentValue / finalTarget.value) * 100));
       }
+      // Ver nota equivalente no relatório interno: indicadores Sim/Não
+      // contam como 100%/0% para não ficarem de fora das médias.
+      let effectivePct = null;
+      if (isNumeric) {
+        effectivePct = pct ?? 0;
+      } else if (ind.isYesNoIndicator) {
+        effectivePct = currentValue === 'Sim' ? 100 : 0;
+      }
       const stage = ME.classifyStage(ind, currentValue);
-      return { ind, currentValue, hasApproved: publicValues.length > 0, finalTarget, isNumeric, pct, stage };
+      return { ind, currentValue, hasApproved: publicValues.length > 0, finalTarget, isNumeric, pct, effectivePct, stage };
     }));
     latestRows = rows;
 
@@ -287,7 +295,7 @@ async function loadReport() {
     const withoutValue = total - withValue;
     // O progresso médio conta TODOS os indicadores numéricos, mesmo os
     // que ainda não têm nenhum valor reportado (contam como 0%).
-    const pctValues = rows.filter(r => r.isNumeric).map(r => r.pct ?? 0);
+    const pctValues = rows.filter(r => r.effectivePct !== null).map(r => r.effectivePct);
     const avgPct = pctValues.length ? Math.round(pctValues.reduce((a, b) => a + b, 0) / pctValues.length) : null;
 
     document.getElementById('stat-tiles').innerHTML = `
@@ -327,8 +335,8 @@ async function loadReport() {
 
     const levels = ['PrDO', 'PDO', 'Intermédio'];
     const avgByLevel = levels.map(lv => {
-      const lvRows = rows.filter(r => r.ind.level === lv && r.isNumeric);
-      const avg = lvRows.length ? Math.round(lvRows.reduce((a, b) => a + (b.pct ?? 0), 0) / lvRows.length) : null;
+      const lvRows = rows.filter(r => r.ind.level === lv && r.effectivePct !== null);
+      const avg = lvRows.length ? Math.round(lvRows.reduce((a, b) => a + b.effectivePct, 0) / lvRows.length) : null;
       return { level: lv, count: rows.filter(r => r.ind.level === lv).length, avg };
     });
     latestAvgByLevel = avgByLevel;
@@ -355,11 +363,11 @@ async function loadReport() {
     });
 
     const byComponent = {};
-    rows.filter(r => r.ind.component && r.isNumeric).forEach(r => {
+    rows.filter(r => r.ind.component && r.effectivePct !== null).forEach(r => {
       const m = r.ind.component.match(/Componente (\d)/);
       const key = m ? `C${m[1]}` : r.ind.component;
       if (!byComponent[key]) byComponent[key] = { values: [], fullName: I18N.translateComponent(r.ind.component) };
-      byComponent[key].values.push(r.pct ?? 0);
+      byComponent[key].values.push(r.effectivePct);
     });
     const compLabels = Object.keys(byComponent).sort();
     const compValues = compLabels.map(k => Math.round(byComponent[k].values.reduce((a, b) => a + b, 0) / byComponent[k].values.length));

@@ -324,6 +324,19 @@ async function loadReport() {
       if (isNumeric && currentValue !== null && typeof finalTarget.value === 'number' && finalTarget.value > 0) {
         pct = Math.min(100, Math.round((currentValue / finalTarget.value) * 100));
       }
+      // "Progresso efectivo" para efeitos de média: indicadores numéricos
+      // usam a percentagem da meta; indicadores Sim/Não contam como 100%
+      // se já alcançados ("Sim") ou 0% caso contrário — isto evita que
+      // indicadores Sim/Não (que não têm % própria) fiquem de fora das
+      // médias por nível/componente, o que sub-contava o total de
+      // indicadores do grupo. Indicadores de texto livre não entram
+      // nestas médias (não há forma sensata de os pontuar em %).
+      let effectivePct = null;
+      if (isNumeric) {
+        effectivePct = pct ?? 0;
+      } else if (ind.isYesNoIndicator) {
+        effectivePct = currentValue === 'Sim' ? 100 : 0;
+      }
       const stage = ME.classifyStage(ind, currentValue);
 
       // Notas ("resumo do processo") de cada submissão aprovada, para
@@ -337,7 +350,7 @@ async function loadReport() {
         }))
         .sort((a, b) => ME.periodSortKey(a.period) - ME.periodSortKey(b.period));
 
-      return { ind, currentValue, hasApproved: approved.length > 0, finalTarget, isNumeric, pct, stage, notes };
+      return { ind, currentValue, hasApproved: approved.length > 0, finalTarget, isNumeric, pct, effectivePct, stage, notes };
     }));
     latestRows = rows;
 
@@ -350,7 +363,7 @@ async function loadReport() {
     // reflecte o progresso real do conjunto, em vez de só a média entre
     // os poucos que já reportaram (o que infla artificialmente a média
     // quando só 1 ou 2 indicadores têm dados).
-    const pctValues = rows.filter(r => r.isNumeric).map(r => r.pct ?? 0);
+    const pctValues = rows.filter(r => r.effectivePct !== null).map(r => r.effectivePct);
     const avgPct = pctValues.length ? Math.round(pctValues.reduce((a, b) => a + b, 0) / pctValues.length) : null;
 
     document.getElementById('stat-tiles').innerHTML = `
@@ -394,8 +407,8 @@ async function loadReport() {
     // ---- Progresso médio por nível ----
     const levels = ['PrDO', 'PDO', 'Intermédio'];
     const avgByLevel = levels.map(lv => {
-      const lvRows = rows.filter(r => r.ind.level === lv && r.isNumeric);
-      const avg = lvRows.length ? Math.round(lvRows.reduce((a, b) => a + (b.pct ?? 0), 0) / lvRows.length) : null;
+      const lvRows = rows.filter(r => r.ind.level === lv && r.effectivePct !== null);
+      const avg = lvRows.length ? Math.round(lvRows.reduce((a, b) => a + b.effectivePct, 0) / lvRows.length) : null;
       return { level: lv, count: rows.filter(r => r.ind.level === lv).length, avg };
     });
     latestAvgByLevel = avgByLevel;
@@ -442,11 +455,11 @@ async function loadReport() {
     const byComponent = {};
     // Conta TODOS os indicadores numéricos do componente (mesmo sem
     // dados ainda, contando como 0%) — não só os que já têm valores.
-    rows.filter(r => r.ind.component && r.isNumeric).forEach(r => {
+    rows.filter(r => r.ind.component && r.effectivePct !== null).forEach(r => {
       const m = r.ind.component.match(/Componente (\d)/);
       const key = m ? `C${m[1]}` : r.ind.component;
       if (!byComponent[key]) byComponent[key] = { values: [], fullName: r.ind.component };
-      byComponent[key].values.push(r.pct ?? 0);
+      byComponent[key].values.push(r.effectivePct);
     });
     const compLabels = Object.keys(byComponent).sort();
     const compValues = compLabels.map(k => Math.round(byComponent[k].values.reduce((a, b) => a + b, 0) / byComponent[k].values.length));
