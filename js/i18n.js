@@ -377,9 +377,33 @@ const I18N = (() => {
   // Devolve o indicador com os campos traduzidos, se existir tradução e
   // o idioma actual for inglês. Caso contrário, devolve o indicador tal
   // como veio (português). Não modifica o objecto original.
+  // Reserva: alguns indicadores criados manualmente pela equipa (fora do
+  // catálogo original) podem ter um identificador gerado automaticamente
+  // que não corresponde ao que aqui está previsto (ex: dois nomes muito
+  // parecidos e longos podem gerar o MESMO identificador cortado, já
+  // que o sistema limita o identificador a 60 caracteres). Por isso,
+  // esta tabela funciona como reserva, indexada pelo NOME exacto em
+  // português — usada só se a procura pelo identificador falhar.
+  const INDICATOR_EN_BY_NAME = {
+    'Beneficiários das intervenções de transferências monetárias — Mulheres (CRI)': {
+      name: 'Beneficiaries of cash-based interventions — Female (CRI)',
+      unit: 'Number of people', frequency: 'Quarterly',
+      description: "This indicator measures the number of people participating in the cash transfer program. The target reflects 10,000 households across the three northern provinces, with an average household size of 5 people. The target for youth (15-24 years) reflects 17% and the target for women reflects 51% of the Northern Region's population, according to World Bank calculations using 2022 data from the Household Budget Survey.",
+      dataSource: 'Progress reports',
+      methodology: 'Review of transactions made.',
+    },
+    'Beneficiários das intervenções de transferências monetárias — Jovens (CRI)': {
+      name: 'Beneficiaries of cash-based interventions — Youth (CRI)',
+      unit: 'Number of people', frequency: 'Quarterly',
+      description: "This indicator measures the number of people participating in the cash transfer program. The target reflects 10,000 households across the three northern provinces, with an average household size of 5 people. The target for youth (15-24 years) reflects 17% and the target for women reflects 51% of the Northern Region's population, according to World Bank calculations using 2022 data from the Household Budget Survey.",
+      dataSource: 'Progress reports',
+      methodology: 'Review of transactions made.',
+    },
+  };
+
   function translateIndicator(ind) {
     if (getLang() !== 'en' || !ind) return ind;
-    const en = INDICATOR_EN[ind.id];
+    const en = INDICATOR_EN[ind.id] || INDICATOR_EN_BY_NAME[ind.name];
     const level = LEVEL_EN[ind.level] || ind.level;
     const component = ind.component ? (COMPONENT_EN[ind.component] || ind.component) : ind.component;
     if (!en) return { ...ind, level, component };

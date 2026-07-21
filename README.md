@@ -857,3 +857,22 @@ público.
 Reordenei os cinco gráficos, no ecrã e no PDF, nos dois relatórios: o
 gráfico "Estágio dos indicadores" passa a ser o **primeiro**, seguido
 de Nível/Componente, e por último Género-Idade/Estatuto.
+
+## Correcção: indicadores novos não traduziam no relatório público
+
+Encontrei a causa: o sistema gera automaticamente o identificador de
+cada indicador a partir do nome, cortado a 60 caracteres — e como os
+dois indicadores novos ("...Mulheres (CRI)" e "...Jovens (CRI)") têm
+nomes muito parecidos e longos, ambos ficaram com o **mesmo** início
+cortado ao mesmo comprimento. A tradução, que procurava pelo
+identificador, nunca encontrava correspondência.
+
+Corrigi para a tradução também poder procurar pelo **nome exacto em
+português**, como reserva, quando o identificador não corresponde —
+isto resolve o problema sem depender de saber o identificador exacto
+que ficou gravado na tua base de dados.
+
+**Um ponto de atenção**: esta correcção só funciona se o nome que
+guardaste for exactamente igual ao que te dei para copiar (incluindo o
+travessão "—" e os parêntesis). Se por acaso o nome ficou ligeiramente
+diferente ao colar, avisa-me o nome exacto que está guardado e ajusto.
