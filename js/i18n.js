@@ -1,5 +1,5 @@
 /* ============================================================
-   M&E MozCommunity — Sistema de tradução (PT / EN)
+   GORS - MOZCOMMUNITY — Sistema de tradução (PT / EN)
    ============================================================
    Traduz a interface (menus, botões, cabeçalhos, mensagens) e o
    catálogo FIXO de indicadores (nome, descrição, metodologia...), que
@@ -129,7 +129,8 @@ const I18N = (() => {
     reports_eyebrow: { pt: 'Progresso do projecto', en: 'Project progress' },
     open_data_label: { pt: 'Dados abertos', en: 'Open data' },
     public_report_lead: { pt: 'Progresso dos indicadores do projecto "Jobs, Social Cohesion and Community Resilience in Northern Mozambique — Phase I", com base apenas em valores já aprovados. Acesso livre, sem necessidade de login.', en: 'Progress of the indicators for the "Jobs, Social Cohesion and Community Resilience in Northern Mozambique — Phase I" project, based only on values that have already been approved. Free access, no login required.' },
-    public_report_page_title: { pt: 'Relatório Público — M&E MozCommunity', en: 'Public Report — M&E MozCommunity' },
+    footer_text: { pt: 'GORS - MOZCOMMUNITY — Monitoria de Indicadores, ADIN.', en: 'GORS - MOZCOMMUNITY — Indicator Monitoring, ADIN.' },
+    public_report_page_title: { pt: 'Relatório Público — GORS - MOZCOMMUNITY', en: 'Public Report — GORS - MOZCOMMUNITY' },
     reports_title: { pt: 'Relatórios', en: 'Reports' },
     reports_lead: { pt: 'Progresso dos indicadores face às metas do Quadro de Resultados, com base apenas em valores aprovados.', en: 'Indicator progress against the Results Framework targets, based only on approved values.' },
     report_filters: { pt: 'Filtros do relatório', en: 'Report filters' },

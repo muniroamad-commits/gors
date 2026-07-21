@@ -1,5 +1,5 @@
 /* ============================================================
-   M&E MozCommunity — camada de dados (Firestore + Auth)
+   GORS - MOZCOMMUNITY — camada de dados (Firestore + Auth)
    Plataforma de monitoria de indicadores do projecto "Jobs, Social
    Cohesion and Community Resilience in Northern Mozambique - Phase I"
    (Banco Mundial, P514199).

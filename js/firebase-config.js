@@ -1,5 +1,5 @@
 /* ============================================================
-   Configuração do projecto Firebase — M&E MozCommunity
+   Configuração do projecto Firebase — GORS - MOZCOMMUNITY
    ============================================================
    Este é um projecto Firebase NOVO e SEPARADO do "mdr-mozcommunity".
 

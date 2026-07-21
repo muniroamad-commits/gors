@@ -726,3 +726,13 @@ para quem visita a página) por uma frase mais apropriada:
 
 (em inglês: "To access the internal dashboard, contact the platform
 administrator to obtain your access credentials.")
+
+## Novo nome do sistema: GORS - MOZCOMMUNITY
+
+Substituí "M&E MozCommunity" por **"GORS - MOZCOMMUNITY"** em toda a
+plataforma — títulos das páginas (separador do browser), cabeçalho
+(logótipo + nome), e rodapé. Aplicado a todas as 8 páginas.
+
+No relatório público, o rodapé "GORS - MOZCOMMUNITY — Monitoria de
+Indicadores, ADIN." também traduz correctamente para inglês ("GORS -
+MOZCOMMUNITY — Indicator Monitoring, ADIN.") ao mudar o idioma.
