@@ -111,6 +111,16 @@
   </section>
 
   <section style="padding-top:0;">
+    <div class="container">
+      <div class="chart-card">
+        <h3 data-i18n="chart_stage">Estágio dos indicadores</h3>
+        <div class="chart-sub" data-i18n="chart_stage_sub">Face às metas do Quadro de Resultados, à data de hoje</div>
+        <canvas id="chart-stage" height="140"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding-top:0;">
     <div class="container" style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
       <div class="chart-card">
         <h3 data-i18n="chart_by_level">Indicadores por nível (PrDO / PDO)</h3>
@@ -121,16 +131,6 @@
         <h3 data-i18n="chart_by_component">Progresso médio por componente</h3>
         <div class="chart-sub" data-i18n="chart_by_component_sub">C1–C4 · indicadores intermédios numéricos</div>
         <canvas id="chart-component" height="220"></canvas>
-      </div>
-    </div>
-  </section>
-
-  <section style="padding-top:0;">
-    <div class="container">
-      <div class="chart-card">
-        <h3 data-i18n="chart_stage">Estágio dos indicadores</h3>
-        <div class="chart-sub" data-i18n="chart_stage_sub">Face às metas do Quadro de Resultados, à data de hoje</div>
-        <canvas id="chart-stage" height="140"></canvas>
       </div>
     </div>
   </section>
@@ -547,6 +547,27 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
 
     // ---- Gráficos (todos de coluna; achatados e compactos de propósito,
     // para os cinco caberem numa única página, tal como pedido) ----
+
+    // Gráfico de estágio dos indicadores (largura total) — vem primeiro
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10.5);
+    doc.setTextColor(0, 0, 0);
+    doc.text(I18N.getLang() === 'en' ? 'Indicator stage against targets' : 'Estágio dos indicadores face às metas', margin, y);
+    y += 8;
+    const stageChartImg = await renderOffscreenChart({
+      type: 'bar',
+      data: charts.stage.data,
+      options: {
+        indexAxis: 'y',
+        plugins: { legend: { display: false } },
+        scales: { x: { beginAtZero: true, ticks: { font: { size: 15 }, stepSize: 1 } }, y: { ticks: { font: { size: 16 } } } },
+      },
+    }, 900, 190);
+    const stageImgWidth = pageWidth - margin * 2;
+    const stageImgHeight = (190 / 900) * stageImgWidth;
+    doc.addImage(stageChartImg, 'PNG', margin, y, stageImgWidth, stageImgHeight);
+    y += stageImgHeight + 10;
+
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10.5);
     doc.text(I18N.t('chart_by_level'), margin, y);
@@ -588,25 +609,6 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
       y += 8.5;
     });
     y += 10;
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10.5);
-    doc.setTextColor(0, 0, 0);
-    doc.text(I18N.getLang() === 'en' ? 'Indicator stage against targets' : 'Estágio dos indicadores face às metas', margin, y);
-    y += 8;
-    const stageChartImg = await renderOffscreenChart({
-      type: 'bar',
-      data: charts.stage.data,
-      options: {
-        indexAxis: 'y',
-        plugins: { legend: { display: false } },
-        scales: { x: { beginAtZero: true, ticks: { font: { size: 15 }, stepSize: 1 } }, y: { ticks: { font: { size: 16 } } } },
-      },
-    }, 900, 190);
-    const stageImgWidth = pageWidth - margin * 2;
-    const stageImgHeight = (190 / 900) * stageImgWidth;
-    doc.addImage(stageChartImg, 'PNG', margin, y, stageImgWidth, stageImgHeight);
-    y += stageImgHeight + 10;
 
     // ---- Desagregação por género/idade e por estatuto de beneficiário ----
     doc.setFont('helvetica', 'bold');

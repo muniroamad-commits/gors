@@ -851,3 +851,9 @@ numa só linha à direita, sem quebrar para uma segunda linha. Aplica-se a
 todas as páginas: painel de Indicadores, página de cada indicador,
 Relatórios, Aprovações, Utilizadores, Editar Indicador, e o relatório
 público.
+
+## Gráfico de Estágio agora é o primeiro
+
+Reordenei os cinco gráficos, no ecrã e no PDF, nos dois relatórios: o
+gráfico "Estágio dos indicadores" passa a ser o **primeiro**, seguido
+de Nível/Componente, e por último Género-Idade/Estatuto.
