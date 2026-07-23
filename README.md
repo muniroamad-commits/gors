@@ -903,3 +903,12 @@ Também adicionei duas legendas novas, no mesmo sítio:
 
 Aplica-se aos dois relatórios (interno e público, incluindo a tradução
 para inglês no relatório público).
+
+## Legenda de volta à página dos gráficos, como rodapé compacto
+
+Corrigi outra vez: a legenda (PrDO, PDO, Componentes) volta a ficar na
+**mesma página dos gráficos** — mas agora bem em baixo, como um rodapé
+compacto, separado por uma linha, com letra pequena e tudo numa disposição
+mais apertada (agrupado por linha, com "·" a separar os itens). Já não
+fica no meio dos gráficos (como estava antes) nem numa página à parte no
+fim do documento (como fiz na tentativa anterior).

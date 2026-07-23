@@ -661,7 +661,45 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
     doc.setFontSize(7);
     doc.setTextColor(90, 67, 68);
     doc.text(I18N.t('chart_demo_sub') + '.', margin, y);
-    y += 14;
+    y += 12;
+
+    // ---- Legenda (rodapé da página dos gráficos) — fica na mesma
+    // página dos gráficos, não numa página à parte. ----
+    if (latestPrdoLegend.length || latestPdoLegend.length || latestComponentLegend.length) {
+      doc.setDrawColor(221, 214, 210);
+      doc.setLineWidth(0.6);
+      doc.line(margin, y, pageWidth - margin, y);
+      y += 10;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.5);
+      doc.setTextColor(90, 33, 38);
+      doc.text(I18N.t('legend_title').toUpperCase(), margin, y);
+      y += 9;
+
+      const drawLegendGroupCompact = (title, items) => {
+        if (!items.length) return;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(6.8);
+        doc.setTextColor(90, 33, 38);
+        doc.text(`${title}:`, margin, y);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(70, 60, 60);
+        const prefixWidth = doc.getTextWidth(`${title}: `);
+        const text = items.map(c => `${c.short} = ${c.full}`).join('   ·   ');
+        const lines = doc.splitTextToSize(text, pageWidth - margin * 2 - prefixWidth);
+        doc.text(lines[0], margin + prefixWidth, y);
+        y += 8;
+        for (let i = 1; i < lines.length; i++) {
+          doc.text(lines[i], margin, y);
+          y += 8;
+        }
+      };
+
+      drawLegendGroupCompact('PrDO', latestPrdoLegend);
+      drawLegendGroupCompact('PDO', latestPdoLegend);
+      drawLegendGroupCompact(I18N.t('legend_components'), latestComponentLegend);
+      y += 6;
+    }
 
     // ---- Tabelas: começam sempre numa página nova, a seguir aos gráficos ----
     doc.addPage();
@@ -707,42 +745,7 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
       margin, tableRight, pageWidth, pageHeight,
     });
 
-    // ---- Legenda (códigos usados nos gráficos de PrDO, PDO e
-    // Componente) — colocada no fim do relatório, não no meio dos
-    // gráficos, para não interromper a leitura. ----
-    if (latestPrdoLegend.length || latestPdoLegend.length || latestComponentLegend.length) {
-      doc.addPage();
-      y = 50;
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(13);
-      doc.setTextColor(0, 0, 0);
-      doc.text(I18N.t('legend_title'), margin, y);
-      y += 18;
 
-      const drawLegendGroup = (title, items) => {
-        if (!items.length) return;
-        if (y > pageHeight - margin - 40) { doc.addPage(); y = 50; }
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(9.5);
-        doc.setTextColor(90, 33, 38);
-        doc.text(title, margin, y);
-        y += 13;
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(8.5);
-        doc.setTextColor(0, 0, 0);
-        items.forEach(c => {
-          const lines = doc.splitTextToSize(`${c.short} = ${c.full}`, pageWidth - margin * 2);
-          if (y + lines.length * 11 > pageHeight - margin - 10) { doc.addPage(); y = 50; }
-          doc.text(lines, margin, y);
-          y += lines.length * 11 + 2;
-        });
-        y += 12;
-      };
-
-      drawLegendGroup('PrDO', latestPrdoLegend);
-      drawLegendGroup('PDO', latestPdoLegend);
-      drawLegendGroup(I18N.t('legend_components'), latestComponentLegend);
-    }
 
     doc.save(`${I18N.getLang() === 'en' ? 'public-report' : 'relatorio-publico'}-me-mozcommunity-${new Date().toISOString().slice(0, 10)}.pdf`);
   } catch (err) {
