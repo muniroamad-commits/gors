@@ -920,3 +920,21 @@ Género-Idade/Estatuto → Legenda) estavam demasiado próximos uns dos
 outros. Adicionei uma **linha tracejada** a separar cada grupo, com mais
 espaço vertical à volta — para ficarem claramente distintos, em vez de
 colados. Aplica-se aos dois relatórios (interno e público).
+
+## Logótipo maior, texto do projecto, e separações bem mais visíveis
+
+**Logótipo**: aumentei bastante (de 30px para 60px de largura), e
+corrigi a proporção — a imagem do logótipo não é quadrada (500×361px),
+por isso estava ligeiramente esticada; agora mantém a forma correcta.
+
+**Novo texto**: logo a seguir ao logótipo, antes de "Unidade de
+Coordenação de Projectos", aparece agora o nome do projecto —
+"**Projecto MozComunidades**" no relatório em português, "**MozCommunity
+Project**" no relatório em inglês.
+
+**Separações mais fortes**: as linhas entre os grupos de gráficos
+passam de finas e claras para grossas, na cor vermelha do ADIN, com
+mais espaço à volta — para ficarem bem visíveis mesmo numa vista rápida.
+
+Confirmei os cálculos de espaço antes de enviar — mesmo com estas
+mudanças, continua tudo a caber numa só página.

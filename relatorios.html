@@ -691,15 +691,21 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
     const margin = 40;
     let y = 40;
 
-    // ---- Cabeçalho institucional (logótipo centrado + títulos) ----
+    // ---- Cabeçalho institucional (logótipo maior, com proporção
+    // correcta + nome do projecto + títulos) ----
     try {
-      const logoSize = 30;
-      doc.addImage(ADIN_LOGO_BASE64, 'JPEG', (pageWidth - logoSize) / 2, y, logoSize, logoSize);
-      y += logoSize + 6;
+      const logoWidth = 60;
+      const logoHeight = logoWidth * (361 / 500); // proporção real da imagem (500×361px)
+      doc.addImage(ADIN_LOGO_BASE64, 'JPEG', (pageWidth - logoWidth) / 2, y, logoWidth, logoHeight);
+      y += logoHeight + 8;
     } catch (e) {
       console.warn('Não foi possível desenhar o logótipo no PDF:', e.message);
     }
     doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Projecto MozComunidades', pageWidth / 2, y, { align: 'center' });
+    y += 14;
     doc.setFontSize(9);
     doc.setTextColor(90, 67, 68);
     doc.text('UNIDADE DE COORDENAÇÃO DE PROJECTOS', pageWidth / 2, y, { align: 'center' });
@@ -770,12 +776,12 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
     // Linha tracejada (estilo zebra) a separar os grupos de gráficos,
     // com mais espaço vertical à volta — para não ficarem colados uns
     // aos outros.
-    doc.setDrawColor(200, 190, 185);
-    doc.setLineWidth(0.75);
-    doc.setLineDashPattern([2, 2], 0);
+    doc.setDrawColor(157, 33, 43);
+    doc.setLineWidth(1.4);
+    doc.setLineDashPattern([3, 2.5], 0);
     doc.line(margin, y, pageWidth - margin, y);
     doc.setLineDashPattern([], 0);
-    y += 16;
+    y += 26;
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
@@ -815,12 +821,12 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
     doc.addImage(componentChartImg, 'PNG', margin + (thirdWidth + 20) * 2, y, thirdWidth, th3);
     y += Math.max(th1, th2, th3) + 14;
 
-    doc.setDrawColor(200, 190, 185);
-    doc.setLineWidth(0.75);
-    doc.setLineDashPattern([2, 2], 0);
+    doc.setDrawColor(157, 33, 43);
+    doc.setLineWidth(1.4);
+    doc.setLineDashPattern([3, 2.5], 0);
     doc.line(margin, y, pageWidth - margin, y);
     doc.setLineDashPattern([], 0);
-    y += 16;
+    y += 26;
 
     // ---- Desagregação por género/idade e por estatuto de beneficiário ----
     doc.setFont('helvetica', 'bold');
@@ -854,12 +860,12 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
     // gráficos de PrDO, PDO e Componente) — fica na mesma página dos
     // gráficos, não numa página à parte. ----
     if (latestPrdoLegend.length || latestPdoLegend.length || latestComponentLegend.length) {
-      doc.setDrawColor(200, 190, 185);
-      doc.setLineWidth(0.75);
-      doc.setLineDashPattern([2, 2], 0);
+      doc.setDrawColor(157, 33, 43);
+      doc.setLineWidth(1.4);
+      doc.setLineDashPattern([3, 2.5], 0);
       doc.line(margin, y, pageWidth - margin, y);
       doc.setLineDashPattern([], 0);
-      y += 12;
+      y += 18;
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(7.5);
       doc.setTextColor(90, 33, 38);
