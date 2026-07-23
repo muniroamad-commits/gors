@@ -912,3 +912,11 @@ compacto, separado por uma linha, com letra pequena e tudo numa disposição
 mais apertada (agrupado por linha, com "·" a separar os itens). Já não
 fica no meio dos gráficos (como estava antes) nem numa página à parte no
 fim do documento (como fiz na tentativa anterior).
+
+## Gráficos separados por linha tracejada, com mais espaço vertical
+
+Os grupos de gráficos no PDF (Estágio → PrDO/PDO/Componente →
+Género-Idade/Estatuto → Legenda) estavam demasiado próximos uns dos
+outros. Adicionei uma **linha tracejada** a separar cada grupo, com mais
+espaço vertical à volta — para ficarem claramente distintos, em vez de
+colados. Aplica-se aos dois relatórios (interno e público).

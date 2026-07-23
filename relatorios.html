@@ -765,7 +765,17 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
     const stageImgWidth = pageWidth - margin * 2;
     const stageImgHeight = (190 / 900) * stageImgWidth;
     doc.addImage(stageChartImg, 'PNG', margin, y, stageImgWidth, stageImgHeight);
-    y += stageImgHeight + 10;
+    y += stageImgHeight + 14;
+
+    // Linha tracejada (estilo zebra) a separar os grupos de gráficos,
+    // com mais espaço vertical à volta — para não ficarem colados uns
+    // aos outros.
+    doc.setDrawColor(200, 190, 185);
+    doc.setLineWidth(0.75);
+    doc.setLineDashPattern([2, 2], 0);
+    doc.line(margin, y, pageWidth - margin, y);
+    doc.setLineDashPattern([], 0);
+    y += 16;
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
@@ -805,6 +815,13 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
     doc.addImage(componentChartImg, 'PNG', margin + (thirdWidth + 20) * 2, y, thirdWidth, th3);
     y += Math.max(th1, th2, th3) + 14;
 
+    doc.setDrawColor(200, 190, 185);
+    doc.setLineWidth(0.75);
+    doc.setLineDashPattern([2, 2], 0);
+    doc.line(margin, y, pageWidth - margin, y);
+    doc.setLineDashPattern([], 0);
+    y += 16;
+
     // ---- Desagregação por género/idade e por estatuto de beneficiário ----
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10.5);
@@ -837,10 +854,12 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
     // gráficos de PrDO, PDO e Componente) — fica na mesma página dos
     // gráficos, não numa página à parte. ----
     if (latestPrdoLegend.length || latestPdoLegend.length || latestComponentLegend.length) {
-      doc.setDrawColor(221, 214, 210);
-      doc.setLineWidth(0.6);
+      doc.setDrawColor(200, 190, 185);
+      doc.setLineWidth(0.75);
+      doc.setLineDashPattern([2, 2], 0);
       doc.line(margin, y, pageWidth - margin, y);
-      y += 10;
+      doc.setLineDashPattern([], 0);
+      y += 12;
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(7.5);
       doc.setTextColor(90, 33, 38);
