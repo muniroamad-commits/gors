@@ -225,7 +225,7 @@ function render(ind0, values) {
       <div class="field">
         <label for="val-evidence">${'Anexar evidência'} <span class="required">*</span></label>
         <input type="file" id="val-evidence" accept=".jpg,.jpeg,.png,.webp,.pdf" style="padding:8px;" required>
-        <div class="hint">${'Até 200KB, 2 ficheiros.'}</div>
+        <div class="hint">${'Até 350KB por ficheiro, no máximo 2 ficheiros.'}</div>
       </div>
       <button type="button" class="btn btn-primary btn-block" id="submit-value-btn">${'Submeter para aprovação'}</button>
     </div>
@@ -523,7 +523,7 @@ function wireEvents(ind) {
           note: noteValue,
         }, fileList);
         if (result.skipped && result.skipped.length) {
-          alert(en ? `The file "${result.skipped.join(', ')}" was not attached because it exceeds 200KB.` : `O ficheiro "${result.skipped.join(', ')}" não foi anexado por exceder 200KB.`);
+          alert(en ? `The file "${result.skipped.join(', ')}" was not attached because it exceeds 350KB.` : `O ficheiro "${result.skipped.join(', ')}" não foi anexado por exceder 350KB.`);
         }
         loadIndicator();
       } catch (err) {

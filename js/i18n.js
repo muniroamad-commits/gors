@@ -162,6 +162,8 @@ const I18N = (() => {
     chart_demo_sub: { pt: 'Soma de: transferências monetárias, jovens formados nos SICs, e beneficiários de VBG', en: 'Sum of: cash transfers, youth trained at SICs, and GBV beneficiaries' },
     chart_status: { pt: 'Desagregação por estatuto de beneficiário', en: 'Disaggregation by beneficiary status' },
     chart_status_sub: { pt: 'Soma de: transferências monetárias, jovens formados nos SICs, e beneficiários de VBG', en: 'Sum of: cash transfers, youth trained at SICs, and GBV beneficiaries' },
+    legend_title: { pt: 'Legenda', en: 'Legend' },
+    legend_components: { pt: 'Componentes (C1–C4)', en: 'Components (C1–C4)' },
     program_indicators_title: { pt: 'Indicadores de Programa (PrDO e PDO)', en: 'Program Indicators (PrDO and PDO)' },
     intermediate_indicators_title: { pt: 'Indicadores Intermédios', en: 'Intermediate Indicators' },
     avg_by_level_title: { pt: 'Progresso médio por nível', en: 'Average progress by level' },

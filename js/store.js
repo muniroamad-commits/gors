@@ -620,7 +620,13 @@ const ME = (() => {
 
   // ---------- Anexos (evidência de cada submissão) ----------
   const MAX_FILES = 2;
-  const MAX_FILE_BYTES = 200 * 1024; // ~200KB por ficheiro
+  // 350KB por ficheiro (2 ficheiros = até 700KB no total) é o máximo
+  // seguro dentro do limite rígido de 1MB por registo do Firestore — os
+  // ficheiros ficam em base64 (que ocupa ~33% mais espaço) directamente
+  // dentro do registo, e sobra margem para os outros campos (notas,
+  // nome do indicador, etc.). Não subir mais este valor sem mudar a
+  // forma como os ficheiros são guardados (ver README).
+  const MAX_FILE_BYTES = 350 * 1024;
 
   function filesToEvidence(fileList) {
     const files = Array.from(fileList || []).slice(0, MAX_FILES);

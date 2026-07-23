@@ -887,3 +887,19 @@ eu tinha assumido por engano, e incluindo o indicador de VBG que faltava):
 
 Testei os três nomes exactos e confirmei que traduzem correctamente
 agora.
+
+## Legenda movida para o rodapé + legendas de PrDO e PDO adicionadas
+
+A legenda dos códigos de componente (C1, C2, C3, C4) já não aparece a
+meio dos gráficos — ficam agora todas juntas numa secção **"Legenda"**
+no fim do PDF, depois de todas as tabelas (e do Relatório Descritivo, no
+relatório interno). Isto evita interromper a leitura dos gráficos.
+
+Também adicionei duas legendas novas, no mesmo sítio:
+- **PrDO**: explica o que "Localidades" e "Empregos" significam no
+  gráfico de PrDO (nome completo de cada indicador)
+- **PDO**: explica "Localidades", "Empregos" e "Infra-estruturas" no
+  gráfico de PDO
+
+Aplica-se aos dois relatórios (interno e público, incluindo a tradução
+para inglês no relatório público).

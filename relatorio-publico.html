@@ -210,6 +210,8 @@ let latestStageCounts = { atraso: 0, alcancada: 0, prazo: 0 };
 let latestDemoTotals = { Mulheres: 0, Jovens: 0 };
 let latestStatusTotals = { 'Deslocados': 0, 'Retornados': 0, 'Anfitriões': 0 };
 let latestComponentLegend = [];
+let latestPrdoLegend = [];
+let latestPdoLegend = [];
 
 I18N.applyStaticTranslations();
 document.title = I18N.t('public_report_page_title');
@@ -422,6 +424,7 @@ async function loadReport() {
       },
       options: { plugins: { legend: { display: false } }, scales: { y: { max: 100, beginAtZero: true, ticks: { callback: v => v + '%' } } } },
     });
+    latestPrdoLegend = prdoRows.map(r => ({ short: shortLabel(r), full: I18N.translateIndicator(r.ind).name }));
 
     const pdoRows = rows.filter(r => r.ind.level === 'PDO' && r.effectivePct !== null);
     charts.pdo = new Chart(document.getElementById('chart-pdo'), {
@@ -432,6 +435,7 @@ async function loadReport() {
       },
       options: { plugins: { legend: { display: false } }, scales: { y: { max: 100, beginAtZero: true, ticks: { callback: v => v + '%' } } } },
     });
+    latestPdoLegend = pdoRows.map(r => ({ short: shortLabel(r), full: I18N.translateIndicator(r.ind).name }));
 
     const byComponent = {};
     rows.filter(r => r.ind.component && r.effectivePct !== null).forEach(r => {
@@ -629,16 +633,7 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
     doc.addImage(prdoChartImg, 'PNG', margin, y, thirdWidth, th1);
     doc.addImage(pdoChartImg, 'PNG', margin + thirdWidth + 20, y, thirdWidth, th2);
     doc.addImage(componentChartImg, 'PNG', margin + (thirdWidth + 20) * 2, y, thirdWidth, th3);
-    y += Math.max(th1, th2, th3) + 8;
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    doc.setTextColor(90, 67, 68);
-    latestComponentLegend.forEach(c => {
-      doc.text(`${c.short} = ${c.full}`, margin, y);
-      y += 8.5;
-    });
-    y += 10;
+    y += Math.max(th1, th2, th3) + 14;
 
     // ---- Desagregação por género/idade e por estatuto de beneficiário ----
     doc.setFont('helvetica', 'bold');
@@ -711,6 +706,43 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
       cellFn: l => [I18N.translateLevel(l.level), String(l.count), l.avg !== null ? `${l.avg}%` : '—'],
       margin, tableRight, pageWidth, pageHeight,
     });
+
+    // ---- Legenda (códigos usados nos gráficos de PrDO, PDO e
+    // Componente) — colocada no fim do relatório, não no meio dos
+    // gráficos, para não interromper a leitura. ----
+    if (latestPrdoLegend.length || latestPdoLegend.length || latestComponentLegend.length) {
+      doc.addPage();
+      y = 50;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.setTextColor(0, 0, 0);
+      doc.text(I18N.t('legend_title'), margin, y);
+      y += 18;
+
+      const drawLegendGroup = (title, items) => {
+        if (!items.length) return;
+        if (y > pageHeight - margin - 40) { doc.addPage(); y = 50; }
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9.5);
+        doc.setTextColor(90, 33, 38);
+        doc.text(title, margin, y);
+        y += 13;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8.5);
+        doc.setTextColor(0, 0, 0);
+        items.forEach(c => {
+          const lines = doc.splitTextToSize(`${c.short} = ${c.full}`, pageWidth - margin * 2);
+          if (y + lines.length * 11 > pageHeight - margin - 10) { doc.addPage(); y = 50; }
+          doc.text(lines, margin, y);
+          y += lines.length * 11 + 2;
+        });
+        y += 12;
+      };
+
+      drawLegendGroup('PrDO', latestPrdoLegend);
+      drawLegendGroup('PDO', latestPdoLegend);
+      drawLegendGroup(I18N.t('legend_components'), latestComponentLegend);
+    }
 
     doc.save(`${I18N.getLang() === 'en' ? 'public-report' : 'relatorio-publico'}-me-mozcommunity-${new Date().toISOString().slice(0, 10)}.pdf`);
   } catch (err) {
