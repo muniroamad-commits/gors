@@ -121,11 +121,16 @@
   </section>
 
   <section style="padding-top:0;">
-    <div class="container" style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+    <div class="container" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px;">
       <div class="chart-card">
-        <h3 data-i18n="chart_by_level">Indicadores por nível (PrDO / PDO)</h3>
-        <div class="chart-sub" data-i18n="chart_by_level_sub">Programa e Projecto — indicadores intermédios são vistos por componente</div>
-        <canvas id="chart-level" height="220"></canvas>
+        <h3 data-i18n="chart_prdo">PrDO — Resultados</h3>
+        <div class="chart-sub" data-i18n="chart_prdo_sub">Progresso de cada indicador de Programa</div>
+        <canvas id="chart-prdo" height="220"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3 data-i18n="chart_pdo">PDO — Resultados</h3>
+        <div class="chart-sub" data-i18n="chart_pdo_sub">Progresso de cada indicador de Projecto</div>
+        <canvas id="chart-pdo" height="220"></canvas>
       </div>
       <div class="chart-card">
         <h3 data-i18n="chart_by_component">Progresso médio por componente</h3>
@@ -400,12 +405,32 @@ async function loadReport() {
 
     destroyCharts();
 
-    const byLevelProgram = { PrDO: 0, PDO: 0 };
-    rows.forEach(r => { if (byLevelProgram.hasOwnProperty(r.ind.level)) byLevelProgram[r.ind.level] += 1; });
-    charts.level = new Chart(document.getElementById('chart-level'), {
+    const SHORT_LABELS = I18N.getLang() === 'en'
+      ? { 'prdo-localities': 'Localities', 'prdo-jobs': 'Jobs', 'pdo-localities': 'Localities', 'pdo-jobs': 'Jobs', 'pdo-cri-infra': 'Infrastructure' }
+      : { 'prdo-localities': 'Localidades', 'prdo-jobs': 'Empregos', 'pdo-localities': 'Localidades', 'pdo-jobs': 'Empregos', 'pdo-cri-infra': 'Infra-estruturas' };
+    const shortLabel = (r) => {
+      const indT = I18N.translateIndicator(r.ind);
+      return SHORT_LABELS[r.ind.id] || (indT.name.length > 22 ? indT.name.slice(0, 20) + '…' : indT.name);
+    };
+
+    const prdoRows = rows.filter(r => r.ind.level === 'PrDO' && r.effectivePct !== null);
+    charts.prdo = new Chart(document.getElementById('chart-prdo'), {
       type: 'bar',
-      data: { labels: Object.keys(byLevelProgram), datasets: [{ data: Object.values(byLevelProgram), backgroundColor: ['#9D212B', '#FAA842'], borderRadius: 4 }] },
-      options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } },
+      data: {
+        labels: prdoRows.map(shortLabel),
+        datasets: [{ data: prdoRows.map(r => r.effectivePct), backgroundColor: '#9D212B', borderRadius: 4 }],
+      },
+      options: { plugins: { legend: { display: false } }, scales: { y: { max: 100, beginAtZero: true, ticks: { callback: v => v + '%' } } } },
+    });
+
+    const pdoRows = rows.filter(r => r.ind.level === 'PDO' && r.effectivePct !== null);
+    charts.pdo = new Chart(document.getElementById('chart-pdo'), {
+      type: 'bar',
+      data: {
+        labels: pdoRows.map(shortLabel),
+        datasets: [{ data: pdoRows.map(r => r.effectivePct), backgroundColor: '#FAA842', borderRadius: 4 }],
+      },
+      options: { plugins: { legend: { display: false } }, scales: { y: { max: 100, beginAtZero: true, ticks: { callback: v => v + '%' } } } },
     });
 
     const byComponent = {};
@@ -569,37 +594,42 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
     y += stageImgHeight + 10;
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10.5);
-    doc.text(I18N.t('chart_by_level'), margin, y);
-    doc.text(I18N.t('chart_by_component'), margin + (pageWidth - margin * 2) / 2 + 14, y);
+    doc.setFontSize(10);
+    const thirdWidth = (pageWidth - margin * 2 - 40) / 3;
+    doc.text(I18N.t('chart_prdo'), margin, y);
+    doc.text(I18N.t('chart_pdo'), margin + thirdWidth + 20, y);
+    doc.text(I18N.t('chart_by_component'), margin + (thirdWidth + 20) * 2, y);
     y += 8;
 
-    const halfWidth = (pageWidth - margin * 2 - 20) / 2;
-    const levelChartImg = await renderOffscreenChart({
+    const prdoChartImg = await renderOffscreenChart({
       type: 'bar',
-      data: charts.level.data,
-      options: {
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, ticks: { font: { size: 15 }, stepSize: 1 } }, x: { ticks: { font: { size: 16 } } } },
-      },
-    }, 640, 320);
+      data: charts.prdo.data,
+      options: { plugins: { legend: { display: false } }, scales: { y: { max: 100, beginAtZero: true, ticks: { callback: v => v + '%', font: { size: 14 } } }, x: { ticks: { font: { size: 13 } } } } },
+    }, 480, 320);
+    const pdoChartImg = await renderOffscreenChart({
+      type: 'bar',
+      data: charts.pdo.data,
+      options: { plugins: { legend: { display: false } }, scales: { y: { max: 100, beginAtZero: true, ticks: { callback: v => v + '%', font: { size: 14 } } }, x: { ticks: { font: { size: 13 } } } } },
+    }, 480, 320);
     const componentChartImg = await renderOffscreenChart({
       type: 'bar',
       data: charts.component.data,
       options: {
         plugins: { legend: { display: false } },
         scales: {
-          y: { max: 100, beginAtZero: true, ticks: { callback: v => v + '%', font: { size: 15 } } },
-          x: { ticks: { font: { size: 17 } } },
+          y: { max: 100, beginAtZero: true, ticks: { callback: v => v + '%', font: { size: 14 } } },
+          x: { ticks: { font: { size: 15 } } },
         },
       },
-    }, 640, 320);
+    }, 480, 320);
 
-    const h1 = (320 / 640) * halfWidth;
-    const h2 = (320 / 640) * halfWidth;
-    doc.addImage(levelChartImg, 'PNG', margin, y, halfWidth, h1);
-    doc.addImage(componentChartImg, 'PNG', margin + halfWidth + 20, y, halfWidth, h2);
-    y += Math.max(h1, h2) + 8;
+    const th1 = (320 / 480) * thirdWidth;
+    const th2 = (320 / 480) * thirdWidth;
+    const th3 = (320 / 480) * thirdWidth;
+    doc.addImage(prdoChartImg, 'PNG', margin, y, thirdWidth, th1);
+    doc.addImage(pdoChartImg, 'PNG', margin + thirdWidth + 20, y, thirdWidth, th2);
+    doc.addImage(componentChartImg, 'PNG', margin + (thirdWidth + 20) * 2, y, thirdWidth, th3);
+    y += Math.max(th1, th2, th3) + 8;
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
