@@ -938,3 +938,14 @@ mais espaço à volta — para ficarem bem visíveis mesmo numa vista rápida.
 
 Confirmei os cálculos de espaço antes de enviar — mesmo com estas
 mudanças, continua tudo a caber numa só página.
+
+## Logótipo ainda maior (confirmado nos dois relatórios)
+
+Aumentei o logótipo de 60px para **90px de largura** — quase o triplo
+do tamanho original. Confirmei que as alterações anteriores (texto do
+projecto, separações mais fortes) já estavam presentes em **ambos** os
+relatórios, interno e público — o zip anterior já as tinha, mas aqui
+está tudo de novo, actualizado, para não haver dúvidas.
+
+Recalculei o espaço com precisão: mesmo com o logótipo maior, ainda cabe
+tudo numa só página (sobra ~25pt de margem).

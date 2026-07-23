@@ -694,7 +694,7 @@ document.getElementById('download-pdf-btn').addEventListener('click', async () =
     // ---- Cabeçalho institucional (logótipo maior, com proporção
     // correcta + nome do projecto + títulos) ----
     try {
-      const logoWidth = 60;
+      const logoWidth = 90;
       const logoHeight = logoWidth * (361 / 500); // proporção real da imagem (500×361px)
       doc.addImage(ADIN_LOGO_BASE64, 'JPEG', (pageWidth - logoWidth) / 2, y, logoWidth, logoHeight);
       y += logoHeight + 8;
